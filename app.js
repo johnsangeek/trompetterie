@@ -303,7 +303,7 @@ async function loadFile(file) {
     state.detectedKey = detectKey(state.noteEvents);
     state.scaleRoot = state.detectedKey.root;
     state.scaleType = state.detectedKey.mode === "minor" ? "blues" : "majorPentatonic";
-    el.detectedKeyLabel.textContent = `${FRENCH_NOTE_NAMES[state.detectedKey.root]} ${state.detectedKey.mode === "minor" ? "mineur" : "majeur"}`;
+    el.detectedKeyLabel.textContent = formatTrumpetKey(state.detectedKey.root, state.detectedKey.mode);
     el.scaleRootSelect.value = String(state.scaleRoot);
     el.scaleTypeSelect.value = state.scaleType;
     state.chordMode = "free";
@@ -543,13 +543,13 @@ function scanTrumpetNote() {
   if (noteScanner.stableFrames < 3) return;
 
   noteScanner.stableMidi = midi;
-  el.scannerNoteLabel.textContent = midiToFrenchName(midi);
+  el.scannerNoteLabel.textContent = midiToTrumpetWrittenName(midi);
   el.scannerCentsLabel.textContent = Math.abs(cents) <= 5 ? "Juste" : `${cents > 0 ? "+" : ""}${cents} cents`;
   el.tunerNeedle.style.left = `${50 + Math.max(-50, Math.min(50, cents))}%`;
   el.captureScannedNoteBtn.disabled = false;
   updatePistons(midi);
-  setCurrentNoteLabel(midiToFrenchName(midi));
-  el.scannerFeedback.textContent = "Note reconnue — tu peux l'ajouter à ta partition.";
+  setTrumpetCurrentNote(midi);
+  el.scannerFeedback.textContent = `Entendu : ${midiToConcertDisplayName(midi)} · à lire : ${midiToTrumpetWrittenName(midi)}.`;
 }
 
 function captureScannedNote() {
@@ -564,7 +564,7 @@ function captureScannedNote() {
   const manualButton = el.modeBtns.find((btn) => btn.dataset.mode === "manual");
   if (manualButton) manualButton.disabled = false;
   setMode("manual");
-  el.scannerFeedback.textContent = `${midiToFrenchName(noteScanner.stableMidi)} ajoutée à la fin de la partition.`;
+  el.scannerFeedback.textContent = `${midiToTrumpetWrittenName(noteScanner.stableMidi)} ajoutée à la fin de la partition.`;
 }
 
 function extractPitchFrames(channelData, sampleRate, onProgress) {
@@ -1270,7 +1270,7 @@ function sendChordToTrumpet() {
   el.insideOutsideRow.hidden = true;
   setMode("improvisation");
   const scaleName = SCALE_DEFINITIONS[state.scaleType].label;
-  el.pianoRollFeedback.textContent = `Trompette : les notes de la gamme ${scaleName} sont affichées avec leurs doigtés.`;
+  el.pianoRollFeedback.textContent = `Trompette : ${trumpetPitchClassLabel(detected.root)} · gamme ${scaleName}, avec les doigtés.`;
   el.staff.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -1399,7 +1399,7 @@ function nextQuizRound() {
   // the player guess by ear first - the exercise is "can you play this
   // fingering", not "can you name this pitch blind".
   updatePistons(quizState.currentTarget);
-  setCurrentNoteLabel(midiToFrenchName(quizState.currentTarget));
+  setTrumpetCurrentNote(quizState.currentTarget);
   el.quizProgress.textContent = `Note ${quizState.index + 1}/${quizState.pool.length}`;
   el.quizScore.textContent = `${quizState.correct}/${quizState.index}`;
   el.quizStatus.textContent = "Écoute…";
@@ -1472,16 +1472,16 @@ function resolveQuizRound(success) {
 
   const target = quizState.currentTarget;
   updatePistons(target);
-  setCurrentNoteLabel(midiToFrenchName(target));
+  setTrumpetCurrentNote(target);
 
   if (success) {
     quizState.correct++;
-    el.quizFeedback.textContent = `✓ ${midiToFrenchName(target)} !`;
+    el.quizFeedback.textContent = `✓ ${midiToTrumpetWrittenName(target)} !`;
     el.quizFeedback.className = "quiz-feedback correct";
     el.quizTimerCircle.style.stroke = "#4fd1c5";
   } else {
     quizState.missed.push(target);
-    el.quizFeedback.textContent = `✗ C'était ${midiToFrenchName(target)}`;
+    el.quizFeedback.textContent = `✗ C'était ${midiToTrumpetWrittenName(target)}`;
     el.quizFeedback.className = "quiz-feedback wrong";
     el.quizTimerCircle.style.stroke = "#ef5350";
   }
@@ -1504,7 +1504,7 @@ function finishQuiz() {
   setQuizRing(0);
 
   if (quizState.missed.length) {
-    const missedNames = [...new Set(quizState.missed.map((m) => midiToFrenchName(m)))].join(", ");
+    const missedNames = [...new Set(quizState.missed.map((m) => midiToTrumpetWrittenName(m)))].join(", ");
     el.quizFeedback.textContent = `${quizState.correct}/${total} — à retravailler : ${missedNames}`;
     el.quizFeedback.className = "quiz-feedback wrong";
   } else {
@@ -1595,10 +1595,39 @@ function midiToVexKey(midi) {
 }
 
 const FRENCH_NOTE_NAMES = ["Do", "Do#", "Ré", "Mib", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Sib", "Si"];
+const INTERNATIONAL_NOTE_NAMES = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 
 function midiToFrenchName(midi) {
   const octave = Math.floor(midi / 12) - 1;
   return `${FRENCH_NOTE_NAMES[((midi % 12) + 12) % 12]}${octave}`;
+}
+
+function midiToInternationalName(midi) {
+  const octave = Math.floor(midi / 12) - 1;
+  return `${INTERNATIONAL_NOTE_NAMES[((midi % 12) + 12) % 12]}${octave}`;
+}
+
+function midiToTrumpetWrittenName(concertMidi) {
+  const writtenMidi = concertMidi + 2;
+  return `${midiToFrenchName(writtenMidi)} / ${midiToInternationalName(writtenMidi)}`;
+}
+
+function midiToConcertDisplayName(concertMidi) {
+  return `${midiToFrenchName(concertMidi)} / ${midiToInternationalName(concertMidi)} concert`;
+}
+
+function trumpetPitchClassLabel(concertPitchClass) {
+  const writtenPitchClass = (concertPitchClass + 2) % 12;
+  return `${FRENCH_NOTE_NAMES[writtenPitchClass]} / ${INTERNATIONAL_NOTE_NAMES[writtenPitchClass]} trompette · ${FRENCH_NOTE_NAMES[concertPitchClass]} / ${INTERNATIONAL_NOTE_NAMES[concertPitchClass]} concert`;
+}
+
+function formatTrumpetKey(concertPitchClass, mode) {
+  const quality = mode === "minor" ? "mineur" : "majeur";
+  return `${trumpetPitchClassLabel(concertPitchClass)} · ${quality}`;
+}
+
+function setTrumpetCurrentNote(concertMidi) {
+  setCurrentNoteLabel(midiToTrumpetWrittenName(concertMidi));
 }
 
 // Mirrors the current note name next to the pistons too, so the fingering
@@ -1805,7 +1834,8 @@ function refreshPlayhead(currentTime) {
     state.lastRenderKey = renderKey;
     drawFullScore(measuresArr, activeEvent ? activeEvent.startTime : null);
     updatePistons(activeEvent ? activeEvent.midi : null);
-    setCurrentNoteLabel(activeEvent ? midiToFrenchName(activeEvent.midi) : "--");
+    if (activeEvent) setTrumpetCurrentNote(activeEvent.midi);
+    else setCurrentNoteLabel("--");
     return;
   }
 
@@ -1818,7 +1848,8 @@ function refreshPlayhead(currentTime) {
 
   drawMeasureWindow(measuresArr, windowStart, activeEvent ? activeEvent.startTime : null);
   updatePistons(activeEvent ? activeEvent.midi : null);
-  setCurrentNoteLabel(activeEvent ? midiToFrenchName(activeEvent.midi) : "--");
+  if (activeEvent) setTrumpetCurrentNote(activeEvent.midi);
+  else setCurrentNoteLabel("--");
 }
 
 // ---------------------------------------------------------------------------
@@ -1832,7 +1863,7 @@ function renderScaleStaff(writtenMidis, activeWrittenMidi) {
   el.staff.innerHTML = "";
   const VF = Vex.Flow;
   const scale = isStandalonePWA ? 1.3 : 1;
-  const perNoteWidth = 72;
+  const perNoteWidth = 92;
   const rowMargin = 50;
   const rowHeight = 122; // extra room for the enlarged fingering digits below each note
 
@@ -1873,7 +1904,7 @@ function renderScaleStaff(writtenMidis, activeWrittenMidi) {
       const note = new VF.StaveNote({ keys: [key], duration: "q" });
       if (key.includes("#")) note.addModifier(new VF.Accidental("#"));
 
-      const nameAnnotation = new VF.Annotation(midiToFrenchName(midi - 2));
+      const nameAnnotation = new VF.Annotation(`${midiToFrenchName(midi)} / ${midiToInternationalName(midi)}`);
       nameAnnotation.setFont("Arial", nameAnnotationSize, "bold");
       if (VF.Annotation.VerticalJustify) {
         nameAnnotation.setVerticalJustification(VF.Annotation.VerticalJustify.TOP);
@@ -1913,7 +1944,7 @@ function renderDegreeChips(writtenMidis) {
     chip.type = "button";
     chip.className = "degree-chip";
     chip.dataset.concertMidi = String(concertMidi);
-    chip.innerHTML = `<span>${midiToFrenchName(concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
+    chip.innerHTML = `<span>${midiToFrenchName(writtenMidi)}</span><span class="chip-international">${midiToInternationalName(writtenMidi)}</span><span class="chip-concert">${midiToConcertDisplayName(concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
     chip.addEventListener("click", () => selectScaleNote(writtenMidi));
     container.appendChild(chip);
   });
@@ -1945,10 +1976,10 @@ function applyChordSelection() {
   const chordDef = CHORD_TO_SCALES[state.chordQuality];
   state.scaleType = chordDef[state.chordSide];
 
-  const rootName = FRENCH_NOTE_NAMES[state.scaleRoot];
+  const rootName = trumpetPitchClassLabel(state.scaleRoot);
   const scaleLabel = SCALE_DEFINITIONS[state.scaleType].label;
   const sideLabel = state.chordSide === "inside" ? "dedans" : "dehors";
-  el.chordScaleExplain.textContent = `${rootName}${chordDef.label} → ${scaleLabel} (${sideLabel})`;
+  el.chordScaleExplain.textContent = `${rootName} · accord ${chordDef.label} → ${scaleLabel} (${sideLabel})`;
 
   renderScaleReference();
   if (state.scoreLoopActive) startScorePlayback();
@@ -1977,7 +2008,7 @@ function selectScaleNote(writtenMidi) {
   const concertMidi = writtenMidi - 2;
   playTone(concertMidi);
   updatePistons(concertMidi);
-  setCurrentNoteLabel(midiToFrenchName(concertMidi));
+  setTrumpetCurrentNote(concertMidi);
 
   const writtenMidis = buildScaleReference(state.scaleRoot, state.scaleType);
   renderScaleStaff(writtenMidis, writtenMidi);
@@ -2038,7 +2069,7 @@ function updateFavoriteButtonState() {
 
 function favoriteScaleLabel(entry) {
   const scaleLabel = SCALE_DEFINITIONS[entry.scaleType] ? SCALE_DEFINITIONS[entry.scaleType].label : entry.scaleType;
-  return `${scaleLabel} ${FRENCH_NOTE_NAMES[entry.root]}`;
+  return `${scaleLabel} · ${trumpetPitchClassLabel(entry.root)}`;
 }
 
 function renderFavoriteScalesList() {
@@ -2087,7 +2118,7 @@ function renderFavoriteScalesList() {
 // (internally-scrollable) full-score view to it.
 function locateNoteInScore(concertMidi) {
   updatePistons(concertMidi);
-  setCurrentNoteLabel(midiToFrenchName(concertMidi));
+  setTrumpetCurrentNote(concertMidi);
   playTone(concertMidi);
 
   const measuresArr = state.mode === "manual" ? state.manualMeasures : state.measures;
@@ -2129,7 +2160,7 @@ function buildPitchPalette() {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "degree-chip";
-    chip.innerHTML = `<span>${midiToFrenchName(concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
+    chip.innerHTML = `<span>${midiToFrenchName(writtenMidi)}</span><span class="chip-international">${midiToInternationalName(writtenMidi)}</span><span class="chip-concert">${midiToConcertDisplayName(concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
     chip.addEventListener("click", () => {
       if (readOnly) {
         locateNoteInScore(concertMidi);
@@ -2165,7 +2196,7 @@ function placeManualNote(concertMidi) {
   // timeline to anchor placement to, and shouldn't get silently mutated by
   // someone just clicking around to check fingerings.
   updatePistons(concertMidi);
-  setCurrentNoteLabel(midiToFrenchName(concertMidi));
+  setTrumpetCurrentNote(concertMidi);
   playTone(concertMidi);
 
   if (!state.audioBuffer && !state.manualCaptureMode) return;
@@ -2240,9 +2271,8 @@ function updateSongKeyPanel() {
   state.songScaleRoot = key.root;
   state.songScaleType = key.mode === "minor" ? "naturalMinor" : "major";
 
-  const rootName = FRENCH_NOTE_NAMES[key.root];
   const modeLabel = key.mode === "minor" ? "mineur" : "majeur";
-  el.songKeyLabel.textContent = `${rootName} ${modeLabel}`;
+  el.songKeyLabel.textContent = `${trumpetPitchClassLabel(key.root)} · ${modeLabel}`;
   el.songKeyPanel.hidden = false;
 }
 
@@ -2411,7 +2441,7 @@ function attachNoteClickOverlay(svgRoot, noteX, height, concertMidi, scale = 1, 
     }
     playTone(concertMidi);
     updatePistons(concertMidi);
-    setCurrentNoteLabel(midiToFrenchName(concertMidi));
+    setTrumpetCurrentNote(concertMidi);
   });
   svgRoot.appendChild(rect);
 }
@@ -2429,7 +2459,7 @@ function handleStaffNoteClick(event) {
   }
   playTone(event.midi);
   updatePistons(event.midi);
-  setCurrentNoteLabel(midiToFrenchName(event.midi));
+  setTrumpetCurrentNote(event.midi);
 }
 
 function deleteManualNoteAt(event) {
@@ -2649,7 +2679,8 @@ function updateImprovisationHighlight(posInLoop) {
   state.scoreLoopLastKey = key;
 
   updatePistons(active ? active.midi : null);
-  setCurrentNoteLabel(active ? midiToFrenchName(active.midi) : "--");
+  if (active) setTrumpetCurrentNote(active.midi);
+  else setCurrentNoteLabel("--");
 
   const writtenMidis = buildScaleReference(state.scaleRoot, state.scaleType);
   renderScaleStaff(writtenMidis, active ? active.midi + 2 : null);
@@ -3140,10 +3171,10 @@ el.deleteNoteModeBtn.addEventListener("click", () => {
     : "🗑️ Supprimer une note";
 });
 
-FRENCH_NOTE_NAMES.forEach((name, idx) => {
+FRENCH_NOTE_NAMES.forEach((_name, idx) => {
   const opt = document.createElement("option");
   opt.value = String(idx);
-  opt.textContent = name;
+  opt.textContent = trumpetPitchClassLabel(idx);
   el.scaleRootSelect.appendChild(opt);
 });
 

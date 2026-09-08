@@ -464,6 +464,24 @@ input:disabled {
   margin-left: 6px;
 }
 
+#scaleRootSelect {
+  min-width: min(410px, 72vw);
+}
+
+.notation-convention {
+  margin: 2px 0 12px;
+  padding: 9px 12px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 7px 7px 0;
+  background: rgba(240, 184, 77, 0.08);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+
+.notation-convention strong {
+  color: var(--text);
+}
+
 .degree-chips {
   display: flex;
   flex-wrap: wrap;
@@ -497,6 +515,20 @@ input:disabled {
   margin-top: 2px;
 }
 
+.degree-chip .chip-international {
+  margin-top: 1px;
+  color: var(--accent-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.degree-chip .chip-concert {
+  margin-top: 3px;
+  color: var(--text-dim);
+  font-size: 0.6rem;
+  white-space: nowrap;
+}
+
 .degree-chip:hover {
   border-color: var(--accent-2);
 }
@@ -509,6 +541,11 @@ input:disabled {
 
 .degree-chip.active .chip-fingering {
   color: #06231f;
+}
+
+.degree-chip.active .chip-international,
+.degree-chip.active .chip-concert {
+  color: #0b4b42;
 }
 
 .favorites-row {
@@ -620,6 +657,7 @@ input:disabled {
   font-weight: 700;
   font-size: 1.1em;
   color: var(--accent);
+  white-space: nowrap;
 }
 
 .octave-shift-stepper {
