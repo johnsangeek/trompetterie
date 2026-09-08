@@ -3,8 +3,6 @@ import { GLTFLoader } from "./vendor/three/addons/loaders/GLTFLoader.js";
 
 const stage = document.getElementById("instrumentStage");
 const canvas = document.getElementById("trumpet3dCanvas");
-const openButton = document.getElementById("openInstrumentViewBtn");
-const closeButton = document.getElementById("closeInstrumentViewBtn");
 const statusLabel = document.getElementById("instrument3dStatus");
 const noteLabel = document.getElementById("instrumentNoteLabel");
 const clef = document.getElementById("instrumentTrebleClef");
@@ -45,7 +43,7 @@ const valveHomeY = [0, 0, 0];
 const valveAmount = [0, 0, 0];
 const valveTargets = [0, 0, 0];
 let modelBounds = null;
-let isOpen = false;
+let isOpen = !stage.hidden;
 
 function frameModel() {
   const width = Math.max(1, stage.clientWidth);
@@ -130,28 +128,20 @@ function setValves(pressed) {
   });
 }
 
-function openStage() {
+function activateStage() {
   isOpen = true;
-  stage.hidden = false;
-  stage.setAttribute("aria-hidden", "false");
-  document.body.classList.add("instrument-view-open");
   noteLabel.textContent = document.getElementById("currentNoteLabel")?.textContent || "--";
   clef.classList.toggle("sounding", noteLabel.textContent !== "--");
   setValves(readCurrentValves());
   frameModel();
-  stage.requestFullscreen?.().catch(() => {});
 }
 
-function closeStage() {
+function deactivateStage() {
   isOpen = false;
-  stage.hidden = true;
-  stage.setAttribute("aria-hidden", "true");
-  document.body.classList.remove("instrument-view-open");
-  if (document.fullscreenElement === stage) document.exitFullscreen?.().catch(() => {});
 }
 
-openButton.addEventListener("click", openStage);
-closeButton.addEventListener("click", closeStage);
+window.addEventListener("trumpet:view-open", activateStage);
+window.addEventListener("trumpet:view-close", deactivateStage);
 window.addEventListener("resize", frameModel);
 window.addEventListener("trumpet:valves", (event) => {
   const valves = event.detail?.valves || {};
@@ -191,5 +181,7 @@ stopButton.addEventListener("click", () => {
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && isOpen && document.fullscreenElement !== stage) closeStage();
+  if (event.key === "Escape" && isOpen && document.fullscreenElement !== stage) {
+    document.getElementById("closeInstrumentViewBtn")?.click();
+  }
 });

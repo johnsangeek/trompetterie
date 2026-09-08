@@ -116,6 +116,9 @@ const el = {
   valve1: document.getElementById("valve1"),
   valve2: document.getElementById("valve2"),
   valve3: document.getElementById("valve3"),
+  openInstrumentViewBtn: document.getElementById("openInstrumentViewBtn"),
+  closeInstrumentViewBtn: document.getElementById("closeInstrumentViewBtn"),
+  instrumentStage: document.getElementById("instrumentStage"),
 
   modeBtns: Array.from(document.querySelectorAll(".mode-btn")),
   improvisationControls: document.getElementById("improvisationControls"),
@@ -190,6 +193,27 @@ const el = {
   quizWrongBtn: document.getElementById("quizWrongBtn"),
   quizMicHint: document.getElementById("quizMicHint"),
 };
+
+// Keep opening and closing the instrument view in the main application
+// script. This shell must remain usable even if WebGL or the 3D model fails.
+function openInstrumentStage() {
+  el.instrumentStage.hidden = false;
+  el.instrumentStage.setAttribute("aria-hidden", "false");
+  document.body.classList.add("instrument-view-open");
+  window.dispatchEvent(new CustomEvent("trumpet:view-open"));
+  el.instrumentStage.requestFullscreen?.().catch(() => {});
+}
+
+function closeInstrumentStage() {
+  el.instrumentStage.hidden = true;
+  el.instrumentStage.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("instrument-view-open");
+  window.dispatchEvent(new CustomEvent("trumpet:view-close"));
+  if (document.fullscreenElement === el.instrumentStage) document.exitFullscreen?.().catch(() => {});
+}
+
+el.openInstrumentViewBtn.addEventListener("click", openInstrumentStage);
+el.closeInstrumentViewBtn.addEventListener("click", closeInstrumentStage);
 
 // ---------------------------------------------------------------------------
 // Standalone PWA layout — a dedicated scale-study app, front and center,
