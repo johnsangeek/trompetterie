@@ -11,7 +11,8 @@ const QUALITY = {
   dim7:{label:"Diminué 7",symbol:"dim7",intervals:[0,3,6,9]}, sus4:{label:"Sus 4",symbol:"sus4",intervals:[0,5,7]},
 };
 const STORAGE = "trumpetTrainerChordProgression";
-const state = {notes:new Set(),progression:[],selected:null,direction:"both",audio:null,importedFile:null};
+const TIMELINE_STORAGE = "trumpetTrainerChordTimeline";
+const state = {notes:new Set(),progression:[],selected:null,direction:"both",audio:null,importedFile:null,timeline:[],timelineMeasures:8,timelineTimers:[],timelineAnimation:null};
 const $ = (id)=>document.getElementById(id);
 
 function pc(n){return ((n%12)+12)%12}
@@ -44,10 +45,19 @@ function detect(notes){
 
 function load(){
   try{const saved=JSON.parse(localStorage.getItem(STORAGE)||"null");if(Array.isArray(saved)&&saved.length)state.progression=saved.filter(x=>Array.isArray(x)&&x.length)}catch(_e){}
+  try{const layout=JSON.parse(localStorage.getItem(TIMELINE_STORAGE)||"null");if(layout&&Array.isArray(layout.items)){state.timeline=layout.items;state.timelineMeasures=[4,8,16,32].includes(layout.measures)?layout.measures:8}}catch(_e){}
   if(!state.progression.length) state.progression=[canonicalVoicing(2,"min9",58),canonicalVoicing(7,"dom7",55)];
+  normalizeTimeline();
   state.selected=state.progression.length-1; state.notes=new Set(state.progression[state.selected]);
 }
-function save(){localStorage.setItem(STORAGE,JSON.stringify(state.progression))}
+function save(){normalizeTimeline();localStorage.setItem(STORAGE,JSON.stringify(state.progression));localStorage.setItem(TIMELINE_STORAGE,JSON.stringify({measures:state.timelineMeasures,items:state.timeline}))}
+
+function normalizeTimeline(){
+  if(!Array.isArray(state.timeline))state.timeline=[];
+  if(state.timeline.length>state.progression.length)state.timeline.length=state.progression.length;
+  while(state.timeline.length<state.progression.length){const end=state.timeline.reduce((max,item)=>Math.max(max,Number(item.start||0)+Number(item.duration||1)),0);state.timeline.push({start:Math.min(Math.floor(end),Math.max(0,state.timelineMeasures-1)),duration:1})}
+  state.timeline.forEach((item,index)=>{item.start=Math.max(0,Math.min(state.timelineMeasures-1,Number(item.start)||0));item.duration=Math.max(.25,Math.min(4,Number(item.duration)||1));if(item.start+item.duration>state.timelineMeasures)item.duration=Math.max(.25,state.timelineMeasures-item.start);item.index=index});
+}
 
 function renderSelects(){
   NOTE_FR.forEach((name,i)=>$("rootSelect").add(new Option(`${name} / ${NOTE_INT[i]}`,i)));
@@ -79,9 +89,34 @@ function renderProgression(){
 }
 
 function removeChord(index){
-  if(index<0||index>=state.progression.length)return;state.progression.splice(index,1);
+  if(index<0||index>=state.progression.length)return;state.progression.splice(index,1);state.timeline.splice(index,1);
   if(!state.progression.length){state.selected=null;state.notes.clear()}else{state.selected=Math.min(index,state.progression.length-1);state.notes=new Set(state.progression[state.selected])}
   save();renderAll();toast("Accord supprimé");
+}
+
+function renderTimeline(){
+  normalizeTimeline();const canvas=$("timelineCanvas"),measureWidth=150,labelWidth=52,rowHeight=14,top=46,low=45,high=84,totalWidth=labelWidth+state.timelineMeasures*measureWidth,totalHeight=top+(high-low+1)*rowHeight;
+  canvas.innerHTML="";canvas.style.width=`${totalWidth}px`;canvas.style.height=`${totalHeight}px`;
+  const corner=document.createElement("div");corner.className="timeline-corner";corner.textContent="CHORDS";canvas.appendChild(corner);
+  for(let measure=0;measure<state.timelineMeasures;measure++){const number=document.createElement("div");number.className="measure-number";number.style.left=`${labelWidth+measure*measureWidth}px`;number.style.width=`${measureWidth}px`;number.innerHTML=`<strong>${measure+1}</strong>4 / 4`;canvas.appendChild(number);for(let beat=0;beat<4;beat++){const line=document.createElement("i");line.className=beat===0?"measure-line":"beat-line";line.style.left=`${labelWidth+measure*measureWidth+beat*measureWidth/4}px`;canvas.appendChild(line)}}
+  for(let midi=high;midi>=low;midi--){const rowIndex=high-midi,key=document.createElement("div"),row=document.createElement("div");key.className="roll-key";key.style.top=`${top+rowIndex*rowHeight}px`;key.style.height=`${rowHeight}px`;key.textContent=midiLabel(midi);row.className=`roll-row ${[1,3,6,8,10].includes(pc(midi))?"black":""}`;row.style.top=key.style.top;row.style.width=`${state.timelineMeasures*measureWidth}px`;row.style.height=key.style.height;canvas.append(row,key)}
+  state.timeline.forEach((item,index)=>{const notes=state.progression[index];if(!notes)return;const found=detect(notes),left=labelWidth+item.start*measureWidth,width=Math.max(18,Math.min(item.duration,state.timelineMeasures-item.start)*measureWidth-4),block=document.createElement("div");block.className=`chord-lane-block ${index===state.selected?"selected":""}`;block.style.left=`${left+2}px`;block.style.width=`${width}px`;block.draggable=true;block.innerHTML=`<strong>${found?chordName(found.root,found.quality):"Accord"}</strong><span>M.${Math.floor(item.start)+1} · ${item.duration<1?Math.round(item.duration*4)+" temps":item.duration+" mesure"+(item.duration>1?"s":"")}</span>`;block.onclick=()=>{state.selected=index;state.notes=new Set(notes);$("chordDurationSelect").value=String(item.duration);renderAll();playNotes(notes)};block.ondragstart=event=>{event.dataTransfer.setData("text/timeline-index",String(index));block.classList.add("dragging")};block.ondragend=()=>block.classList.remove("dragging");canvas.appendChild(block);
+    notes.forEach(midi=>{if(midi<low||midi>high)return;const note=document.createElement("div");note.className="roll-note";note.style.left=`${left+3}px`;note.style.top=`${top+(high-midi)*rowHeight+1}px`;note.style.width=`${Math.max(12,width-3)}px`;canvas.appendChild(note)})});
+  if(!state.progression.length){const empty=document.createElement("div");empty.className="empty-roll-message";empty.textContent="Ajoute ou importe des accords pour remplir la grille.";canvas.appendChild(empty)}
+  document.querySelectorAll("[data-measures]").forEach(button=>button.classList.toggle("active",Number(button.dataset.measures)===state.timelineMeasures));
+  if(state.selected!==null&&state.timeline[state.selected])$("chordDurationSelect").value=String(state.timeline[state.selected].duration);
+}
+
+function moveTimelineChord(index,clientX){
+  const viewport=$("timelineViewport"),rect=$("timelineCanvas").getBoundingClientRect(),measureWidth=150,labelWidth=52,x=clientX-rect.left+viewport.scrollLeft-labelWidth,start=Math.max(0,Math.min(state.timelineMeasures-1,Math.floor(x/measureWidth)));
+  if(!state.timeline[index])return;state.timeline[index].start=start;if(start+state.timeline[index].duration>state.timelineMeasures)state.timeline[index].duration=Math.max(.25,state.timelineMeasures-start);state.selected=index;save();renderAll();toast(`Accord déplacé en mesure ${start+1}`);
+}
+
+function stopTimeline(){state.timelineTimers.forEach(clearTimeout);state.timelineTimers=[];if(state.timelineAnimation){state.timelineAnimation.cancel();state.timelineAnimation=null}const head=document.querySelector(".timeline-playhead");if(head)head.remove()}
+function playTimeline(){
+  stopTimeline();if(!state.progression.length)return;const bpm=Math.max(30,Math.min(260,Number($("timelineTempo").value)||100)),measureMs=240000/bpm,canvas=$("timelineCanvas"),head=document.createElement("div");head.className="timeline-playhead";head.style.left="52px";canvas.appendChild(head);
+  state.timeline.forEach((item,index)=>state.timelineTimers.push(setTimeout(()=>{state.selected=index;playNotes(state.progression[index],Math.min(1.4,item.duration*measureMs/1000*.85));renderProgression()},item.start*measureMs)));
+  const end=Math.max(...state.timeline.map(item=>item.start+item.duration),1),distance=end*150;state.timelineAnimation=head.animate([{transform:"translateX(0)"},{transform:`translateX(${distance}px)`}],{duration:end*measureMs,easing:"linear",fill:"forwards"});state.timelineAnimation.onfinish=()=>{state.timelineAnimation=null;state.timelineTimers=[]};
 }
 
 function qualityFamily(q){return q.startsWith("min")?"minor":q.startsWith("dom")||q==="dom7"?"dominant":"major"}
@@ -139,7 +174,7 @@ function readMidiFile(arrayBuffer){
 
 async function importMidi(file){
   if(!file)return;const result=$("midiImportResult");result.hidden=false;result.textContent="Analyse du MIDI…";
-  try{const parsed=readMidiFile(await file.arrayBuffer());state.progression=parsed.progression;state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);state.importedFile=file.name;save();renderAll();result.innerHTML=`<strong>${file.name}</strong> · ${parsed.trackCount} piste${parsed.trackCount>1?"s":""} · ${parsed.events.length} attaques · ${parsed.progression.length} accords reconnus`;toast("Progression MIDI analysée")}
+  try{const parsed=readMidiFile(await file.arrayBuffer());state.progression=parsed.progression;state.timeline=[];state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);state.importedFile=file.name;const needed=parsed.progression.length<=4?4:parsed.progression.length<=8?8:parsed.progression.length<=16?16:32;state.timelineMeasures=needed;save();renderAll();result.innerHTML=`<strong>${file.name}</strong> · ${parsed.trackCount} piste${parsed.trackCount>1?"s":""} · ${parsed.events.length} attaques · ${parsed.progression.length} accords reconnus`;toast("Progression MIDI analysée")}
   catch(error){result.innerHTML=`<strong>Impossible de l’analyser :</strong> ${error.message}`}
 }
 
@@ -180,21 +215,25 @@ function renderCadences(){
 
 function variableBytes(value){let buffer=value&127,out=[];while((value>>=7)){buffer<<=8;buffer|=(value&127)|128}for(;;){out.push(buffer&255);if(buffer&128)buffer>>=8;else break}return out}
 function exportMidi(){
-  if(!state.progression.length){toast("La progression est vide");return}const track=[0,255,81,3,7,161,32,0,192,4];let lastTick=0;
-  state.progression.forEach((notes,index)=>{const start=index*480,end=start+420;notes.slice().sort((a,b)=>a-b).forEach((note,i)=>{track.push(...variableBytes(i?0:start-lastTick),144,note,88);lastTick=start});notes.slice().sort((a,b)=>a-b).forEach((note,i)=>{track.push(...variableBytes(i?0:end-lastTick),128,note,48);lastTick=end})});track.push(...variableBytes(state.progression.length*480-lastTick),255,47,0);
+  if(!state.progression.length){toast("La progression est vide");return}normalizeTimeline();const bpm=Math.max(30,Math.min(260,Number($("timelineTempo").value)||100)),micros=Math.round(60000000/bpm),track=[0,255,81,3,(micros>>>16)&255,(micros>>>8)&255,micros&255,0,192,4],events=[];let lastTick=0;
+  state.timeline.forEach((item,index)=>{const start=Math.round(item.start*1920),end=start+Math.max(60,Math.round(item.duration*1920)-60);state.progression[index].forEach(note=>{events.push({tick:start,on:true,note});events.push({tick:end,on:false,note})})});events.sort((a,b)=>a.tick-b.tick||(a.on===b.on?0:a.on?1:-1));events.forEach(event=>{track.push(...variableBytes(event.tick-lastTick),event.on?144:128,event.note,event.on?88:48);lastTick=event.tick});track.push(...variableBytes(Math.max(state.timelineMeasures*1920,lastTick)-lastTick),255,47,0);
   const chunk=(name,data)=>[...name].map(c=>c.charCodeAt(0)).concat([(data.length>>>24)&255,(data.length>>>16)&255,(data.length>>>8)&255,data.length&255],data);const header=[77,84,104,100,0,0,0,6,0,0,0,1,1,224],bytes=new Uint8Array(header.concat(chunk("MTrk",track))),url=URL.createObjectURL(new Blob([bytes],{type:"audio/midi"})),a=document.createElement("a");a.href=url;a.download=`progression-${Date.now()}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("MIDI exporté");
 }
 
-function renderAll(){renderPiano();renderIdentity();renderProgression();renderAnswers();renderProgressionIdeas();renderCadences()}
+function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderAnswers();renderProgressionIdeas();renderCadences()}
 
 renderSelects();load();renderAll();
 $("placeChordBtn").onclick=()=>{const root=Number($("rootSelect").value),quality=$("qualitySelect").value;state.notes=new Set(canonicalVoicing(root,quality));renderAll();playNotes([...state.notes])};
 $("clearNotesBtn").onclick=()=>{state.notes.clear();renderAll()};
 $("addCurrentBtn").onclick=()=>{const notes=[...state.notes].sort((a,b)=>a-b);if(notes.length<3)return;state.progression.push(notes);state.selected=state.progression.length-1;save();renderAll();toast("Accord ajouté")};
-$("clearAllBtn").onclick=()=>{if(!confirm("Effacer toute la progression ?"))return;state.progression=[];state.selected=null;state.notes.clear();save();renderAll()};
+$("clearAllBtn").onclick=()=>{if(!confirm("Effacer toute la progression ?"))return;stopTimeline();state.progression=[];state.timeline=[];state.selected=null;state.notes.clear();save();renderAll()};
 $("detectedName").onclick=()=>{if(state.notes.size>=3)playNotes([...state.notes])};
 $("exportMidiBtn").onclick=exportMidi;
 $("midiFileInput").onchange=(event)=>importMidi(event.target.files[0]);
 const midiDrop=$("midiDropzone");["dragenter","dragover"].forEach(type=>midiDrop.addEventListener(type,event=>{event.preventDefault();midiDrop.classList.add("drag")}));["dragleave","drop"].forEach(type=>midiDrop.addEventListener(type,event=>{event.preventDefault();midiDrop.classList.remove("drag")}));midiDrop.addEventListener("drop",event=>importMidi([...event.dataTransfer.files].find(file=>/\.midi?$/i.test(file.name))));
-const trash=$("chordTrash");trash.addEventListener("dragover",event=>{event.preventDefault();trash.classList.add("drag")});trash.addEventListener("dragleave",()=>trash.classList.remove("drag"));trash.addEventListener("drop",event=>{event.preventDefault();trash.classList.remove("drag");removeChord(Number(event.dataTransfer.getData("text/chord-index")))});
+const trash=$("chordTrash");trash.addEventListener("dragover",event=>{if(Array.from(event.dataTransfer.types).includes("text/chord-index")){event.preventDefault();trash.classList.add("drag")}});trash.addEventListener("dragleave",()=>trash.classList.remove("drag"));trash.addEventListener("drop",event=>{event.preventDefault();trash.classList.remove("drag");const value=event.dataTransfer.getData("text/chord-index");if(value!=="")removeChord(Number(value))});
+document.querySelectorAll("[data-measures]").forEach(button=>button.onclick=()=>{state.timelineMeasures=Number(button.dataset.measures);normalizeTimeline();save();renderAll()});
+$("chordDurationSelect").onchange=()=>{if(state.selected===null||!state.timeline[state.selected])return;state.timeline[state.selected].duration=Number($("chordDurationSelect").value);normalizeTimeline();save();renderAll()};
+$("playTimelineBtn").onclick=playTimeline;$("stopTimelineBtn").onclick=stopTimeline;
+const timelineCanvas=$("timelineCanvas");timelineCanvas.addEventListener("dragover",event=>event.preventDefault());timelineCanvas.addEventListener("drop",event=>{event.preventDefault();const own=event.dataTransfer.getData("text/timeline-index"),fromTop=event.dataTransfer.getData("text/chord-index"),value=own!==""?own:fromTop;if(value!=="")moveTimelineChord(Number(value),event.clientX)});
 document.querySelectorAll(".direction-btn").forEach(btn=>btn.onclick=()=>{state.direction=btn.dataset.direction;document.querySelectorAll(".direction-btn").forEach(b=>b.classList.toggle("active",b===btn));renderAnswers()});

@@ -9,6 +9,7 @@
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="chords.css" />
   <link rel="stylesheet" href="chords-midi.css" />
+  <link rel="stylesheet" href="chords-roll.css" />
 </head>
 <body>
   <header class="resolver-topbar">
@@ -46,9 +47,31 @@
       <div id="progression" class="progression"></div>
     </section>
 
+    <section class="timeline-panel" aria-labelledby="timelineTitle">
+      <div class="section-heading timeline-heading">
+        <div><span class="step">03</span><h2 id="timelineTitle">Piano roll de la progression</h2></div>
+        <div class="measure-presets" role="group" aria-label="Longueur de la grille">
+          <span>Mesures</span>
+          <button type="button" data-measures="4">4</button><button type="button" data-measures="8" class="active">8</button><button type="button" data-measures="16">16</button><button type="button" data-measures="32">32</button>
+        </div>
+      </div>
+      <div class="timeline-tools">
+        <button type="button" id="playTimelineBtn" class="timeline-primary">▶ Lire la grille</button>
+        <button type="button" id="stopTimelineBtn">■ Stop</button>
+        <label>Tempo <input id="timelineTempo" type="number" min="30" max="260" value="100" /> BPM</label>
+        <label>Durée de l’accord sélectionné
+          <select id="chordDurationSelect"><option value="0.25">1 temps</option><option value="0.5">2 temps</option><option value="1" selected>1 mesure</option><option value="2">2 mesures</option><option value="4">4 mesures</option></select>
+        </label>
+        <span class="timeline-help">Glisse un bloc d’accord sur une autre mesure.</span>
+      </div>
+      <div id="timelineViewport" class="timeline-viewport">
+        <div id="timelineCanvas" class="timeline-canvas"></div>
+      </div>
+    </section>
+
     <section id="progressionIdeasPanel" class="progression-ideas-panel" hidden>
       <div class="section-heading">
-        <div><span class="step">03</span><h2>Variantes de toute la progression</h2></div>
+        <div><span class="step">04</span><h2>Variantes de toute la progression</h2></div>
         <span class="muted">L’harmonie change, la direction reste reconnaissable</span>
       </div>
       <div id="progressionIdeas" class="progression-ideas"></div>
@@ -57,7 +80,7 @@
     <div class="work-grid">
       <section class="builder-panel">
         <div class="section-heading">
-          <div><span class="step">04</span><h2>Construire l’accord</h2></div>
+          <div><span class="step">05</span><h2>Construire l’accord</h2></div>
           <button type="button" id="clearNotesBtn" class="text-btn">Effacer les notes</button>
         </div>
 
@@ -83,7 +106,7 @@
 
     <section class="answers-panel">
       <div class="section-heading resolver-heading">
-        <div><span class="step">05</span><h2>Réponses possibles</h2></div>
+        <div><span class="step">06</span><h2>Réponses possibles</h2></div>
         <div class="direction-tabs" role="group" aria-label="Direction de la réponse">
           <button type="button" class="direction-btn active" data-direction="both">Toutes</button>
           <button type="button" class="direction-btn" data-direction="up">↗ Montantes</button>
@@ -96,7 +119,7 @@
 
     <section class="cadence-panel">
       <div class="section-heading cadence-heading">
-        <div><span class="step">06</span><h2>Finaliser la progression</h2></div>
+        <div><span class="step">07</span><h2>Finaliser la progression</h2></div>
         <span id="tonicGuess" class="tonic-guess">Centre tonal estimé : —</span>
       </div>
       <p class="cadence-intro">Si la progression reste suspendue, choisis une arrivée. Le resolver fabrique les accords manquants jusqu’à une vraie finalité.</p>
