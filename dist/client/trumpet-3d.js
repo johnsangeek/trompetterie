@@ -107,7 +107,8 @@ new GLTFLoader().load(
 function animate() {
   requestAnimationFrame(animate);
   for (let index = 0; index < 3; index++) {
-    valveAmount[index] += (valveTargets[index] - valveAmount[index]) * 0.2;
+    const responseSpeed = valveTargets[index] > valveAmount[index] ? 0.62 : 0.36;
+    valveAmount[index] += (valveTargets[index] - valveAmount[index]) * responseSpeed;
     const node = valveNodes[index];
     if (!node) continue;
     // Stop with the coloured finger capsule still visible on top of the brass
