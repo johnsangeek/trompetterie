@@ -6,11 +6,13 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const dist = join(root, "dist");
 const client = join(dist, "client");
 const server = join(dist, "server");
+const metadata = join(dist, ".openai");
 const includedExtensions = new Set([".html", ".css", ".js", ".json", ".png", ".jpg", ".jpeg", ".svg", ".webp", ".ico"]);
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(client, { recursive: true });
 await mkdir(server, { recursive: true });
+await mkdir(metadata, { recursive: true });
 
 async function collect(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -41,3 +43,4 @@ export default {async fetch(request){const url=new URL(request.url);let path=dec
 `;
 
 await writeFile(join(server, "index.js"), worker);
+await copyFile(join(root, ".openai", "hosting.json"), join(metadata, "hosting.json"));
