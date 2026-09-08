@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#171914" />
+  <title>Chords Resolver — Trompette Trainer</title>
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="chords.css" />
+</head>
+<body>
+  <header class="resolver-topbar">
+    <a href="index.html" class="back-link">← Entraîneur</a>
+    <div class="brand"><span class="brand-dots"><i></i><i></i><i></i></span> Chords Resolver</div>
+    <button type="button" id="clearAllBtn" class="ghost-btn">Nouvelle progression</button>
+  </header>
+
+  <main class="resolver-shell">
+    <section class="intro-row">
+      <div>
+        <span class="eyebrow">Laboratoire harmonique</span>
+        <h1>Pose un accord.<br><em>Trouve la suite.</em></h1>
+      </div>
+      <p>Le resolver reconnaît les notes jouées, nomme l’accord, puis calcule des réponses cohérentes en mouvement montant ou descendant. Écoute avant d’ajouter.</p>
+    </section>
+
+    <section class="progression-panel" aria-labelledby="progressionTitle">
+      <div class="section-heading">
+        <div><span class="step">01</span><h2 id="progressionTitle">Ta progression</h2></div>
+        <span id="progressionHint" class="muted">Clique un accord pour le résoudre</span>
+      </div>
+      <div id="progression" class="progression"></div>
+    </section>
+
+    <div class="work-grid">
+      <section class="builder-panel">
+        <div class="section-heading">
+          <div><span class="step">02</span><h2>Construire l’accord</h2></div>
+          <button type="button" id="clearNotesBtn" class="text-btn">Effacer les notes</button>
+        </div>
+
+        <div class="quick-builder">
+          <label>Fondamentale<select id="rootSelect"></select></label>
+          <label>Couleur<select id="qualitySelect"></select></label>
+          <button type="button" id="placeChordBtn" class="gold-btn">Poser cet accord</button>
+        </div>
+
+        <div id="piano" class="piano" aria-label="Clavier pour composer l’accord"></div>
+        <div class="piano-caption"><span>Tu peux aussi composer à l’oreille sur le clavier.</span><span id="noteCount">0 note</span></div>
+      </section>
+
+      <aside class="identity-panel">
+        <span class="eyebrow">Accord reconnu</span>
+        <div id="detectedName" class="detected-name">—</div>
+        <div id="detectedInternational" class="detected-international">Ajoute au moins trois notes</div>
+        <div id="detectedNotes" class="detected-notes"></div>
+        <div class="confidence"><span>Confiance</span><div><i id="confidenceBar"></i></div><strong id="confidenceLabel">—</strong></div>
+        <button type="button" id="addCurrentBtn" class="outline-btn" disabled>Ajouter à la progression</button>
+        <p id="alternativeNames" class="alternatives"></p>
+      </aside>
+    </div>
+
+    <section class="answers-panel">
+      <div class="section-heading resolver-heading">
+        <div><span class="step">03</span><h2>Réponses possibles</h2></div>
+        <div class="direction-tabs" role="group" aria-label="Direction de la réponse">
+          <button type="button" class="direction-btn active" data-direction="both">Toutes</button>
+          <button type="button" class="direction-btn" data-direction="up">↗ Montantes</button>
+          <button type="button" class="direction-btn" data-direction="down">↘ Descendantes</button>
+        </div>
+      </div>
+      <div id="sourceSummary" class="source-summary">Sélectionne un accord de la progression pour lancer le calcul.</div>
+      <div id="answers" class="answers"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="chords.js"></script>
+</body>
+</html>

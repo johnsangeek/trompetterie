@@ -60,6 +60,10 @@ const state = {
   manualMeasures: [],
   manualCaptureMode: false,
   deleteNoteMode: false, // when true, clicking a staff note removes it instead of previewing it
+  selectedManualNoteIndex: null,
+  twelveKeyBaseNotes: null,
+  twelveKeyBaseRoot: null,
+  soundEngine: "sample",
 
   scoreLoopActive: false,
   scoreLoopTimer: null,
@@ -80,6 +84,14 @@ const state = {
 
 const SAVED_SCORES_STORAGE_KEY = "trumpetTrainerSavedScores";
 const FAVORITE_SCALES_STORAGE_KEY = "trumpetTrainerFavoriteScales";
+const CHORD_PROGRESSION_STORAGE_KEY = "trumpetTrainerChordProgression";
+
+const TRUMPET_SAMPLES = [
+  [53, "F3.mp3"], [57, "A3.mp3"], [60, "C4.mp3"], [63, "Ds4.mp3"],
+  [65, "F4.mp3"], [67, "G4.mp3"], [70, "As4.mp3"], [74, "D5.mp3"],
+  [77, "F5.mp3"], [81, "A5.mp3"], [84, "C6.mp3"],
+];
+const trumpetSampleBuffers = new Map();
 
 const TICKS_PER_BEAT = 4;      // 16th-note resolution
 const TICKS_PER_MEASURE = 16;  // 4/4 time signature
@@ -140,9 +152,14 @@ const el = {
   undoManualNoteBtn: document.getElementById("undoManualNoteBtn"),
   clearManualNotesBtn: document.getElementById("clearManualNotesBtn"),
   deleteNoteModeBtn: document.getElementById("deleteNoteModeBtn"),
+  toggleTwelveKeysBtn: document.getElementById("toggleTwelveKeysBtn"),
+  twelveKeysPanel: document.getElementById("twelveKeysPanel"),
+  twelveKeysGrid: document.getElementById("twelveKeysGrid"),
   playScoreBtn: document.getElementById("playScoreBtn"),
   stopScoreBtn: document.getElementById("stopScoreBtn"),
   openKaraokeBtn: document.getElementById("openKaraokeBtn"),
+  exportScorePdfBtn: document.getElementById("exportScorePdfBtn"),
+  soundEngineSelect: document.getElementById("soundEngineSelect"),
   metronomeBtn: document.getElementById("metronomeBtn"),
   muteScoreCheckbox: document.getElementById("muteScoreCheckbox"),
   saveScoreBtn: document.getElementById("saveScoreBtn"),
@@ -1058,6 +1075,19 @@ function renderPianoRoll() {
   container.appendChild(pr);
 }
 
+function saveSharedChordProgression() {
+  try { localStorage.setItem(CHORD_PROGRESSION_STORAGE_KEY, JSON.stringify(state.pianoRoll.chords)); } catch (_error) { /* local-only bonus */ }
+}
+
+function loadSharedChordProgression() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(CHORD_PROGRESSION_STORAGE_KEY) || "null");
+    if (Array.isArray(saved) && saved.length && saved.every((chord) => Array.isArray(chord))) {
+      state.pianoRoll.chords = saved;
+    }
+  } catch (_error) { /* keep defaults */ }
+}
+
 function toggleNoteInChord(chordIdx, midi) {
   hideJazzSuggestions();
   const notes = state.pianoRoll.chords[chordIdx];
@@ -1074,6 +1104,7 @@ function toggleNoteInChord(chordIdx, midi) {
   el.pianoRollFeedback.textContent = hasNotes
     ? "Accord sélectionné — tu peux créer une variante ou l'envoyer vers la trompette."
     : "Ajoute des notes à cet accord pour continuer.";
+  saveSharedChordProgression();
   renderPianoRoll();
 }
 
@@ -1099,6 +1130,7 @@ function addChordSlot() {
   el.jazzifyBtn.disabled = true;
   el.sendChordToTrumpetBtn.disabled = true;
   el.pianoRollFeedback.textContent = "Nouvel accord sélectionné — ajoute ses notes dans la grille.";
+  saveSharedChordProgression();
   renderPianoRoll();
 }
 
@@ -1107,6 +1139,7 @@ function clearPianoRoll() {
   state.pianoRoll.chords = [[]];
   state.pianoRoll.selectedChordIndex = null;
   state.pianoRoll.responseIndices = [];
+  saveSharedChordProgression();
   hideJazzSuggestions();
   el.jazzifyBtn.disabled = true;
   el.sendChordToTrumpetBtn.disabled = true;
@@ -1180,6 +1213,7 @@ function appendJazzResponse(variation) {
   state.pianoRoll.chords.push([...variation.notes]);
   state.pianoRoll.responseIndices.push(newIndex);
   state.pianoRoll.selectedChordIndex = newIndex;
+  saveSharedChordProgression();
   renderPianoRoll();
   playChordNotes(variation.notes);
   el.pianoRollFeedback.textContent = `${variation.label} ajouté comme réponse à la fin de la progression.`;
@@ -1723,9 +1757,10 @@ function drawMeasureWindow(measuresArr, start, activeStartTime) {
         note = new VF.StaveNote({ keys: [key], duration: event.duration });
         if (key.includes("#")) note.addModifier(new VF.Accidental("#"));
         const isActive = event.startTime === activeStartTime;
+        const isSelected = isManualEventSelected(event);
         note.setStyle({
-          fillStyle: isActive ? "#e0781f" : "#1a1a1a",
-          strokeStyle: isActive ? "#e0781f" : "#1a1a1a",
+          fillStyle: isActive ? "#e0781f" : isSelected ? "#0f9f91" : "#1a1a1a",
+          strokeStyle: isActive ? "#e0781f" : isSelected ? "#0f9f91" : "#1a1a1a",
         });
       }
       return note;
@@ -1814,10 +1849,11 @@ function drawFullScore(measuresArr, activeStartTime) {
           note = new VF.StaveNote({ keys: [key], duration: event.duration });
           if (key.includes("#")) note.addModifier(new VF.Accidental("#"));
           const isActive = event.startTime === activeStartTime;
+          const isSelected = isManualEventSelected(event);
           if (isActive) activeRowY = y;
           note.setStyle({
-            fillStyle: isActive ? "#e0781f" : "#1a1a1a",
-            strokeStyle: isActive ? "#e0781f" : "#1a1a1a",
+            fillStyle: isActive ? "#e0781f" : isSelected ? "#0f9f91" : "#1a1a1a",
+            strokeStyle: isActive ? "#e0781f" : isSelected ? "#0f9f91" : "#1a1a1a",
           });
         }
         return note;
@@ -2426,6 +2462,11 @@ function playTone(concertMidi, duration = 0.45) {
   const ctx = state.audioContext;
   if (ctx.state === "suspended") ctx.resume();
 
+  if (state.soundEngine === "sample") {
+    playTrumpetSample(concertMidi, duration, ctx);
+    return;
+  }
+
   const freq = 440 * Math.pow(2, (concertMidi - 69) / 12);
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
@@ -2441,6 +2482,38 @@ function playTone(concertMidi, duration = 0.45) {
   gain.connect(ctx.destination);
   osc.start(now);
   osc.stop(now + duration + 0.05);
+}
+
+async function playTrumpetSample(concertMidi, duration, ctx) {
+  const [baseMidi, file] = TRUMPET_SAMPLES.reduce((best, item) =>
+    Math.abs(item[0] - concertMidi) < Math.abs(best[0] - concertMidi) ? item : best
+  );
+  try {
+    let buffer = trumpetSampleBuffers.get(file);
+    if (!buffer) {
+      const response = await fetch(`assets/trumpet-samples/${file}`);
+      if (!response.ok) throw new Error("sample unavailable");
+      buffer = await ctx.decodeAudioData(await response.arrayBuffer());
+      trumpetSampleBuffers.set(file, buffer);
+    }
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+    source.buffer = buffer;
+    source.playbackRate.value = Math.pow(2, (concertMidi - baseMidi) / 12);
+    gain.gain.setValueAtTime(.0001, now);
+    gain.gain.linearRampToValueAtTime(.72, now + .018);
+    gain.gain.setValueAtTime(.72, now + Math.max(.04, duration - .08));
+    gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+    source.connect(gain).connect(ctx.destination);
+    source.start(now);
+    source.stop(now + duration + .08);
+  } catch (_error) {
+    const previous = state.soundEngine;
+    state.soundEngine = "synth";
+    playTone(concertMidi, duration);
+    state.soundEngine = previous;
+  }
 }
 
 // Adds an invisible clickable column over a rendered VexFlow note so clicking
@@ -2484,9 +2557,60 @@ function handleStaffNoteClick(event) {
     deleteManualNoteAt(event);
     return;
   }
+  if (state.mode === "manual") {
+    state.selectedManualNoteIndex = findManualNoteIndex(event);
+    drawFullScore(state.manualMeasures, null);
+    setStatus("Note sélectionnée — Suppr pour effacer, ↑/↓ pour modifier.");
+  }
   playTone(event.midi);
   updatePistons(event.midi);
   setTrumpetCurrentNote(event.midi);
+}
+
+function findManualNoteIndex(event) {
+  let idx = -1;
+  let bestDiff = Infinity;
+  state.manualNotes.forEach((note, i) => {
+    if (note.midi !== event.midi) return;
+    const diff = Math.abs(note.time - event.startTime);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      idx = i;
+    }
+  });
+  return idx;
+}
+
+function isManualEventSelected(event) {
+  if (state.mode !== "manual" || state.selectedManualNoteIndex === null) return false;
+  return findManualNoteIndex(event) === state.selectedManualNoteIndex;
+}
+
+function deleteSelectedManualNote() {
+  const idx = state.selectedManualNoteIndex;
+  if (state.mode !== "manual" || idx === null || !state.manualNotes[idx]) return false;
+  state.manualNotes.splice(idx, 1);
+  state.selectedManualNoteIndex = null;
+  rebuildManualMeasures();
+  updateSongKeyPanel();
+  buildPitchPalette();
+  drawFullScore(state.manualMeasures, null);
+  setStatus("Note supprimée.");
+  return true;
+}
+
+function alterSelectedManualNote(semitones) {
+  const idx = state.selectedManualNoteIndex;
+  if (state.mode !== "manual" || idx === null || !state.manualNotes[idx]) return false;
+  state.manualNotes[idx].midi = Math.max(36, Math.min(96, state.manualNotes[idx].midi + semitones));
+  rebuildManualMeasures();
+  updateSongKeyPanel();
+  buildPitchPalette();
+  drawFullScore(state.manualMeasures, null);
+  playTone(state.manualNotes[idx].midi);
+  updatePistons(state.manualNotes[idx].midi);
+  setStatus(semitones > 0 ? "Note montée d’un demi-ton." : "Note descendue d’un demi-ton.");
+  return true;
 }
 
 function deleteManualNoteAt(event) {
@@ -2506,6 +2630,7 @@ function deleteManualNoteAt(event) {
   });
   if (idx === -1) return;
   state.manualNotes.splice(idx, 1);
+  state.selectedManualNoteIndex = null;
   rebuildManualMeasures();
   updateSongKeyPanel();
   buildPitchPalette();
@@ -3174,6 +3299,69 @@ function updateLoopLabels() {
   el.loopBLabel.textContent = `B: ${state.loopB !== null ? formatTime(state.loopB) : "--"}`;
 }
 
+function renderTwelveKeys() {
+  if (!el.twelveKeysGrid) return;
+  el.twelveKeysGrid.innerHTML = "";
+  const activeRoot = state.songScaleRoot;
+  FRENCH_NOTE_NAMES.forEach((name, root) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "btn twelve-key-btn";
+    button.textContent = `${name} / ${INTERNATIONAL_NOTE_NAMES[root]}`;
+    button.classList.toggle("active", root === activeRoot);
+    button.addEventListener("click", () => transposeManualPhraseTo(root));
+    el.twelveKeysGrid.appendChild(button);
+  });
+}
+
+function transposeManualPhraseTo(targetRoot) {
+  if (!state.manualNotes.length) {
+    setStatus("Ajoute d’abord une phrase à la partition.");
+    return;
+  }
+  if (!state.twelveKeyBaseNotes) {
+    state.twelveKeyBaseNotes = state.manualNotes.map((note) => ({ ...note }));
+    state.twelveKeyBaseRoot = state.songScaleRoot;
+  }
+  let delta = targetRoot - state.twelveKeyBaseRoot;
+  if (delta > 6) delta -= 12;
+  if (delta < -6) delta += 12;
+  state.manualNotes = state.twelveKeyBaseNotes.map((note) => ({ ...note, midi: note.midi + delta }));
+  state.selectedManualNoteIndex = null;
+  rebuildManualMeasures();
+  state.songScaleRoot = targetRoot;
+  updateSongKeyPanel();
+  buildPitchPalette();
+  drawFullScore(state.manualMeasures, null);
+  renderTwelveKeys();
+  setStatus(`Phrase transposée en ${FRENCH_NOTE_NAMES[targetRoot]}.`);
+}
+
+function exportCurrentScorePdf() {
+  const measures = state.mode === "manual" ? state.manualMeasures : state.mode === "transcription" ? state.measures : null;
+  if (measures && measures.length) drawFullScore(measures, null);
+  document.body.classList.add("print-score");
+  const cleanup = () => document.body.classList.remove("print-score");
+  window.addEventListener("afterprint", cleanup, { once: true });
+  window.print();
+  setTimeout(cleanup, 1200);
+}
+
+document.addEventListener("keydown", (event) => {
+  const target = event.target;
+  if (target && (target.matches("input, textarea, select") || target.isContentEditable)) return;
+  if (event.key === "Delete" || event.key === "Backspace") {
+    if (deleteSelectedManualNote()) event.preventDefault();
+  } else if (event.key === "ArrowUp") {
+    if (alterSelectedManualNote(1)) event.preventDefault();
+  } else if (event.key === "ArrowDown") {
+    if (alterSelectedManualNote(-1)) event.preventDefault();
+  } else if (event.key === "Escape" && state.selectedManualNoteIndex !== null) {
+    state.selectedManualNoteIndex = null;
+    drawFullScore(state.manualMeasures, null);
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Mode UI wiring (improvisation + manual)
 // ---------------------------------------------------------------------------
@@ -3212,6 +3400,8 @@ el.scaleTypeSelect.addEventListener("change", () => {
 
 el.undoManualNoteBtn.addEventListener("click", () => {
   state.manualNotes.pop();
+  state.selectedManualNoteIndex = null;
+  state.twelveKeyBaseNotes = null;
   rebuildManualMeasures();
   if (state.mode === "manual") {
     state.lastRenderKey = null;
@@ -3221,6 +3411,8 @@ el.undoManualNoteBtn.addEventListener("click", () => {
 
 el.clearManualNotesBtn.addEventListener("click", () => {
   state.manualNotes = [];
+  state.selectedManualNoteIndex = null;
+  state.twelveKeyBaseNotes = null;
   rebuildManualMeasures();
   if (state.mode === "manual") {
     state.lastRenderKey = null;
@@ -3234,6 +3426,21 @@ el.deleteNoteModeBtn.addEventListener("click", () => {
   el.deleteNoteModeBtn.textContent = state.deleteNoteMode
     ? "🗑️ Clique une note pour la supprimer (actif)"
     : "🗑️ Supprimer une note";
+});
+
+el.toggleTwelveKeysBtn.addEventListener("click", () => {
+  el.twelveKeysPanel.hidden = !el.twelveKeysPanel.hidden;
+  if (!el.twelveKeysPanel.hidden) {
+    state.twelveKeyBaseNotes = state.manualNotes.map((note) => ({ ...note }));
+    state.twelveKeyBaseRoot = state.songScaleRoot;
+    renderTwelveKeys();
+  }
+});
+
+el.exportScorePdfBtn.addEventListener("click", exportCurrentScorePdf);
+el.soundEngineSelect.addEventListener("change", () => {
+  state.soundEngine = el.soundEngineSelect.value;
+  setStatus(state.soundEngine === "sample" ? "Son de trompette échantillonné activé." : "Synthé rapide activé.");
 });
 
 FRENCH_NOTE_NAMES.forEach((_name, idx) => {
@@ -3297,6 +3504,7 @@ el.addChordSlotBtn.addEventListener("click", addChordSlot);
 el.clearPianoRollBtn.addEventListener("click", clearPianoRoll);
 el.jazzifyBtn.addEventListener("click", jazzifyChord);
 el.sendChordToTrumpetBtn.addEventListener("click", sendChordToTrumpet);
+loadSharedChordProgression();
 renderPianoRoll();
 
 el.startQuizBtn.addEventListener("click", () => {

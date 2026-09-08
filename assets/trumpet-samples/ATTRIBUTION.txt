@@ -1,0 +1,4 @@
+Trumpet audio samples reused from nicolasloizeau/trumpet-fingering.
+Source: https://github.com/nicolasloizeau/trumpet-fingering
+Copyright (c) 2025 Nicolas Loizeau
+Licensed under the MIT License. See the source repository for the full license text.

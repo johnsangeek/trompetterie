@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "trumpet-trainer-v37";
+const CACHE_NAME = "trumpet-trainer-v38";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -9,11 +9,18 @@ const CORE_ASSETS = [
   "./karaoke.html",
   "./karaoke.css",
   "./karaoke.js",
+  "./chords.html",
+  "./chords.css",
+  "./chords.js",
   "./style.css",
   "./site.css",
   "./app.js",
   "./trumpet-3d.js",
   "./assets/trumpet/trumpet.glb",
+  "./assets/trumpet-samples/C4.mp3",
+  "./assets/trumpet-samples/F4.mp3",
+  "./assets/trumpet-samples/G4.mp3",
+  "./assets/trumpet-samples/As4.mp3",
   "./vendor/three/three.module.min.js",
   "./vendor/three/three.core.min.js",
   "./vendor/three/addons/loaders/GLTFLoader.js",

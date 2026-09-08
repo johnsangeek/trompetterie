@@ -25,6 +25,7 @@
           <a href="home.html">← Accueil</a>
           <a href="training.html">📀 Training</a>
           <a href="karaoke.html">🎤 Karaoké</a>
+          <a href="chords.html">🎹 Chords Resolver</a>
       </div>
       <div class="title-row">
         <div>
@@ -122,6 +123,13 @@
           <button type="button" id="playScoreBtn" class="btn btn-primary">🔁 Jouer la partition en boucle</button>
           <button type="button" id="stopScoreBtn" class="btn" hidden>⏹ Stop partition</button>
           <button type="button" id="openKaraokeBtn" class="btn">🎤 Mode karaoké</button>
+          <button type="button" id="exportScorePdfBtn" class="btn">Exporter PDF</button>
+          <label class="sound-engine-label">Son
+            <select id="soundEngineSelect">
+              <option value="sample">Trompette échantillonnée</option>
+              <option value="synth">Synthé rapide</option>
+            </select>
+          </label>
           <label class="checkbox-label">
             <input type="checkbox" id="muteScoreCheckbox" />
             🔇 Couper le son des notes
@@ -234,11 +242,16 @@
         </div>
 
         <div id="manualControls" class="manual-controls" hidden>
-          <p class="subtitle">Portée vide : mets en pause / cale-toi sur le son, clique la note que tu entends dans la palette ci-dessous — elle se place au temps courant (calée sur la grille) et le doigté s'affiche.</p>
+          <p class="subtitle">Clique une note pour la sélectionner. Suppr l'efface, ↑/↓ la monte ou la descend d'un demi-ton. La palette ajoute une note au temps courant.</p>
           <div class="improv-row">
             <button type="button" id="undoManualNoteBtn" class="btn">↶ Annuler la dernière note</button>
             <button type="button" id="clearManualNotesBtn" class="btn">Effacer tout</button>
             <button type="button" id="deleteNoteModeBtn" class="btn">🗑️ Supprimer une note</button>
+            <button type="button" id="toggleTwelveKeysBtn" class="btn">12 tonalités</button>
+          </div>
+          <div id="twelveKeysPanel" class="twelve-keys-panel" hidden>
+            <div><strong>Transpose la phrase</strong><small>Choisis la nouvelle tonalité : le rythme et les doigtés suivent.</small></div>
+            <div id="twelveKeysGrid" class="twelve-keys-grid"></div>
           </div>
         </div>
 
@@ -306,6 +319,7 @@
           <div class="piano-roll-header">
             <h2><span class="instrument-tag piano-tag">Piano</span> Accords et réponses</h2>
             <div class="piano-roll-actions">
+              <a href="chords.html" class="btn btn-primary">Ouvrir Chords Resolver</a>
               <button type="button" id="addChordSlotBtn" class="btn">+ Accord</button>
               <button type="button" id="clearPianoRollBtn" class="btn">Effacer</button>
               <button type="button" id="jazzifyBtn" class="btn btn-primary" disabled>Jazzifier · trouver des réponses</button>
