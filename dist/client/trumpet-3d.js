@@ -79,7 +79,7 @@ new GLTFLoader().load(
     };
 
     for (let index = 0; index < 3; index++) {
-      const node = gltf.scene.getObjectByName(`AnimatedValve${index + 1}`);
+      const node = gltf.scene.getObjectByName(`Piston_${index + 1}`);
       valveNodes[index] = node;
       if (!node) continue;
       valveHomeY[index] = node.position.y;
@@ -107,7 +107,7 @@ function animate() {
     valveAmount[index] += (valveTargets[index] - valveAmount[index]) * 0.2;
     const node = valveNodes[index];
     if (!node) continue;
-    node.position.y = valveHomeY[index] - valveAmount[index] * 0.19;
+    node.position.y = valveHomeY[index] - valveAmount[index] * 0.42;
     node.traverse((child) => {
       if (!child.isMesh || !child.material?.emissive) return;
       child.material.emissive.copy(child.material.color).multiplyScalar(valveAmount[index] * 0.5);
