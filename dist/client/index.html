@@ -30,7 +30,10 @@
           <h1>Trompette Trainer</h1>
           <p class="subtitle">Ton pupitre de travail : partition, notes et doigtés au même endroit.</p>
         </div>
-        <span class="desktop-badge">Mode studio</span>
+        <div class="header-actions">
+          <button type="button" id="openInstrumentViewBtn" class="btn instrument-view-launch">🎺 Vue instrument</button>
+          <span class="desktop-badge">Mode studio</span>
+        </div>
       </div>
     </header>
 
@@ -326,8 +329,43 @@
     </section>
   </div>
 
+  <section id="instrumentStage" class="instrument-stage" hidden aria-hidden="true" aria-label="Vue animée de la trompette">
+    <canvas id="trumpet3dCanvas" class="trumpet-3d-canvas" aria-label="Trompette en trois dimensions, vue fixe"></canvas>
+    <div class="instrument-stage-vignette" aria-hidden="true"></div>
+    <header class="instrument-stage-header">
+      <button type="button" id="closeInstrumentViewBtn" class="instrument-stage-button" aria-label="Revenir à l'application">← Retour</button>
+      <div class="instrument-stage-title">
+        <span>Vue instrument</span>
+        <small>Caméra fixe · trompette Sib</small>
+      </div>
+      <span id="instrument3dStatus" class="instrument-3d-status">Chargement du modèle…</span>
+    </header>
+    <div class="instrument-note-hud" aria-live="polite">
+      <span id="instrumentTrebleClef" class="instrument-clef" aria-hidden="true">𝄞</span>
+      <div>
+        <small>Note écrite</small>
+        <strong id="instrumentNoteLabel">--</strong>
+      </div>
+    </div>
+    <footer class="instrument-stage-footer">
+      <div class="instrument-valve-legend" aria-label="État des pistons">
+        <span id="instrumentValve1" class="instrument-valve-dot valve-one">1</span>
+        <span id="instrumentValve2" class="instrument-valve-dot valve-two">2</span>
+        <span id="instrumentValve3" class="instrument-valve-dot valve-three">3</span>
+      </div>
+      <div class="instrument-stage-controls">
+        <button type="button" id="instrumentPlayPauseBtn" class="instrument-stage-button instrument-stage-primary">▶ Jouer</button>
+        <button type="button" id="instrumentStopBtn" class="instrument-stage-button">■ Stop</button>
+      </div>
+    </footer>
+  </section>
+
   <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
   <script src="app.js"></script>
+  <script type="importmap">
+    {"imports":{"three":"./vendor/three/three.module.min.js"}}
+  </script>
+  <script type="module" src="trumpet-3d.js"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

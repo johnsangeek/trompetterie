@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "trumpet-trainer-v26";
+const CACHE_NAME = "trumpet-trainer-v27";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,11 @@ const CORE_ASSETS = [
   "./style.css",
   "./site.css",
   "./app.js",
+  "./trumpet-3d.js",
+  "./assets/trumpet/trumpet.glb",
+  "./vendor/three/three.module.min.js",
+  "./vendor/three/addons/loaders/GLTFLoader.js",
+  "./vendor/three/addons/utils/BufferGeometryUtils.js",
   "./manifest.json",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

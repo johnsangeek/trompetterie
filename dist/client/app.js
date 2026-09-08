@@ -1635,6 +1635,7 @@ function setTrumpetCurrentNote(concertMidi) {
 function setCurrentNoteLabel(text) {
   el.currentNoteLabel.textContent = text;
   el.pistonNoteLabel.textContent = text;
+  window.dispatchEvent(new CustomEvent("trumpet:note", { detail: { label: text } }));
 }
 
 function findActiveEvent(measuresArr, currentTime, centerMeasureIdx) {
@@ -2386,6 +2387,7 @@ function updatePistons(concertMidi) {
   el.valve1.classList.toggle("pressed", valves[1]);
   el.valve2.classList.toggle("pressed", valves[2]);
   el.valve3.classList.toggle("pressed", valves[3]);
+  window.dispatchEvent(new CustomEvent("trumpet:valves", { detail: { valves } }));
 }
 
 // ---------------------------------------------------------------------------

@@ -58,6 +58,19 @@ header h1 {
   gap: 24px;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.instrument-view-launch {
+  border-color: rgba(var(--accent-rgb), 0.42);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.16), rgba(var(--accent-rgb), 0.06));
+  color: var(--accent);
+  font-weight: 700;
+}
+
 .title-row .subtitle {
   margin-bottom: 0;
 }
@@ -1019,6 +1032,265 @@ body.standalone-app .degree-chip {
 
 body.standalone-app .chip-fingering {
   font-size: 0.9rem;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Fixed-camera 3D instrument stage                                       */
+/* ---------------------------------------------------------------------- */
+
+body.instrument-view-open {
+  overflow: hidden;
+}
+
+.instrument-stage[hidden] {
+  display: none;
+}
+
+.instrument-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  overflow: hidden;
+  color: #f5f3ed;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(219, 216, 203, 0.28) 0, rgba(115, 119, 116, 0.1) 35%, transparent 68%),
+    linear-gradient(145deg, #858987 0%, #686d6a 52%, #555a58 100%);
+  isolation: isolate;
+}
+
+.trumpet-3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  outline: none;
+  pointer-events: none;
+}
+
+.instrument-stage-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(19, 22, 21, 0.38), transparent 26%, transparent 72%, rgba(19, 22, 21, 0.48)),
+    radial-gradient(ellipse at center, transparent 42%, rgba(24, 27, 26, 0.38) 100%);
+}
+
+.instrument-stage-header,
+.instrument-stage-footer {
+  position: absolute;
+  left: clamp(18px, 3vw, 46px);
+  right: clamp(18px, 3vw, 46px);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.instrument-stage-header {
+  top: max(20px, env(safe-area-inset-top));
+}
+
+.instrument-stage-footer {
+  bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+.instrument-stage-button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  color: #f8f6f0;
+  background: rgba(27, 31, 29, 0.38);
+  backdrop-filter: blur(16px);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.instrument-stage-button:hover {
+  border-color: rgba(255, 224, 157, 0.72);
+  background: rgba(27, 31, 29, 0.58);
+}
+
+.instrument-stage-button:active {
+  transform: translateY(1px);
+}
+
+.instrument-stage-primary {
+  border-color: rgba(244, 198, 111, 0.6);
+  color: #241b0c;
+  background: rgba(244, 198, 111, 0.92);
+}
+
+.instrument-stage-title {
+  position: absolute;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: translateX(-50%);
+  letter-spacing: 0.03em;
+}
+
+.instrument-stage-title span {
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.instrument-stage-title small,
+.instrument-note-hud small {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 0.68rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.instrument-3d-status {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+}
+
+.instrument-3d-status.ready {
+  color: #cce8de;
+}
+
+.instrument-3d-status.error {
+  color: #ffd0cc;
+}
+
+.instrument-note-hud {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(92px, 14vh, 150px);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 18px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 18px;
+  background: rgba(28, 32, 30, 0.42);
+  box-shadow: 0 16px 44px rgba(15, 18, 17, 0.24);
+  backdrop-filter: blur(18px);
+  transform: translateX(-50%);
+}
+
+.instrument-note-hud div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.instrument-note-hud strong {
+  white-space: nowrap;
+  color: #ffe2a5;
+  font-size: clamp(1.1rem, 2vw, 1.6rem);
+}
+
+.instrument-clef {
+  color: rgba(255, 255, 255, 0.42);
+  font-family: serif;
+  font-size: 2.6rem;
+  line-height: 1;
+  transition: color 180ms ease, filter 180ms ease, transform 180ms ease;
+}
+
+.instrument-clef.sounding {
+  color: #ffe2a5;
+  filter: drop-shadow(0 0 13px rgba(255, 216, 133, 0.45));
+  transform: scale(1.06);
+}
+
+.instrument-valve-legend,
+.instrument-stage-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.instrument-valve-dot {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(29, 33, 31, 0.42);
+  font-weight: 900;
+  transform: translateY(0);
+  transition: transform 130ms ease, color 130ms ease, background 130ms ease, box-shadow 130ms ease;
+}
+
+.instrument-valve-dot.pressed {
+  color: #101311;
+  transform: translateY(6px);
+}
+
+.instrument-valve-dot.valve-one.pressed {
+  background: #ef5350;
+  box-shadow: 0 0 22px rgba(239, 83, 80, 0.5);
+}
+
+.instrument-valve-dot.valve-two.pressed {
+  background: #4fd1c5;
+  box-shadow: 0 0 22px rgba(79, 209, 197, 0.5);
+}
+
+.instrument-valve-dot.valve-three.pressed {
+  background: #ffb020;
+  box-shadow: 0 0 22px rgba(255, 176, 32, 0.5);
+}
+
+@media (max-width: 700px) {
+  .header-actions .desktop-badge {
+    display: none;
+  }
+
+  .instrument-stage-title {
+    display: none;
+  }
+
+  .instrument-stage-header,
+  .instrument-stage-footer {
+    gap: 10px;
+  }
+
+  .instrument-stage-footer {
+    align-items: flex-end;
+  }
+
+  .instrument-stage-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .instrument-stage-button {
+    min-height: 40px;
+    padding: 8px 13px;
+    font-size: 0.78rem;
+  }
+
+  .instrument-valve-dot {
+    width: 36px;
+    height: 36px;
+  }
+
+  .instrument-note-hud {
+    bottom: 110px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .instrument-clef,
+  .instrument-valve-dot,
+  .instrument-stage-button {
+    transition: none;
+  }
 }
 
 body.standalone-app .pistons {
