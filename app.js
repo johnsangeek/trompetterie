@@ -142,6 +142,7 @@ const el = {
   deleteNoteModeBtn: document.getElementById("deleteNoteModeBtn"),
   playScoreBtn: document.getElementById("playScoreBtn"),
   stopScoreBtn: document.getElementById("stopScoreBtn"),
+  openKaraokeBtn: document.getElementById("openKaraokeBtn"),
   metronomeBtn: document.getElementById("metronomeBtn"),
   muteScoreCheckbox: document.getElementById("muteScoreCheckbox"),
   saveScoreBtn: document.getElementById("saveScoreBtn"),
@@ -2549,6 +2550,28 @@ function getCurrentModeEvents() {
   return flattenMeasures(state.measures);
 }
 
+function openKaraoke(eventsData, title = "Partition en cours") {
+  const events = eventsData.events
+    .filter((event) => Number.isFinite(event.midi))
+    .map((event) => ({
+      startTime: event.startTime,
+      endTime: Math.max(event.endTime, event.startTime + 0.08),
+      midi: event.midi,
+    }));
+  if (!events.length) {
+    setStatus("Ajoute des notes avant d'ouvrir le mode karaoké.", true);
+    setTimeout(() => setStatus(""), 2600);
+    return;
+  }
+  sessionStorage.setItem("trumpetKaraokeSession", JSON.stringify({
+    title,
+    bpm: state.bpm,
+    events,
+    totalDuration: Math.max(eventsData.totalDuration, ...events.map((event) => event.endTime)),
+  }));
+  window.location.href = "karaoke.html";
+}
+
 // Routed through a single persistent gain node (rather than baking mute
 // state into each note at schedule time) so muting takes effect instantly,
 // including for notes already scheduled ahead by the lookahead scheduler.
@@ -2862,6 +2885,21 @@ function renderSavedScoresList() {
       playBtn.textContent = "▶ Rejouer";
       playBtn.addEventListener("click", () => loadSavedScore(entry));
 
+      const karaokeBtn = document.createElement("button");
+      karaokeBtn.type = "button";
+      karaokeBtn.className = "btn";
+      karaokeBtn.textContent = "🎤 Karaoké";
+      karaokeBtn.addEventListener("click", () => {
+        const beat = 60 / entry.bpm;
+        const notes = entry.notes.slice().sort((a, b) => a.time - b.time);
+        const events = notes.map((note, index) => ({
+          startTime: note.time,
+          endTime: notes[index + 1]?.time ?? note.time + beat * 0.9,
+          midi: note.midi,
+        }));
+        openKaraoke({ events, totalDuration: Math.max(entry.duration, ...events.map((event) => event.endTime)) }, entry.name);
+      });
+
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "btn";
@@ -2874,6 +2912,7 @@ function renderSavedScoresList() {
 
       item.appendChild(info);
       item.appendChild(playBtn);
+      item.appendChild(karaokeBtn);
       item.appendChild(deleteBtn);
       el.savedScoresList.appendChild(item);
     });
@@ -3295,6 +3334,7 @@ el.octaveUpBtn.addEventListener("click", () => {
 
 el.playScoreBtn.addEventListener("click", startScorePlayback);
 el.stopScoreBtn.addEventListener("click", stopScorePlayback);
+el.openKaraokeBtn.addEventListener("click", () => openKaraoke(getCurrentModeEvents()));
 
 el.metronomeBtn.addEventListener("click", () => {
   if (state.metronomeActive) {

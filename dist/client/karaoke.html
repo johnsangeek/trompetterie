@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Karaoké trompette — Trompette Trainer</title>
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="karaoke.css" />
+</head>
+<body>
+  <main class="karaoke-stage">
+    <canvas id="karaokeTrumpetCanvas" class="karaoke-trumpet" aria-label="Trompette animée et ses pistons"></canvas>
+    <div class="stage-vignette" aria-hidden="true"></div>
+
+    <header class="karaoke-header">
+      <a class="ghost-button" href="index.html">← Partition</a>
+      <div class="song-heading">
+        <span class="eyebrow">MODE KARAOKÉ · TROMPETTE SIB</span>
+        <h1 id="karaokeTitle">Partition en cours</h1>
+      </div>
+      <button type="button" id="fullscreenBtn" class="ghost-button">Plein écran</button>
+    </header>
+
+    <section class="score-window" aria-label="Partition défilante">
+      <div class="staff-clef" aria-hidden="true">𝄞</div>
+      <div class="staff-viewport" id="staffViewport">
+        <div class="staff-lines" aria-hidden="true"></div>
+        <div id="noteTrack" class="note-track"></div>
+        <div class="anchor-line" aria-label="Point de lecture">
+          <span>JOUE</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="now-playing" aria-live="polite">
+      <span class="now-label">NOTE ÉCRITE</span>
+      <strong id="activeNote">Prêt</strong>
+      <div id="activeFingering" class="active-fingering">0</div>
+    </section>
+
+    <div class="valve-status" aria-label="Pistons actifs">
+      <span id="karaokeValve1" class="valve-dot valve-1">1</span>
+      <span id="karaokeValve2" class="valve-dot valve-2">2</span>
+      <span id="karaokeValve3" class="valve-dot valve-3">3</span>
+    </div>
+
+    <footer class="karaoke-controls">
+      <div class="time-block"><span id="currentTime">0:00</span><small id="totalTime">0:00</small></div>
+      <div class="progress"><div id="progressFill"></div></div>
+      <button type="button" id="restartBtn" class="control-button">↺ Recommencer</button>
+      <button type="button" id="playPauseBtn" class="control-button primary">▶ Jouer</button>
+      <label class="speed-control">Vitesse
+        <select id="speedSelect">
+          <option value="0.75">75 %</option>
+          <option value="1" selected>100 %</option>
+          <option value="1.25">125 %</option>
+          <option value="1.5">150 %</option>
+        </select>
+      </label>
+      <label class="loop-control"><input id="loopToggle" type="checkbox" checked /> Boucle</label>
+    </footer>
+  </main>
+
+  <script type="importmap">
+    {"imports":{"three":"./vendor/three/three.module.min.js"}}
+  </script>
+  <script type="module" src="karaoke.js"></script>
+</body>
+</html>
