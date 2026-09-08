@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Trompette Trainer — Boucle, partition &amp; doigtés</title>
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#101311" />
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Trompette" />
+  <meta name="mobile-web-app-capable" content="yes" />
+</head>
+<body>
+  <div class="glow-blob glow-1"></div>
+  <div class="glow-blob glow-2"></div>
+  <div class="app">
+    <header>
+      <div id="miniNav" class="mini-nav">
+        <a href="home.html">← Accueil</a>
+        <a href="training.html">📀 Training</a>
+      </div>
+      <div class="title-row">
+        <div>
+          <h1>Trompette Trainer</h1>
+          <p class="subtitle">Ton pupitre de travail : partition, notes et doigtés au même endroit.</p>
+        </div>
+        <span class="desktop-badge">Mode studio</span>
+      </div>
+    </header>
+
+    <section id="dropzone" class="dropzone">
+      <p><strong>Importer un morceau</strong><span>Glisse un fichier audio ici ou clique pour le choisir</span></p>
+      <input type="file" id="fileInput" accept="audio/*" hidden />
+    </section>
+
+    <p id="status" class="status" hidden></p>
+
+    <div id="progressWrap" class="progress-wrap" hidden>
+      <div id="progressBar" class="progress-bar"></div>
+    </div>
+
+    <section id="workspace" class="workspace">
+
+      <section class="panel transport-panel">
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="bpmDisplay">--</span>
+            <span class="stat-label">BPM détecté</span>
+          </div>
+          <div class="stat editable-stat">
+            <input type="number" id="bpmInput" min="20" max="300" step="0.1" />
+            <span class="stat-label">BPM (ajustable)</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="durationValue">--</span>
+            <span class="stat-label">durée</span>
+          </div>
+        </div>
+
+        <div class="transport-controls">
+          <button type="button" id="playBtn" class="btn btn-primary" disabled>▶ Lecture</button>
+          <button type="button" id="pauseBtn" class="btn" hidden>⏸ Pause</button>
+          <button type="button" id="stopBtn" class="btn" disabled>⏹ Stop</button>
+          <button type="button" id="metronomeBtn" class="btn">🎵 Métronome</button>
+          <span class="time-display"><span id="currentTimeLabel">0:00</span> / <span id="totalTimeLabel">0:00</span></span>
+        </div>
+
+        <p id="noFileHint" class="no-file-hint">Charge un fichier audio ci-dessus pour activer la lecture, le looper et la transcription. Le métronome et la bibliothèque de gammes marchent déjà, sans rien charger.</p>
+
+        <input type="range" id="seekBar" class="seek-bar" min="0" max="1000" value="0" disabled />
+
+        <div class="loop-controls">
+          <h3>Looper quantifié</h3>
+          <div class="loop-row">
+            <button type="button" id="setLoopABtn" class="btn" disabled>Poser A ici</button>
+            <span id="loopALabel" class="loop-label">A: --</span>
+            <button type="button" id="setLoopBBtn" class="btn" disabled>Poser B ici</button>
+            <span id="loopBLabel" class="loop-label">B: --</span>
+          </div>
+          <div class="loop-row">
+            <label class="checkbox-label">
+              <input type="checkbox" id="loopEnabledCheckbox" disabled />
+              Boucle active
+            </label>
+            <label>
+              Grille de calage
+              <select id="snapGridSelect">
+                <option value="1">Noire (1 temps)</option>
+                <option value="0.5" selected>Croche (1/2 temps)</option>
+                <option value="0.25">Double-croche (1/4 temps)</option>
+                <option value="2">Blanche (2 temps)</option>
+                <option value="4">Ronde (4 temps)</option>
+              </select>
+            </label>
+            <button type="button" id="clearLoopBtn" class="btn" disabled>Effacer la boucle</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel notation-panel">
+        <div class="panel-header">
+          <h2>Partition</h2>
+          <div class="mode-toggle">
+            <button type="button" class="mode-btn" data-mode="transcription" disabled>Transcription</button>
+            <button type="button" class="mode-btn active" data-mode="improvisation">Gammes</button>
+            <button type="button" class="mode-btn" data-mode="manual" disabled>Partition libre</button>
+          </div>
+          <span id="currentNoteLabel" class="current-note-label">--</span>
+        </div>
+
+        <div class="score-playback-row">
+          <button type="button" id="playScoreBtn" class="btn btn-primary">🔁 Jouer la partition en boucle</button>
+          <button type="button" id="stopScoreBtn" class="btn" hidden>⏹ Stop partition</button>
+          <label class="checkbox-label">
+            <input type="checkbox" id="muteScoreCheckbox" />
+            🔇 Couper le son des notes
+          </label>
+          <span class="score-playback-hint">Utilise le BPM ci-dessus — change-le pour ralentir/accélérer la boucle.</span>
+        </div>
+
+        <div id="improvisationControls" class="improvisation-controls" hidden>
+          <p class="subtitle">Bibliothèque de gammes : choisis n'importe quelle note et n'importe quelle gamme pour l'étudier, avec les doigtés. Charge un fichier audio pour que la clé soit détectée automatiquement et coller à ce que tu entends.</p>
+          <div class="improv-row">
+            <span class="key-display">Tonalité détectée : <strong id="detectedKeyLabel">--</strong></span>
+          </div>
+
+          <div class="improv-row">
+            <div class="mode-toggle chord-mode-toggle">
+              <button type="button" class="sub-toggle-btn active" data-chordmode="free">Gamme libre</button>
+              <button type="button" class="sub-toggle-btn" data-chordmode="chord">À partir d'un accord</button>
+            </div>
+          </div>
+
+          <div class="improv-row">
+            <label>
+              Note de base
+              <select id="scaleRootSelect"></select>
+            </label>
+            <label id="scaleTypeLabel">
+              Gamme
+              <select id="scaleTypeSelect"></select>
+            </label>
+            <label id="chordQualityLabel" hidden>
+              Accord
+              <select id="chordQualitySelect"></select>
+            </label>
+            <button type="button" id="toggleFavoriteScaleBtn" class="btn" title="Ajouter aux favoris">☆ Favori</button>
+          </div>
+
+          <div class="improv-row" id="insideOutsideRow" hidden>
+            <div class="mode-toggle">
+              <button type="button" id="insideScaleBtn" class="sub-toggle-btn active">Dedans</button>
+              <button type="button" id="outsideScaleBtn" class="sub-toggle-btn">Dehors (jazz)</button>
+            </div>
+            <span class="key-display" id="chordScaleExplain"></span>
+          </div>
+
+          <div class="improv-row favorites-row">
+            <span class="key-display">⭐ Mes gammes :</span>
+            <div id="favoriteScalesList" class="favorite-scales-list"></div>
+          </div>
+
+          <details class="advanced-tools">
+            <summary>
+              <span>Outils d'entraînement</span>
+              <small>Progression d'accords et interro</small>
+            </summary>
+
+          <div class="piano-roll-panel">
+            <div class="piano-roll-header">
+              <h3><span class="instrument-tag piano-tag">Piano</span> Progression d'accords</h3>
+              <div class="piano-roll-actions">
+                <button type="button" id="addChordSlotBtn" class="btn">+ Accord</button>
+                <button type="button" id="clearPianoRollBtn" class="btn">Effacer</button>
+                <button type="button" id="jazzifyBtn" class="btn btn-primary" disabled>Jazzifier · trouver des réponses</button>
+                <button type="button" id="sendChordToTrumpetBtn" class="btn trumpet-action" disabled>Vers la trompette</button>
+              </div>
+            </div>
+            <p class="subtitle">Sélectionne un accord, puis écoute plusieurs variantes. La réponse choisie sera ajoutée tout à la fin de la progression. « Vers la trompette » reste une action séparée.</p>
+            <p id="pianoRollFeedback" class="piano-roll-feedback" role="status" aria-live="polite"></p>
+            <div id="jazzVariationPicker" class="jazz-variation-picker" hidden></div>
+            <div id="pianoRollGrid" class="piano-roll-grid"></div>
+          </div>
+
+          <div class="quiz-panel">
+            <div class="piano-roll-header">
+              <h3>🎓 Interro</h3>
+              <button type="button" id="startQuizBtn" class="btn btn-primary">Démarrer l'interro</button>
+            </div>
+            <p class="subtitle">
+              Une note de la gamme actuelle est jouée — reproduis-la sur ta trompette. Détection
+              automatique au micro si tu l'autorises, sinon confirme toi-même au clic.
+            </p>
+
+            <div id="quizArea" class="quiz-area" hidden>
+              <div class="quiz-top-row">
+                <span class="quiz-score">Score : <strong id="quizScore">0/0</strong></span>
+                <span class="quiz-progress" id="quizProgress"></span>
+                <button type="button" id="stopQuizBtn" class="btn">Arrêter</button>
+              </div>
+
+              <div class="quiz-stage">
+                <div class="quiz-timer-ring">
+                  <svg viewBox="0 0 100 100" width="140" height="140">
+                    <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" />
+                    <circle id="quizTimerCircle" cx="50" cy="50" r="44" fill="none" stroke="#ffb020" stroke-width="8"
+                      stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"
+                      transform="rotate(-90 50 50)" />
+                  </svg>
+                  <div class="quiz-timer-label" id="quizTimerLabel">🎺</div>
+                </div>
+                <div class="quiz-status" id="quizStatus">Prépare-toi…</div>
+                <div class="quiz-feedback" id="quizFeedback"></div>
+              </div>
+
+              <div class="quiz-manual-buttons" id="quizManualButtons" hidden>
+                <button type="button" id="quizCorrectBtn" class="btn btn-primary">✓ Je l'ai jouée</button>
+                <button type="button" id="quizWrongBtn" class="btn">✗ Raté</button>
+              </div>
+
+              <p class="quiz-mic-hint" id="quizMicHint"></p>
+            </div>
+          </div>
+          </details>
+        </div>
+
+        <div id="manualControls" class="manual-controls" hidden>
+          <p class="subtitle">Portée vide : mets en pause / cale-toi sur le son, clique la note que tu entends dans la palette ci-dessous — elle se place au temps courant (calée sur la grille) et le doigté s'affiche.</p>
+          <div class="improv-row">
+            <button type="button" id="undoManualNoteBtn" class="btn">↶ Annuler la dernière note</button>
+            <button type="button" id="clearManualNotesBtn" class="btn">Effacer tout</button>
+            <button type="button" id="deleteNoteModeBtn" class="btn">🗑️ Supprimer une note</button>
+          </div>
+        </div>
+
+        <div id="staff" class="staff"></div>
+        <div id="degreeChips" class="degree-chips" hidden></div>
+
+        <div id="songNotesHeader" class="song-notes-header" hidden>
+          <span>🎵 Notes du morceau :</span>
+          <button type="button" id="startSongNotesQuizBtn" class="btn btn-primary btn-small">🎯 Les apprendre (interro)</button>
+        </div>
+        <div id="pitchPalette" class="degree-chips" hidden></div>
+
+        <div id="songKeyPanel" class="song-key-panel" hidden>
+          <p class="subtitle">🎓 Gamme à travailler pour ce morceau : <strong id="songKeyLabel">--</strong></p>
+          <button type="button" id="startSongQuizBtn" class="btn btn-primary">🎯 Réviser cette gamme (interro)</button>
+        </div>
+      </section>
+
+      <section class="panel piston-panel">
+        <div class="piston-panel-header">
+          <div>
+            <span class="eyebrow">Doigté en direct</span>
+            <h2>Trompette Sib</h2>
+          </div>
+          <span id="pistonNoteLabel" class="piston-note-label">--</span>
+        </div>
+        <div class="octave-shift-stepper">
+          <button type="button" id="octaveDownBtn" class="btn">🔽 Octave</button>
+          <span id="octaveShiftLabel" class="octave-shift-label">Octave normale</span>
+          <button type="button" id="octaveUpBtn" class="btn">🔼 Octave</button>
+        </div>
+        <div class="pistons">
+          <div class="valve-group">
+            <div class="valve" id="valve1"><div class="valve-cap"></div></div>
+            <span class="valve-number">1</span>
+          </div>
+          <div class="valve-group">
+            <div class="valve" id="valve2"><div class="valve-cap"></div></div>
+            <span class="valve-number">2</span>
+          </div>
+          <div class="valve-group">
+            <div class="valve" id="valve3"><div class="valve-cap"></div></div>
+            <span class="valve-number">3</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel saved-scores-panel">
+        <div class="panel-header">
+          <h2>📁 Partitions sauvegardées</h2>
+          <button type="button" id="saveScoreBtn" class="btn btn-primary">💾 Sauvegarder la partition actuelle</button>
+        </div>
+        <p class="subtitle">Enregistrées dans ce navigateur — rejoue-les à tout moment, même après avoir chargé un autre fichier.</p>
+        <div id="savedScoresList" class="saved-scores-list"></div>
+      </section>
+
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => { /* offline support is a bonus, not required */ });
+      });
+    }
+  </script>
+</body>
+</html>
