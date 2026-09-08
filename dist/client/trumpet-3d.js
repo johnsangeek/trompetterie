@@ -112,7 +112,7 @@ function animate() {
     if (!node) continue;
     // Stop with the coloured finger capsule still visible on top of the brass
     // valve cap, like a real piston reaching its mechanical travel limit.
-    node.position.y = valveHomeY[index] - valveAmount[index] * 0.29;
+    node.position.y = valveHomeY[index] - valveAmount[index] * 0.315;
     node.traverse((child) => {
       if (!child.isMesh || !child.material?.emissive) return;
       child.material.emissive.copy(child.material.color).multiplyScalar(valveAmount[index] * 0.5);
