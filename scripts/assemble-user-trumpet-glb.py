@@ -47,6 +47,14 @@ for index, obj in enumerate(body_objects):
 
 piston_objects = [obj for obj in import_gltf(pistons_source) if obj.type == "MESH"]
 
+# Some Blender exports accidentally keep a few trumpet/mouthpiece meshes in the
+# piston-only file. They sit far left of the actual valve assembly in source space;
+# discard them so pressing piston 1 never moves a stray piece of the instrument.
+for obj in list(piston_objects):
+    if object_center_x(obj) < -3.0:
+        bpy.data.objects.remove(obj, do_unlink=True)
+        piston_objects.remove(obj)
+
 # The exporter kept repeated components together. Split every disconnected
 # component so each physical piston can be grouped and animated independently.
 for obj in list(piston_objects):

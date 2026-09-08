@@ -18,7 +18,7 @@ async function collect(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const files = [];
   for (const entry of entries) {
-    if (["dist", ".git", ".openai", "scripts"].includes(entry.name)) continue;
+    if (["dist", ".git", ".openai", "scripts", "trumpet-user"].includes(entry.name)) continue;
     const path = join(directory, entry.name);
     if (entry.isDirectory()) files.push(...await collect(path));
     else if (includedExtensions.has(extname(entry.name).toLowerCase())) files.push(path);
