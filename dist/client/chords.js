@@ -11,7 +11,7 @@ const QUALITY = {
   dim7:{label:"Diminué 7",symbol:"dim7",intervals:[0,3,6,9]}, sus4:{label:"Sus 4",symbol:"sus4",intervals:[0,5,7]},
 };
 const STORAGE = "trumpetTrainerChordProgression";
-const state = {notes:new Set(),progression:[],selected:null,direction:"both",audio:null};
+const state = {notes:new Set(),progression:[],selected:null,direction:"both",audio:null,importedFile:null};
 const $ = (id)=>document.getElementById(id);
 
 function pc(n){return ((n%12)+12)%12}
@@ -67,15 +67,21 @@ function toggleNote(midi){state.notes.has(midi)?state.notes.delete(midi):state.n
 function renderIdentity(){
   const notes=[...state.notes].sort((a,b)=>a-b),found=detect(notes);$("noteCount").textContent=`${notes.length} note${notes.length>1?"s":""}`;
   $("detectedNotes").innerHTML=notes.map(n=>`<span class="note-pill">${midiLabel(n)}</span>`).join("");
-  if(!found||notes.length<3){$("detectedName").textContent="—";$("detectedInternational").textContent="Ajoute au moins trois notes";$("confidenceBar").style.width="0";$("confidenceLabel").textContent="—";$("addCurrentBtn").disabled=true;$("alternativeNames").textContent="";return}
+  if(!found||notes.length<3){$("detectedName").textContent="—";$("detectedName").disabled=true;$("detectedInternational").textContent="Ajoute au moins trois notes";$("confidenceBar").style.width="0";$("confidenceLabel").textContent="—";$("addCurrentBtn").disabled=true;$("alternativeNames").textContent="";return}
   $("detectedName").textContent=chordName(found.root,found.quality);$("detectedInternational").textContent=`${chordName(found.root,found.quality,true)} · ${QUALITY[found.quality].label}`;
-  $("confidenceBar").style.width=`${found.confidence}%`;$("confidenceLabel").textContent=`${found.confidence}%`;$("addCurrentBtn").disabled=false;
+  $("detectedName").disabled=false;$("confidenceBar").style.width=`${found.confidence}%`;$("confidenceLabel").textContent=`${found.confidence}%`;$("addCurrentBtn").disabled=false;
   $("alternativeNames").textContent=found.alternatives.length?`Autres lectures : ${found.alternatives.map(a=>chordName(a.root,a.quality)).join(" · ")}`:"Lecture harmonique nette.";
 }
 
 function renderProgression(){
-  const wrap=$("progression");wrap.innerHTML="";state.progression.forEach((notes,i)=>{const found=detect(notes),b=document.createElement("button");b.className=`chord-chip ${i===state.selected?"active":""}`;b.innerHTML=`<small>ACCORD ${String(i+1).padStart(2,"0")}</small><strong>${found?chordName(found.root,found.quality):"?"}</strong><span>${notes.length} notes</span>`;b.onclick=()=>{state.selected=i;state.notes=new Set(notes);renderAll();playNotes(notes)};wrap.appendChild(b)});
+  const wrap=$("progression");wrap.innerHTML="";state.progression.forEach((notes,i)=>{const found=detect(notes),b=document.createElement("div");b.className=`chord-chip ${i===state.selected?"active":""}`;b.tabIndex=0;b.draggable=true;b.setAttribute("role","button");b.innerHTML=`<button type="button" class="delete-chord" aria-label="Supprimer cet accord">×</button><small>ACCORD ${String(i+1).padStart(2,"0")}</small><strong>${found?chordName(found.root,found.quality):"?"}</strong><span>${notes.length} notes</span>`;const select=()=>{state.selected=i;state.notes=new Set(notes);renderAll();playNotes(notes)};b.onclick=(event)=>{if(!event.target.closest(".delete-chord"))select()};b.onkeydown=(event)=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();select()}};b.querySelector(".delete-chord").onclick=(event)=>{event.stopPropagation();removeChord(i)};b.ondragstart=(event)=>{event.dataTransfer.setData("text/chord-index",String(i));b.classList.add("dragging")};b.ondragend=()=>b.classList.remove("dragging");wrap.appendChild(b)});
   const add=document.createElement("button");add.className="chip-add";add.textContent="+ Accord";add.onclick=()=>{$("clearNotesBtn").click();$("rootSelect").focus()};wrap.appendChild(add);
+}
+
+function removeChord(index){
+  if(index<0||index>=state.progression.length)return;state.progression.splice(index,1);
+  if(!state.progression.length){state.selected=null;state.notes.clear()}else{state.selected=Math.min(index,state.progression.length-1);state.notes=new Set(state.progression[state.selected])}
+  save();renderAll();toast("Accord supprimé");
 }
 
 function qualityFamily(q){return q.startsWith("min")?"minor":q.startsWith("dom")||q==="dom7"?"dominant":"major"}
@@ -106,11 +112,89 @@ function ensureAudio(){if(!state.audio)state.audio=new (window.AudioContext||win
 function playNotes(notes,duration=.85,delay=0){const ctx=ensureAudio(),when=ctx.currentTime+delay;notes.forEach((midi,i)=>{const o=ctx.createOscillator(),g=ctx.createGain(),filter=ctx.createBiquadFilter();o.type=i%2?"triangle":"sine";o.frequency.value=440*Math.pow(2,(midi-69)/12);filter.type="lowpass";filter.frequency.value=1800;g.gain.setValueAtTime(.0001,when);g.gain.linearRampToValueAtTime(.12/Math.sqrt(notes.length),when+.025);g.gain.exponentialRampToValueAtTime(.0001,when+duration);o.connect(filter).connect(g).connect(ctx.destination);o.start(when);o.stop(when+duration+.05)})}
 function playSequence(a,b){playNotes(a,.7);playNotes(b,1,0.72)}
 function toast(message){const el=$("toast");el.textContent=message;el.classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove("show"),1800)}
-function renderAll(){renderPiano();renderIdentity();renderProgression();renderAnswers()}
+
+function playProgression(progression=state.progression){progression.forEach((notes,i)=>playNotes(notes,.7,i*.62))}
+
+function readMidiFile(arrayBuffer){
+  const view=new DataView(arrayBuffer);let pos=0;const text=(at,n)=>String.fromCharCode(...new Uint8Array(arrayBuffer,at,n));
+  const u32=()=>{const value=view.getUint32(pos);pos+=4;return value};
+  const variable=()=>{let value=0,byte;do{if(pos>=view.byteLength)throw new Error("MIDI incomplet");byte=view.getUint8(pos++);value=(value<<7)|(byte&127)}while(byte&128);return value};
+  if(text(0,4)!=="MThd")throw new Error("Ce fichier n’est pas un MIDI standard");pos=4;const headerLength=u32();
+  if(headerLength<6)throw new Error("En-tête MIDI invalide");const format=view.getUint16(pos),trackCount=view.getUint16(pos+2);let division=view.getUint16(pos+4);if(division&0x8000)division=480;pos=8+headerLength;
+  const events=[];
+  for(let track=0;track<trackCount&&pos+8<=view.byteLength;track++){
+    if(text(pos,4)!=="MTrk")break;pos+=4;const length=u32(),end=Math.min(view.byteLength,pos+length);let tick=0,running=0;
+    while(pos<end){tick+=variable();let status=view.getUint8(pos),first=null;if(status<128){if(!running)throw new Error("Événement MIDI invalide");first=status;status=running;pos++}else{pos++;if(status<240)running=status}
+      if(status===255){pos++;const size=variable();pos+=size;continue}if(status===240||status===247){pos+=variable();continue}
+      const high=status&240,channel=status&15,short=high===192||high===208;const d1=first===null?view.getUint8(pos++):first;const d2=short?0:view.getUint8(pos++);
+      if(high===144&&d2>0&&channel!==9)events.push({tick,note:d1,velocity:d2});
+    }
+    pos=end;
+  }
+  if(!events.length)throw new Error("Aucune note exploitable dans ce MIDI");events.sort((a,b)=>a.tick-b.tick||a.note-b.note);
+  const tolerance=Math.max(1,Math.round(division/3)),groups=[];for(const event of events){let group=groups[groups.length-1];if(!group||event.tick-group.start>tolerance){group={start:event.tick,notes:[]};groups.push(group)}if(!group.notes.includes(event.note))group.notes.push(event.note)}
+  const progression=[];let previous="";for(const group of groups){if(new Set(group.notes.map(pc)).size<3)continue;const notes=[...new Set(group.notes.map(note=>{while(note<48)note+=12;while(note>84)note-=12;return note}))].sort((a,b)=>a-b),found=detect(notes);if(!found)continue;const signature=`${found.root}:${found.quality}`;if(signature===previous)continue;previous=signature;progression.push(notes)}
+  if(!progression.length)throw new Error("Je trouve des notes, mais pas de blocs d’au moins trois notes jouées ensemble");return{format,trackCount,division,events,progression};
+}
+
+async function importMidi(file){
+  if(!file)return;const result=$("midiImportResult");result.hidden=false;result.textContent="Analyse du MIDI…";
+  try{const parsed=readMidiFile(await file.arrayBuffer());state.progression=parsed.progression;state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);state.importedFile=file.name;save();renderAll();result.innerHTML=`<strong>${file.name}</strong> · ${parsed.trackCount} piste${parsed.trackCount>1?"s":""} · ${parsed.events.length} attaques · ${parsed.progression.length} accords reconnus`;toast("Progression MIDI analysée")}
+  catch(error){result.innerHTML=`<strong>Impossible de l’analyser :</strong> ${error.message}`}
+}
+
+function closestVoicing(root,quality,reference){
+  const refMean=reference.reduce((a,b)=>a+b,0)/reference.length;let best=null;
+  for(let center=48;center<=72;center+=12){const notes=canonicalVoicing(root,quality,center),mean=notes.reduce((a,b)=>a+b,0)/notes.length,score=Math.abs(mean-refMean);if(!best||score<best.score)best={notes,score}}
+  return best.notes;
+}
+
+function progressionVariants(){
+  if(state.progression.length<2)return[];
+  const enrichedMap={maj:"maj7",maj7:"maj9",min:"min7",min7:"min9",dom7:"dom9",dom9:"dom13",sus4:"dom7"};
+  const enrich=state.progression.map(notes=>{const chord=detect(notes),quality=enrichedMap[chord.quality]||chord.quality;return closestVoicing(chord.root,quality,notes)});
+  const tritone=state.progression.map(notes=>{const chord=detect(notes);return qualityFamily(chord.quality)==="dominant"?closestVoicing(pc(chord.root+6),"dom7",notes):[...notes]});
+  const parallel=state.progression.map(notes=>{const chord=detect(notes),family=qualityFamily(chord.quality),quality=family==="major"?"min7":family==="minor"?"maj7":chord.quality;return closestVoicing(chord.root,quality,notes)});
+  return [{title:"Version enrichie",description:"Ajoute 7e, 9e et 13e sans changer les fondamentales.",progression:enrich},{title:"Substitution tritonique",description:"Remplace les dominantes par leur miroir jazz à trois tons.",progression:tritone},{title:"Ombre parallèle",description:"Bascule majeur et mineur en gardant le dessin des basses.",progression:parallel}];
+}
+
+function renderProgressionIdeas(){
+  const panel=$("progressionIdeasPanel"),wrap=$("progressionIdeas"),ideas=progressionVariants();panel.hidden=!ideas.length;wrap.innerHTML="";
+  ideas.forEach(idea=>{const card=document.createElement("article");card.className="progression-idea";card.innerHTML=`<h3>${idea.title}</h3><p>${idea.description}</p><div class="mini-progression">${idea.progression.map(notes=>{const c=detect(notes);return `<span>${chordName(c.root,c.quality)}</span>`}).join("")}</div><div class="idea-actions"><button type="button">Écouter</button><button type="button">Utiliser</button></div>`;const buttons=card.querySelectorAll("button");buttons[0].onclick=()=>playProgression(idea.progression);buttons[1].onclick=()=>{state.progression=idea.progression.map(notes=>[...notes]);state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);save();renderAll();toast(`${idea.title} appliquée`)};wrap.appendChild(card)});
+}
+
+function inferTonic(){
+  if(!state.progression.length)return{root:0,minor:false};const chords=state.progression.map(detect).filter(Boolean);let best={root:chords[0]?.root||0,score:-Infinity};
+  for(let root=0;root<12;root++){let score=0;chords.forEach((chord,i)=>{const weight=i===0||i===chords.length-1?1.4:1;if(chord.root===root&&qualityFamily(chord.quality)!=="dominant")score+=3*weight;if(chord.root===pc(root+7)&&qualityFamily(chord.quality)==="dominant")score+=2.5;if(chord.root===pc(root+2)&&qualityFamily(chord.quality)==="minor")score+=1.3;if(chord.root===pc(root+5))score+=.8});if(score>best.score)best={root,score}}
+  const tonicChord=chords.find(chord=>chord.root===best.root&&qualityFamily(chord.quality)!=="dominant");return{root:best.root,minor:tonicChord?qualityFamily(tonicChord.quality)==="minor":false};
+}
+
+function cadenceDefinitions(){
+  const tonic=inferTonic(),t=tonic.root,I=tonic.minor?"min7":"maj7";return[{label:"Cadence parfaite",description:"L’arrivée la plus nette : dominante puis tonique.",specs:[[pc(t+7),"dom7"],[t,I]]},{label:"Cadence jazz",description:"Le classique ii–V–I, souple et immédiatement lisible.",specs:[[pc(t+2),"min7"],[pc(t+7),"dom7"],[t,I]]},{label:"Cadence plagale",description:"Une arrivée plus ronde, du IV vers la tonique.",specs:[[pc(t+5),tonic.minor?"min7":"maj7"],[t,I]]},{label:"Turnaround",description:"Une boucle complète qui peut finir ou relancer la progression.",specs:[[pc(t+9),"min7"],[pc(t+2),"min7"],[pc(t+7),"dom7"],[t,I]]}];
+}
+function cadenceVoicings(specs){let reference=state.progression[state.progression.length-1]||[60,64,67];return specs.map(([root,quality])=>{const notes=closestVoicing(root,quality,reference);reference=notes;return notes})}
+function renderCadences(){
+  const tonic=inferTonic();$("tonicGuess").textContent=`Centre tonal estimé : ${NOTE_FR[tonic.root]} ${tonic.minor?"mineur":"majeur"}`;const wrap=$("cadences");wrap.innerHTML="";
+  cadenceDefinitions().forEach(cadence=>{const voicings=cadenceVoicings(cadence.specs),card=document.createElement("article");card.className="cadence-card";card.innerHTML=`<small>Finalité</small><h3>${cadence.label}</h3><p>${cadence.description}</p><div class="cadence-path">${cadence.specs.map(([r,q])=>`<span>${chordName(r,q)}</span>`).join("")}</div><button type="button">Écouter puis ajouter</button>`;card.querySelector("button").onclick=()=>{playProgression(voicings);setTimeout(()=>{state.progression.push(...voicings.map(notes=>[...notes]));state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);save();renderAll();toast(`${cadence.label} ajoutée`)},Math.max(850,voicings.length*620))};wrap.appendChild(card)});
+}
+
+function variableBytes(value){let buffer=value&127,out=[];while((value>>=7)){buffer<<=8;buffer|=(value&127)|128}for(;;){out.push(buffer&255);if(buffer&128)buffer>>=8;else break}return out}
+function exportMidi(){
+  if(!state.progression.length){toast("La progression est vide");return}const track=[0,255,81,3,7,161,32,0,192,4];let lastTick=0;
+  state.progression.forEach((notes,index)=>{const start=index*480,end=start+420;notes.slice().sort((a,b)=>a-b).forEach((note,i)=>{track.push(...variableBytes(i?0:start-lastTick),144,note,88);lastTick=start});notes.slice().sort((a,b)=>a-b).forEach((note,i)=>{track.push(...variableBytes(i?0:end-lastTick),128,note,48);lastTick=end})});track.push(...variableBytes(state.progression.length*480-lastTick),255,47,0);
+  const chunk=(name,data)=>[...name].map(c=>c.charCodeAt(0)).concat([(data.length>>>24)&255,(data.length>>>16)&255,(data.length>>>8)&255,data.length&255],data);const header=[77,84,104,100,0,0,0,6,0,0,0,1,1,224],bytes=new Uint8Array(header.concat(chunk("MTrk",track))),url=URL.createObjectURL(new Blob([bytes],{type:"audio/midi"})),a=document.createElement("a");a.href=url;a.download=`progression-${Date.now()}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("MIDI exporté");
+}
+
+function renderAll(){renderPiano();renderIdentity();renderProgression();renderAnswers();renderProgressionIdeas();renderCadences()}
 
 renderSelects();load();renderAll();
 $("placeChordBtn").onclick=()=>{const root=Number($("rootSelect").value),quality=$("qualitySelect").value;state.notes=new Set(canonicalVoicing(root,quality));renderAll();playNotes([...state.notes])};
 $("clearNotesBtn").onclick=()=>{state.notes.clear();renderAll()};
 $("addCurrentBtn").onclick=()=>{const notes=[...state.notes].sort((a,b)=>a-b);if(notes.length<3)return;state.progression.push(notes);state.selected=state.progression.length-1;save();renderAll();toast("Accord ajouté")};
 $("clearAllBtn").onclick=()=>{if(!confirm("Effacer toute la progression ?"))return;state.progression=[];state.selected=null;state.notes.clear();save();renderAll()};
+$("detectedName").onclick=()=>{if(state.notes.size>=3)playNotes([...state.notes])};
+$("exportMidiBtn").onclick=exportMidi;
+$("midiFileInput").onchange=(event)=>importMidi(event.target.files[0]);
+const midiDrop=$("midiDropzone");["dragenter","dragover"].forEach(type=>midiDrop.addEventListener(type,event=>{event.preventDefault();midiDrop.classList.add("drag")}));["dragleave","drop"].forEach(type=>midiDrop.addEventListener(type,event=>{event.preventDefault();midiDrop.classList.remove("drag")}));midiDrop.addEventListener("drop",event=>importMidi([...event.dataTransfer.files].find(file=>/\.midi?$/i.test(file.name))));
+const trash=$("chordTrash");trash.addEventListener("dragover",event=>{event.preventDefault();trash.classList.add("drag")});trash.addEventListener("dragleave",()=>trash.classList.remove("drag"));trash.addEventListener("drop",event=>{event.preventDefault();trash.classList.remove("drag");removeChord(Number(event.dataTransfer.getData("text/chord-index")))});
 document.querySelectorAll(".direction-btn").forEach(btn=>btn.onclick=()=>{state.direction=btn.dataset.direction;document.querySelectorAll(".direction-btn").forEach(b=>b.classList.toggle("active",b===btn));renderAnswers()});

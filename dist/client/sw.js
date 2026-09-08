@@ -11,6 +11,7 @@ const CORE_ASSETS = [
   "./karaoke.js",
   "./chords.html",
   "./chords.css",
+  "./chords-midi.css",
   "./chords.js",
   "./style.css",
   "./site.css",
