@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "trumpet-trainer-v33";
+const CACHE_NAME = "trumpet-trainer-v34";
 const CORE_ASSETS = [
   "./",
   "./index.html",
