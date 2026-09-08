@@ -124,13 +124,25 @@
           <span class="score-playback-hint">Utilise le BPM ci-dessus — change-le pour ralentir/accélérer la boucle.</span>
         </div>
 
+        <div id="transcriptionTools" class="transcription-tools" hidden>
+          <div class="transcription-tools-copy">
+            <span class="instrument-tag trumpet-tag">Trompette</span>
+            <div><strong>Partition détectée</strong><small>Retire les fausses notes courtes, puis passe en édition si nécessaire.</small></div>
+          </div>
+          <div class="transcription-tools-actions">
+            <button type="button" id="cleanTranscriptionBtn" class="btn">Nettoyer les notes parasites</button>
+            <button type="button" id="editTranscriptionBtn" class="btn btn-primary">Modifier la partition</button>
+          </div>
+          <p id="transcriptionFeedback" class="transcription-feedback" role="status" aria-live="polite"></p>
+        </div>
+
         <div id="improvisationControls" class="improvisation-controls" hidden>
           <p class="subtitle">Bibliothèque de gammes : choisis n'importe quelle note et n'importe quelle gamme pour l'étudier, avec les doigtés. Charge un fichier audio pour que la clé soit détectée automatiquement et coller à ce que tu entends.</p>
           <div class="improv-row">
             <span class="key-display">Tonalité détectée : <strong id="detectedKeyLabel">--</strong></span>
           </div>
 
-          <div class="improv-row">
+          <div class="improv-row" hidden>
             <div class="mode-toggle chord-mode-toggle">
               <button type="button" class="sub-toggle-btn active" data-chordmode="free">Gamme libre</button>
               <button type="button" class="sub-toggle-btn" data-chordmode="chord">À partir d'un accord</button>
@@ -168,25 +180,9 @@
 
           <details class="advanced-tools">
             <summary>
-              <span>Outils d'entraînement</span>
-              <small>Progression d'accords et interro</small>
+              <span>Entraînement trompette</span>
+              <small>Interro de notes au micro</small>
             </summary>
-
-          <div class="piano-roll-panel">
-            <div class="piano-roll-header">
-              <h3><span class="instrument-tag piano-tag">Piano</span> Progression d'accords</h3>
-              <div class="piano-roll-actions">
-                <button type="button" id="addChordSlotBtn" class="btn">+ Accord</button>
-                <button type="button" id="clearPianoRollBtn" class="btn">Effacer</button>
-                <button type="button" id="jazzifyBtn" class="btn btn-primary" disabled>Jazzifier · trouver des réponses</button>
-                <button type="button" id="sendChordToTrumpetBtn" class="btn trumpet-action" disabled>Vers la trompette</button>
-              </div>
-            </div>
-            <p class="subtitle">Sélectionne un accord, puis écoute plusieurs variantes. La réponse choisie sera ajoutée tout à la fin de la progression. « Vers la trompette » reste une action séparée.</p>
-            <p id="pianoRollFeedback" class="piano-roll-feedback" role="status" aria-live="polite"></p>
-            <div id="jazzVariationPicker" class="jazz-variation-picker" hidden></div>
-            <div id="pianoRollGrid" class="piano-roll-grid"></div>
-          </div>
 
           <div class="quiz-panel">
             <div class="piano-roll-header">
@@ -267,6 +263,21 @@
           <span id="octaveShiftLabel" class="octave-shift-label">Octave normale</span>
           <button type="button" id="octaveUpBtn" class="btn">🔼 Octave</button>
         </div>
+        <div class="note-scanner">
+          <div class="scanner-heading">
+            <div>
+              <span class="eyebrow">Scanner micro</span>
+              <strong id="scannerNoteLabel">--</strong>
+            </div>
+            <span id="scannerCentsLabel" class="scanner-cents">En attente</span>
+          </div>
+          <div class="tuner-track" aria-hidden="true"><span id="tunerNeedle" class="tuner-needle"></span></div>
+          <div class="scanner-actions">
+            <button type="button" id="toggleScannerBtn" class="btn btn-primary">Démarrer le scanner</button>
+            <button type="button" id="captureScannedNoteBtn" class="btn" disabled>Ajouter à la partition</button>
+          </div>
+          <p id="scannerFeedback" class="scanner-feedback" role="status" aria-live="polite">Le scanner reconnaît une note à la fois et affiche directement le doigté.</p>
+        </div>
         <div class="pistons">
           <div class="valve-group">
             <div class="valve" id="valve1"><div class="valve-cap"></div></div>
@@ -280,6 +291,24 @@
             <div class="valve" id="valve3"><div class="valve-cap"></div></div>
             <span class="valve-number">3</span>
           </div>
+        </div>
+      </section>
+
+      <section class="panel piano-panel">
+        <div class="piano-roll-panel">
+          <div class="piano-roll-header">
+            <h2><span class="instrument-tag piano-tag">Piano</span> Accords et réponses</h2>
+            <div class="piano-roll-actions">
+              <button type="button" id="addChordSlotBtn" class="btn">+ Accord</button>
+              <button type="button" id="clearPianoRollBtn" class="btn">Effacer</button>
+              <button type="button" id="jazzifyBtn" class="btn btn-primary" disabled>Jazzifier · trouver des réponses</button>
+              <button type="button" id="sendChordToTrumpetBtn" class="btn trumpet-action" disabled>Notes pour trompette</button>
+            </div>
+          </div>
+          <p class="subtitle">Construis et vérifie les accords ici. Jazzifier propose plusieurs réponses à écouter avant d'ajouter la meilleure à la fin.</p>
+          <p id="pianoRollFeedback" class="piano-roll-feedback" role="status" aria-live="polite"></p>
+          <div id="jazzVariationPicker" class="jazz-variation-picker" hidden></div>
+          <div id="pianoRollGrid" class="piano-roll-grid"></div>
         </div>
       </section>
 

@@ -183,6 +183,7 @@ body.standalone-app .mini-nav {
 
 .transport-panel,
 .notation-panel,
+.piano-panel,
 .saved-scores-panel {
   grid-column: 1;
 }
@@ -724,6 +725,7 @@ input:disabled {
   .transport-panel,
   .notation-panel,
   .piston-panel,
+  .piano-panel,
   .saved-scores-panel {
     grid-column: 1;
   }
@@ -1067,6 +1069,59 @@ body.standalone-app .valve-number {
   border: 1px solid #3e5b88;
 }
 
+.trumpet-tag {
+  color: #2b210d;
+  background: var(--accent);
+  border: 1px solid #f3ce82;
+}
+
+.transcription-tools {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 16px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  border-radius: 10px;
+  background: rgba(var(--accent-rgb), 0.045);
+}
+
+.transcription-tools[hidden] { display: none; }
+
+.transcription-tools-copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.transcription-tools-copy div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.transcription-tools-copy small,
+.transcription-feedback,
+.scanner-feedback {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+}
+
+.transcription-tools-actions { display: flex; gap: 8px; }
+
+.transcription-tools-actions .btn {
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+
+.transcription-feedback {
+  grid-column: 1 / -1;
+  min-height: 1em;
+  margin: 0;
+  color: var(--accent-2);
+}
+
 .trumpet-action {
   color: var(--accent);
   border-color: rgba(var(--accent-rgb), 0.45);
@@ -1078,6 +1133,93 @@ body.standalone-app .valve-number {
   margin: 8px 0 0;
   color: var(--accent-2);
   font-size: 0.82rem;
+}
+
+.piano-panel .piano-roll-panel {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.note-scanner {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(var(--accent-2-rgb), 0.3);
+  border-radius: 10px;
+  background: rgba(var(--accent-2-rgb), 0.045);
+}
+
+.scanner-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.scanner-heading > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.scanner-heading strong {
+  color: var(--text);
+  font-size: 1.55rem;
+}
+
+.scanner-cents {
+  color: var(--accent-2);
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tuner-track {
+  position: relative;
+  height: 5px;
+  margin: 12px 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--danger), var(--accent-2) 50%, var(--danger));
+}
+
+.tuner-track::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: 50%;
+  width: 1px;
+  background: var(--text);
+}
+
+.tuner-needle {
+  position: absolute;
+  z-index: 1;
+  top: -5px;
+  left: 50%;
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: white;
+  transform: translateX(-50%);
+  transition: left 0.12s ease;
+}
+
+.scanner-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+}
+
+.scanner-actions .btn {
+  width: 100%;
+  padding: 7px 8px;
+  font-size: 0.77rem;
+}
+
+.scanner-feedback {
+  min-height: 2.6em;
+  margin: 9px 0 0;
+  line-height: 1.35;
 }
 
 .jazz-variation-picker {
@@ -1160,6 +1302,14 @@ body.standalone-app .valve-number {
 @media (max-width: 760px) {
   .variation-list {
     grid-template-columns: 1fr;
+  }
+
+  .transcription-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .transcription-tools-actions {
+    flex-direction: column;
   }
 }
 

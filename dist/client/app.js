@@ -58,6 +58,7 @@ const state = {
 
   manualNotes: [],      // [{time, midi}] concert pitch, user-placed, time-sorted
   manualMeasures: [],
+  manualCaptureMode: false,
   deleteNoteMode: false, // when true, clicking a staff note removes it instead of previewing it
 
   scoreLoopActive: false,
@@ -163,6 +164,18 @@ const el = {
   pianoRollFeedback: document.getElementById("pianoRollFeedback"),
   jazzVariationPicker: document.getElementById("jazzVariationPicker"),
 
+  transcriptionTools: document.getElementById("transcriptionTools"),
+  cleanTranscriptionBtn: document.getElementById("cleanTranscriptionBtn"),
+  editTranscriptionBtn: document.getElementById("editTranscriptionBtn"),
+  transcriptionFeedback: document.getElementById("transcriptionFeedback"),
+
+  toggleScannerBtn: document.getElementById("toggleScannerBtn"),
+  captureScannedNoteBtn: document.getElementById("captureScannedNoteBtn"),
+  scannerNoteLabel: document.getElementById("scannerNoteLabel"),
+  scannerCentsLabel: document.getElementById("scannerCentsLabel"),
+  tunerNeedle: document.getElementById("tunerNeedle"),
+  scannerFeedback: document.getElementById("scannerFeedback"),
+
   startQuizBtn: document.getElementById("startQuizBtn"),
   quizArea: document.getElementById("quizArea"),
   quizScore: document.getElementById("quizScore"),
@@ -248,6 +261,7 @@ el.fileInput.addEventListener("change", () => {
 });
 
 async function loadFile(file) {
+  if (noteScanner.active) stopNoteScanner();
   stopPlayback();
   stopScorePlayback();
   stopMetronome();
@@ -299,6 +313,7 @@ async function loadFile(file) {
     el.insideOutsideRow.hidden = true;
 
     state.manualNotes = [];
+    state.manualCaptureMode = false;
     rebuildManualMeasures();
 
     setProgress(null);
@@ -448,6 +463,110 @@ function autoCorrelate(buffer, sampleRate) {
   return sampleRate / T0;
 }
 
+// ---------------------------------------------------------------------------
+// Trumpet note scanner — strictly monophonic: one detected pitch, its tuning
+// and the matching Bb-trumpet fingering. It never attempts chord detection.
+// ---------------------------------------------------------------------------
+
+const noteScanner = {
+  active: false,
+  stream: null,
+  analyser: null,
+  buffer: null,
+  pollHandle: null,
+  lastMidi: null,
+  stableFrames: 0,
+  stableMidi: null,
+};
+
+async function startNoteScanner() {
+  if (quizState.active) stopQuiz(false);
+  if (!navigator.mediaDevices?.getUserMedia) {
+    el.scannerFeedback.textContent = "Le micro n'est pas disponible dans ce navigateur.";
+    return;
+  }
+
+  try {
+    if (!state.audioContext) state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    if (state.audioContext.state === "suspended") await state.audioContext.resume();
+    const stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+    });
+    const source = state.audioContext.createMediaStreamSource(stream);
+    const analyser = state.audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+    source.connect(analyser);
+
+    noteScanner.active = true;
+    noteScanner.stream = stream;
+    noteScanner.analyser = analyser;
+    noteScanner.buffer = new Float32Array(analyser.fftSize);
+    noteScanner.lastMidi = null;
+    noteScanner.stableFrames = 0;
+    noteScanner.stableMidi = null;
+    el.toggleScannerBtn.textContent = "Arrêter";
+    el.toggleScannerBtn.classList.add("active");
+    el.scannerFeedback.textContent = "Joue une note tenue…";
+    noteScanner.pollHandle = setInterval(scanTrumpetNote, 90);
+  } catch (error) {
+    el.scannerFeedback.textContent = "Autorise le micro pour utiliser le scanner de notes.";
+  }
+}
+
+function stopNoteScanner() {
+  if (noteScanner.pollHandle) clearInterval(noteScanner.pollHandle);
+  noteScanner.stream?.getTracks().forEach((track) => track.stop());
+  noteScanner.active = false;
+  noteScanner.stream = null;
+  noteScanner.analyser = null;
+  noteScanner.buffer = null;
+  noteScanner.pollHandle = null;
+  el.toggleScannerBtn.textContent = "Démarrer le scanner";
+  el.toggleScannerBtn.classList.remove("active");
+  el.scannerFeedback.textContent = "Scanner arrêté.";
+}
+
+function scanTrumpetNote() {
+  if (!noteScanner.active || !noteScanner.analyser) return;
+  noteScanner.analyser.getFloatTimeDomainData(noteScanner.buffer);
+  const frequency = autoCorrelate(noteScanner.buffer, state.audioContext.sampleRate);
+  if (frequency < 140 || frequency > 1400) return;
+
+  const preciseMidi = 69 + 12 * Math.log2(frequency / 440);
+  const midi = Math.round(preciseMidi);
+  const cents = Math.round((preciseMidi - midi) * 100);
+  if (midi === noteScanner.lastMidi) noteScanner.stableFrames++;
+  else {
+    noteScanner.lastMidi = midi;
+    noteScanner.stableFrames = 1;
+  }
+  if (noteScanner.stableFrames < 3) return;
+
+  noteScanner.stableMidi = midi;
+  el.scannerNoteLabel.textContent = midiToFrenchName(midi);
+  el.scannerCentsLabel.textContent = Math.abs(cents) <= 5 ? "Juste" : `${cents > 0 ? "+" : ""}${cents} cents`;
+  el.tunerNeedle.style.left = `${50 + Math.max(-50, Math.min(50, cents))}%`;
+  el.captureScannedNoteBtn.disabled = false;
+  updatePistons(midi);
+  setCurrentNoteLabel(midiToFrenchName(midi));
+  el.scannerFeedback.textContent = "Note reconnue — tu peux l'ajouter à ta partition.";
+}
+
+function captureScannedNote() {
+  if (noteScanner.stableMidi === null) return;
+  const beatDuration = 60 / state.bpm;
+  const last = state.manualNotes[state.manualNotes.length - 1];
+  const time = last ? last.time + beatDuration : 0;
+  state.manualCaptureMode = true;
+  state.duration = Math.max(state.duration, time + beatDuration);
+  state.manualNotes.push({ time, midi: noteScanner.stableMidi });
+  rebuildManualMeasures();
+  const manualButton = el.modeBtns.find((btn) => btn.dataset.mode === "manual");
+  if (manualButton) manualButton.disabled = false;
+  setMode("manual");
+  el.scannerFeedback.textContent = `${midiToFrenchName(noteScanner.stableMidi)} ajoutée à la fin de la partition.`;
+}
+
 function extractPitchFrames(channelData, sampleRate, onProgress) {
   const windowSize = 1024;
   const hop = 512;
@@ -546,6 +665,63 @@ function buildNoteEvents(segments, duration, bpm) {
   }
 
   return events;
+}
+
+function cleanTranscription() {
+  const notes = state.noteEvents.filter((event) => event.type === "note").map((event) => ({ ...event }));
+  if (notes.length < 2) {
+    el.transcriptionFeedback.textContent = "Pas assez de notes pour lancer le nettoyage.";
+    return;
+  }
+
+  const filtered = [];
+  let removed = 0;
+  notes.forEach((note, index) => {
+    const previous = notes[index - 1];
+    const next = notes[index + 1];
+    const length = note.endTicks - note.startTicks;
+    const betweenSamePitch = previous && next && previous.midi === next.midi && length <= 2;
+    const isolatedJump = previous && next && length <= 1
+      && Math.abs(note.midi - previous.midi) >= 7
+      && Math.abs(note.midi - next.midi) >= 7;
+    if (betweenSamePitch || isolatedJump) removed++;
+    else filtered.push(note);
+  });
+
+  const merged = [];
+  filtered.forEach((note) => {
+    const previous = merged[merged.length - 1];
+    if (previous && previous.midi === note.midi && note.startTicks - previous.endTicks <= 2) {
+      previous.endTicks = Math.max(previous.endTicks, note.endTicks);
+    } else {
+      merged.push({ ...note });
+    }
+  });
+
+  const segments = merged.map((note) => ({
+    startTime: ticksToTime(note.startTicks, state.bpm),
+    endTime: ticksToTime(note.endTicks, state.bpm),
+    midi: note.midi,
+  }));
+  state.noteEvents = buildNoteEvents(segments, state.duration, state.bpm);
+  state.measures = groupIntoMeasures(state.noteEvents);
+  state.lastRenderKey = null;
+  state.renderedMeasureWindowStart = -1;
+  drawFullScore(state.measures, null);
+  el.transcriptionFeedback.textContent = removed
+    ? `${removed} note${removed > 1 ? "s" : ""} parasite${removed > 1 ? "s" : ""} retirée${removed > 1 ? "s" : ""}.`
+    : "La partition est déjà propre selon le filtre automatique.";
+}
+
+function editDetectedTranscription() {
+  state.manualNotes = state.noteEvents
+    .filter((event) => event.type === "note")
+    .map((event) => ({ time: event.startTime, midi: event.midi }));
+  state.manualCaptureMode = true;
+  rebuildManualMeasures();
+  setMode("manual");
+  setStatus("Partition copiée dans l'éditeur : supprime une note ou remplace-la avec la palette.");
+  setTimeout(() => setStatus(""), 4500);
 }
 
 const DURATION_TOKENS = [
@@ -1084,17 +1260,17 @@ function sendChordToTrumpet() {
   }
 
   state.scaleRoot = detected.root;
-  state.chordQuality = detected.quality;
-  state.chordSide = "outside";
-
+  state.scaleType = CHORD_TO_SCALES[detected.quality].outside;
+  state.chordMode = "free";
   el.scaleRootSelect.value = String(detected.root);
-  el.chordQualitySelect.value = detected.quality;
-  el.insideScaleBtn.classList.remove("active");
-  el.outsideScaleBtn.classList.add("active");
-
-  setChordMode("chord");
+  el.scaleTypeSelect.value = state.scaleType;
+  el.chordModeBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.chordmode === "free"));
+  el.scaleTypeLabel.hidden = false;
+  el.chordQualityLabel.hidden = true;
+  el.insideOutsideRow.hidden = true;
+  setMode("improvisation");
   const scaleName = SCALE_DEFINITIONS[state.scaleType].label;
-  el.pianoRollFeedback.textContent = `Côté trompette : gamme ${scaleName} proposée pour cet accord.`;
+  el.pianoRollFeedback.textContent = `Trompette : les notes de la gamme ${scaleName} sont affichées avec leurs doigtés.`;
   el.staff.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -1135,6 +1311,7 @@ function shuffle(arr) {
 }
 
 async function startQuiz(poolOverride) {
+  if (noteScanner.active) stopNoteScanner();
   let uniqueConcert;
   if (poolOverride) {
     uniqueConcert = [...new Set(poolOverride)];
@@ -1936,7 +2113,7 @@ function buildPitchPalette() {
   // instead of an unrelated full 3-octave chromatic run - and framed as a
   // "notes du morceau" reference with its own quiz entry point, since there's
   // nothing to place/edit here.
-  const readOnly = !state.audioBuffer && state.manualNotes.length > 0;
+  const readOnly = !state.audioBuffer && state.manualNotes.length > 0 && !state.manualCaptureMode;
   let concertMidis;
   if (readOnly) {
     concertMidis = [...new Set(state.manualNotes.map((n) => n.midi))].sort((a, b) => a - b);
@@ -1991,7 +2168,18 @@ function placeManualNote(concertMidi) {
   setCurrentNoteLabel(midiToFrenchName(concertMidi));
   playTone(concertMidi);
 
-  if (!state.audioBuffer) return;
+  if (!state.audioBuffer && !state.manualCaptureMode) return;
+
+  if (!state.audioBuffer && state.manualCaptureMode) {
+    const beatDuration = 60 / state.bpm;
+    const last = state.manualNotes[state.manualNotes.length - 1];
+    const time = last ? last.time + beatDuration : 0;
+    state.duration = Math.max(state.duration, time + beatDuration);
+    state.manualNotes.push({ time, midi: concertMidi });
+    rebuildManualMeasures();
+    drawFullScore(state.manualMeasures, null);
+    return;
+  }
 
   const fraction = Number(el.snapGridSelect.value);
   const time = Math.max(0, Math.min(snapTime(currentPlaybackPosition(), state.bpm, fraction), state.duration));
@@ -2117,6 +2305,7 @@ function setMode(mode) {
   el.modeBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === mode));
   el.improvisationControls.hidden = mode !== "improvisation";
   el.manualControls.hidden = mode !== "manual";
+  el.transcriptionTools.hidden = mode !== "transcription";
   el.degreeChips.hidden = mode !== "improvisation";
   el.pitchPalette.hidden = mode !== "manual";
 
@@ -2663,7 +2852,9 @@ function saveCurrentScore() {
 function loadSavedScore(entry) {
   stopScorePlayback();
   state.manualNotes = entry.notes.map((n) => ({ time: n.time, midi: n.midi }));
+  state.manualCaptureMode = true;
   state.bpm = entry.bpm;
+  state.duration = entry.duration;
   el.bpmInput.value = entry.bpm.toFixed(1);
   el.bpmDisplay.textContent = entry.bpm.toFixed(1);
   state.manualMeasures = buildManualMeasuresFor(state.manualNotes, state.bpm, Math.max(state.duration, entry.duration));
@@ -2895,6 +3086,14 @@ el.modeBtns.forEach((btn) => {
   btn.addEventListener("click", () => setMode(btn.dataset.mode));
 });
 
+el.cleanTranscriptionBtn.addEventListener("click", cleanTranscription);
+el.editTranscriptionBtn.addEventListener("click", editDetectedTranscription);
+el.toggleScannerBtn.addEventListener("click", () => {
+  if (noteScanner.active) stopNoteScanner();
+  else startNoteScanner();
+});
+el.captureScannedNoteBtn.addEventListener("click", captureScannedNote);
+
 el.scaleRootSelect.addEventListener("change", () => {
   state.scaleRoot = Number(el.scaleRootSelect.value);
   if (state.mode === "improvisation") {
@@ -3090,6 +3289,7 @@ async function loadTrackFromQueryParam() {
     const entry = await resp.json();
 
     state.manualNotes = entry.notes.map((n) => ({ time: n.time, midi: n.midi }));
+    state.manualCaptureMode = false;
     state.bpm = entry.bpm;
     state.duration = Math.max(state.duration, entry.duration);
     el.bpmInput.value = entry.bpm.toFixed(1);
