@@ -82,6 +82,9 @@ new GLTFLoader().load(
       const node = gltf.scene.getObjectByName(`Piston_${index + 1}`);
       valveNodes[index] = node;
       if (!node) continue;
+      // Keep the moving piston behind the trumpet body. The main brass tube then
+      // naturally masks the coloured lower plate as the piston goes down.
+      node.position.z -= 0.32;
       valveHomeY[index] = node.position.y;
       node.traverse((child) => {
         if (!child.isMesh || !child.material) return;
