@@ -65,9 +65,12 @@ button, select { font: inherit; }
 .now-playing strong { min-width: 88px; font-size: 1.35rem; color: var(--gold); }
 .active-fingering { min-width: 38px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: var(--gold); color: #27200f; font-weight: 900; }
 
-.valve-status { position: absolute; z-index: 6; left: 30px; bottom: 94px; display: flex; gap: 8px; }
-.valve-dot { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; border: 1px solid rgba(32,40,36,.18); background: rgba(255,255,255,.54); color: var(--muted); font-weight: 900; transition: .08s ease; }
-.valve-dot.pressed { color: #18201d; transform: translateY(4px); }
+.valve-status { position: absolute; z-index: 7; left: calc(50% - 60px); top: 45.5%; transform: translateX(-50%); display: flex; gap: 22px; pointer-events: none; }
+.valve-dot { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 2px solid rgba(255,255,255,.82); color: #18201d; font-size: .9rem; font-weight: 900; opacity: .82; box-shadow: 0 6px 16px rgba(61,48,24,.2); transition: transform .08s ease, opacity .08s ease, box-shadow .08s ease; }
+.valve-dot.pressed { color: #18201d; opacity: 1; transform: translateY(7px) scale(1.08); }
+.valve-1 { background: var(--red); }
+.valve-2 { background: var(--teal); }
+.valve-3 { background: var(--amber); }
 .valve-1.pressed { background: var(--red); box-shadow: 0 0 22px rgba(239,102,88,.55); }
 .valve-2.pressed { background: var(--teal); box-shadow: 0 0 22px rgba(81,209,196,.55); }
 .valve-3.pressed { background: var(--amber); box-shadow: 0 0 22px rgba(243,189,79,.55); }
@@ -79,7 +82,8 @@ button, select { font: inherit; }
 .progress div { width: 0; height: 100%; background: linear-gradient(90deg, #d8952d, #f6ce71); }
 .control-button { border: 1px solid rgba(32,40,36,.16); border-radius: 999px; padding: 10px 15px; color: var(--ink); background: rgba(255,255,255,.45); cursor: pointer; }
 .control-button.primary { min-width: 116px; border-color: transparent; background: var(--gold); color: #28210f; font-weight: 900; }
-.speed-control, .loop-control { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: .82rem; font-weight: 700; white-space: nowrap; }
+.infinite-mode { padding: 7px 10px; border-radius: 999px; color: #756229; background: rgba(242,188,84,.18); font-size: .72rem; font-weight: 900; white-space: nowrap; }
+.speed-control { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: .82rem; font-weight: 700; white-space: nowrap; }
 .speed-control select { color: var(--ink); background: #f7f2e7; border: 1px solid rgba(32,40,36,.16); border-radius: 9px; padding: 7px; }
 
 @media (max-width: 760px) {
@@ -96,6 +100,7 @@ button, select { font: inherit; }
   .progress { order: -1; flex-basis: 100%; }
   #restartBtn { display: none; }
   .speed-control { margin-left: auto; }
-  .loop-control { display: none; }
-  .valve-status { left: 12px; bottom: 112px; }
+  .valve-status { left: calc(50% - 35px); top: 47%; gap: 13px; }
+  .valve-dot { width: 32px; height: 32px; }
+  .infinite-mode { display: none; }
 }

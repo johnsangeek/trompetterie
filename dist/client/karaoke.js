@@ -36,7 +36,6 @@ const activeFingering = document.getElementById("activeFingering");
 const playPauseBtn = document.getElementById("playPauseBtn");
 const restartBtn = document.getElementById("restartBtn");
 const speedSelect = document.getElementById("speedSelect");
-const loopToggle = document.getElementById("loopToggle");
 const progressFill = document.getElementById("progressFill");
 const currentTimeLabel = document.getElementById("currentTime");
 const totalTimeLabel = document.getElementById("totalTime");
@@ -44,19 +43,23 @@ const fullscreenBtn = document.getElementById("fullscreenBtn");
 const valveDots = [1, 2, 3].map((index) => document.getElementById(`karaokeValve${index}`));
 
 title.textContent = session.title || "Partition en cours";
-totalTimeLabel.textContent = formatTime(totalDuration);
+totalTimeLabel.textContent = "∞";
 
-const noteElements = events.map((event) => {
-  const writtenMidi = event.midi + 2;
-  const fingering = fingeringFor(event.midi);
-  const note = document.createElement("div");
-  note.className = "karaoke-note";
-  note.dataset.index = event.index;
-  note.style.top = `${92 - (writtenMidi - 71) * 3.3}px`;
-  note.innerHTML = `<span class="stem"></span><span class="head"></span><span class="duration"></span><span class="name">${writtenName(event.midi)}</span><span class="fingering">${fingering}</span>`;
-  noteTrack.appendChild(note);
-  return note;
-});
+const noteElements = [];
+for (let cycle = 0; cycle < 2; cycle++) {
+  events.forEach((event) => {
+    const writtenMidi = event.midi + 2;
+    const fingering = fingeringFor(event.midi);
+    const note = document.createElement("div");
+    note.className = "karaoke-note";
+    note.dataset.index = event.index;
+    note.dataset.cycle = cycle;
+    note.style.top = `${92 - (writtenMidi - 71) * 3.3}px`;
+    note.innerHTML = `<span class="stem"></span><span class="head"></span><span class="duration"></span><span class="name">${writtenName(event.midi)}</span><span class="fingering">${fingering}</span>`;
+    noteTrack.appendChild(note);
+    noteElements.push({ element: note, event, cycle });
+  });
+}
 
 let audioContext = null;
 let playing = false;
@@ -123,7 +126,6 @@ function currentPosition() {
 
 function start() {
   const ctx = ensureAudio();
-  if (pausedAt >= totalDuration) pausedAt = 0;
   startedAt = ctx.currentTime - pausedAt / speed;
   lastActiveIndex = -1;
   playing = true;
@@ -161,7 +163,7 @@ function setActive(event) {
   const index = event?.index ?? -1;
   if (index === lastActiveIndex) return;
   lastActiveIndex = index;
-  noteElements.forEach((element, elementIndex) => element.classList.toggle("active", elementIndex === index));
+  noteElements.forEach(({ element, event: renderedEvent }) => element.classList.toggle("active", renderedEvent.index === index));
   const values = event ? fingeringValues(event.midi) : [];
   valveDots.forEach((dot, dotIndex) => dot.classList.toggle("pressed", values.includes(dotIndex + 1)));
   valveTargets.forEach((_, targetIndex) => { valveTargets[targetIndex] = values.includes(targetIndex + 1) ? 1 : 0; });
@@ -176,25 +178,15 @@ function setActive(event) {
 }
 
 function updateFrame() {
-  let position = currentPosition();
-  if (position >= totalDuration) {
-    if (loopToggle.checked && playing) {
-      restart(true);
-      position = 0;
-    } else {
-      pausedAt = totalDuration;
-      playing = false;
-      playPauseBtn.textContent = "▶ Rejouer";
-    }
-  }
+  const elapsed = currentPosition();
+  const position = totalDuration ? elapsed % totalDuration : 0;
 
   const anchor = staffViewport.clientWidth * .48;
   const pixelsPerSecond = Math.max(128, staffViewport.clientWidth * .14);
-  noteElements.forEach((element, index) => {
-    const event = events[index];
-    element.style.left = `${anchor + event.startTime * pixelsPerSecond}px`;
+  noteElements.forEach(({ element, event, cycle }) => {
+    element.style.left = `${anchor + (event.startTime + cycle * totalDuration) * pixelsPerSecond}px`;
     element.querySelector(".duration").style.width = `${Math.max(20, (event.endTime - event.startTime) * pixelsPerSecond)}px`;
-    element.classList.toggle("past", event.endTime < position);
+    element.classList.toggle("past", cycle === 0 && event.endTime < position);
   });
   noteTrack.style.transform = `translateX(${-position * pixelsPerSecond}px)`;
   const active = findActive(position);
