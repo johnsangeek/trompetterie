@@ -52,7 +52,7 @@ body.trumpet-workspace-open .mini-nav a:first-child {
 body.trumpet-workspace-open #workspace {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(285px, 42vh) minmax(0, 1fr);
+  grid-template-rows: 42vh minmax(0, 58vh);
   gap: 0;
   width: 100%;
   height: 100%;
@@ -150,6 +150,8 @@ body.trumpet-workspace-open #staff {
   scrollbar-color: rgba(104, 97, 82, .28) transparent;
 }
 
+body.trumpet-workspace-open #staff > svg { margin-inline: auto; }
+
 body.trumpet-workspace-open .degree-chips {
   position: absolute;
   z-index: 12;
@@ -172,6 +174,30 @@ body.trumpet-workspace-open .degree-chip {
   padding: 7px 10px;
   background: rgba(239, 234, 221, .92);
 }
+
+.chip-fingering { display: flex; align-items: center; justify-content: center; gap: 3px; }
+.fingering-color-dot,
+.current-fingering-dot {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: 1px solid rgba(255,255,255,.9);
+  border-radius: 50%;
+  color: #17201d;
+  background: var(--fingering-color, #9aa1b2);
+  box-shadow: 0 2px 7px rgba(35,31,23,.16);
+  font-size: .68rem;
+  font-weight: 900;
+}
+
+.instrument-current-fingering { display: flex; align-items: center; gap: 4px; }
+.current-fingering-dot { width: 30px; height: 30px; font-size: .78rem; }
+.current-fingering-dot.fingering-0 { color: #fff; background: #9aa1b2; }
+.current-fingering-dot.fingering-1 { background: #ef6658; }
+.current-fingering-dot.fingering-2 { background: #51d1c4; }
+.current-fingering-dot.fingering-3 { background: #f3bd4f; }
 
 body.trumpet-workspace-open .practice-launch {
   position: absolute;
@@ -253,7 +279,7 @@ body.trumpet-workspace-open .instrument-clef { color: #8f948d; }
 body.trumpet-workspace-open .instrument-stage-footer {
   top: 21%;
   bottom: auto;
-  left: calc(50% - 60px);
+  left: calc(50% - 82px);
   right: auto;
   z-index: 8;
   transform: translateX(-50%);
@@ -342,9 +368,9 @@ body.trumpet-workspace-open #scorePlaybackRow {
 body.trumpet-workspace-open #hiddenModeToggle { top: 172px; }
 
 @media (max-width: 760px) {
-  body.trumpet-workspace-open { height: auto; min-height: 100vh; overflow-y: auto; }
-  body.trumpet-workspace-open .app { height: auto; min-height: 100vh; overflow: visible; }
-  body.trumpet-workspace-open #workspace { grid-template-rows: minmax(310px, 48vh) minmax(390px, 52vh); height: 100vh; min-height: 700px; }
+  body.trumpet-workspace-open { height: 100vh; min-height: 0; overflow: hidden; }
+  body.trumpet-workspace-open .app { height: 100vh; min-height: 0; overflow: hidden; }
+  body.trumpet-workspace-open #workspace { grid-template-rows: 48vh minmax(0, 52vh); height: 100vh; min-height: 0; }
   body.trumpet-workspace-open .notation-panel { padding-inline: 12px; }
   body.trumpet-workspace-open .notation-panel > .panel-header { left: 12px; right: 12px; }
   body.trumpet-workspace-open .clef-toggle-btn::after { display: none; }
@@ -352,7 +378,7 @@ body.trumpet-workspace-open #hiddenModeToggle { top: 172px; }
   body.trumpet-workspace-open .practice-launch .btn { min-height: 40px; padding-inline: 14px; font-size: .78rem; }
   body.trumpet-workspace-open .degree-chips { left: 12px; width: calc(100vw - 170px); transform: none; }
   body.trumpet-workspace-open #improvisationControls { left: 12px; top: 104px; width: calc(100vw - 24px); }
-  body.trumpet-workspace-open .instrument-stage-footer { left: calc(50% - 34px); top: 24%; }
+  body.trumpet-workspace-open .instrument-stage-footer { left: calc(50% - 50px); top: 24%; }
   body.trumpet-workspace-open .instrument-valve-legend { gap: 12px; }
   body.trumpet-workspace-open .instrument-valve-dot { width: 32px; height: 32px; }
 }

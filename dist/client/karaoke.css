@@ -49,23 +49,26 @@ button, select { font: inherit; }
 .staff-viewport { position: relative; overflow: hidden; }
 .staff-lines { position: absolute; top: 69px; left: 0; right: 0; height: 71px; background: repeating-linear-gradient(to bottom, rgba(22,29,26,.55) 0 1px, transparent 1px 14px); }
 .note-track { position: absolute; inset: 0; will-change: transform; }
-.anchor-line { position: absolute; z-index: 5; left: 48%; top: 13px; bottom: 12px; width: 2px; background: linear-gradient(transparent, #e59f28 13%, #e59f28 86%, transparent); box-shadow: 0 0 16px rgba(229,159,40,.7); }
+.anchor-line { position: absolute; z-index: 5; left: 50%; top: 13px; bottom: 12px; width: 2px; background: linear-gradient(transparent, #e59f28 13%, #e59f28 86%, transparent); box-shadow: 0 0 16px rgba(229,159,40,.7); }
 .anchor-line span { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); background: #1e2724; color: var(--gold); border-radius: 999px; padding: 4px 8px; font-size: .6rem; font-weight: 900; letter-spacing: .12em; }
 .karaoke-note { position: absolute; width: 54px; height: 120px; color: #17201d; transform: translate(-27px, -50%); }
 .karaoke-note .head { position: absolute; left: 17px; top: 43px; width: 22px; height: 15px; border-radius: 50%; background: currentColor; transform: rotate(-16deg); box-shadow: 0 1px 0 rgba(255,255,255,.3) inset; }
 .karaoke-note .stem { position: absolute; left: 37px; top: 2px; width: 2px; height: 48px; background: currentColor; }
 .karaoke-note .duration { position: absolute; left: 38px; top: 2px; height: 3px; border-radius: 3px; background: currentColor; min-width: 24px; }
 .karaoke-note .name { position: absolute; top: 63px; left: 50%; transform: translateX(-50%); font-size: .73rem; font-weight: 900; white-space: nowrap; }
-.karaoke-note .fingering { position: absolute; top: 84px; left: 50%; transform: translateX(-50%); min-width: 29px; height: 25px; padding: 3px 6px; border-radius: 8px; color: white; background: #202825; text-align: center; font-size: .78rem; font-weight: 900; letter-spacing: .04em; }
+.karaoke-note .fingering { position: absolute; top: 82px; left: 50%; transform: translateX(-50%); min-width: 29px; height: 25px; display: flex; align-items: center; justify-content: center; gap: 3px; text-align: center; font-size: .7rem; font-weight: 900; }
+.karaoke-fingering-dot { width: 23px; height: 23px; display: inline-grid; place-items: center; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.88); border-radius: 50%; color: #17201d; box-shadow: 0 2px 7px rgba(35,31,23,.18); }
+.karaoke-fingering-dot.fingering-0 { color: #fff; background: #9aa1b2; }.karaoke-fingering-dot.fingering-1 { background: var(--red); }.karaoke-fingering-dot.fingering-2 { background: var(--teal); }.karaoke-fingering-dot.fingering-3 { background: var(--amber); }
 .karaoke-note.active { color: #e29724; filter: drop-shadow(0 0 7px rgba(226,151,36,.45)); }
 .karaoke-note.past { opacity: .25; }
 
 .now-playing { position: absolute; z-index: 6; left: 50%; top: 335px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px solid rgba(57,52,42,.15); border-radius: 16px; background: rgba(250,247,239,.72); box-shadow: 0 10px 32px rgba(89,72,39,.11); backdrop-filter: blur(12px); }
 .now-label { color: var(--muted); font-size: .62rem; font-weight: 900; letter-spacing: .12em; }
 .now-playing strong { min-width: 88px; font-size: 1.35rem; color: var(--gold); }
-.active-fingering { min-width: 38px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: var(--gold); color: #27200f; font-weight: 900; }
+.active-fingering { min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center; gap: 4px; color: #27200f; font-weight: 900; }
+.active-fingering .karaoke-fingering-dot { width: 32px; height: 32px; }
 
-.valve-status { position: absolute; z-index: 7; left: calc(50% - 60px); top: 45.5%; transform: translateX(-50%); display: flex; gap: 22px; pointer-events: none; }
+.valve-status { position: absolute; z-index: 7; left: calc(50% - 82px); top: 45.5%; transform: translateX(-50%); display: flex; gap: 22px; pointer-events: none; }
 .valve-dot { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 2px solid rgba(255,255,255,.82); color: #18201d; font-size: .9rem; font-weight: 900; opacity: .82; box-shadow: 0 6px 16px rgba(61,48,24,.2); transition: transform .08s ease, opacity .08s ease, box-shadow .08s ease; }
 .valve-dot.pressed { color: #18201d; opacity: 1; transform: translateY(7px) scale(1.08); }
 .valve-1 { background: var(--red); }
@@ -100,7 +103,7 @@ button, select { font: inherit; }
   .progress { order: -1; flex-basis: 100%; }
   #restartBtn { display: none; }
   .speed-control { margin-left: auto; }
-  .valve-status { left: calc(50% - 35px); top: 47%; gap: 13px; }
+  .valve-status { left: calc(50% - 50px); top: 47%; gap: 13px; }
   .valve-dot { width: 32px; height: 32px; }
   .infinite-mode { display: none; }
 }

@@ -9,6 +9,7 @@ const clef = document.getElementById("instrumentTrebleClef");
 const playPauseButton = document.getElementById("instrumentPlayPauseBtn");
 const stopButton = document.getElementById("instrumentStopBtn");
 const valveDots = [1, 2, 3].map((index) => document.getElementById(`instrumentValve${index}`));
+const fingeringDots = document.getElementById("instrumentFingeringDots");
 
 const renderer = new THREE.WebGLRenderer({
   canvas,
@@ -51,8 +52,8 @@ function frameModel() {
   renderer.setSize(width, height, false);
 
   const aspect = width / height;
-  const modelWidth = modelBounds ? modelBounds.size.x * 1.12 : 10;
-  const modelHeight = modelBounds ? modelBounds.size.y * 1.35 : 4;
+  const modelWidth = modelBounds ? modelBounds.size.x * 1.2 : 10;
+  const modelHeight = modelBounds ? modelBounds.size.y * 1.44 : 4;
   const viewHeight = Math.max(modelHeight, modelWidth / aspect);
   const viewWidth = viewHeight * aspect;
 
@@ -132,6 +133,10 @@ function setValves(pressed) {
     valveTargets[index] = value ? 1 : 0;
     valveDots[index].classList.toggle("pressed", value);
   });
+  const active = pressed.map((value, index) => value ? index + 1 : null).filter(Boolean);
+  const values = active.length ? active : [0];
+  fingeringDots.innerHTML = values.map((value) => `<span class="current-fingering-dot fingering-${value}">${value}</span>`).join("");
+  fingeringDots.setAttribute("aria-label", active.length ? `Pistons ${active.join(", ")}` : "Doigté ouvert");
 }
 
 function activateStage() {

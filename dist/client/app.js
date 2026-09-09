@@ -246,6 +246,7 @@ toolsDrawer.appendChild(toolsDrawerHead);
   document.querySelector(".note-scanner"),
 ].filter(Boolean).forEach((node) => toolsDrawer.appendChild(node));
 el.mainApp.appendChild(toolsDrawer);
+[el.songNotesHeader, el.songKeyPanel].filter(Boolean).forEach((node) => el.improvisationControls.appendChild(node));
 
 // The 3D trumpet is now an always-visible inline panel (not an on-demand
 // fullscreen modal), so it's activated once at startup and never closed.
@@ -1646,8 +1647,11 @@ const OPEN_FINGERING_COLOR = "#9aa1b2";
 // HTML (colored <span> per digit) for use inside chip labels.
 function coloredFingeringHTML(writtenMidi) {
   const valves = fingeringValves(writtenMidi);
-  if (!valves.length) return `<span style="color:${OPEN_FINGERING_COLOR}">0</span>`;
-  return valves.map((v) => `<span style="color:${VALVE_COLORS[v]}">${v}</span>`).join("");
+  const values = valves.length ? valves : [0];
+  return values.map((value) => {
+    const color = value ? VALVE_COLORS[value] : OPEN_FINGERING_COLOR;
+    return `<span class="fingering-color-dot" style="--fingering-color:${color}">${value}</span>`;
+  }).join("");
 }
 
 // Draws the fingering digits directly onto an SVG as individual colored
@@ -1659,25 +1663,33 @@ function drawColoredFingering(svgRoot, x, y, writtenMidi, fontSize) {
   const valves = fingeringValves(writtenMidi);
   const chars = valves.length ? valves.map(String) : ["0"];
   const colors = valves.length ? valves.map((v) => VALVE_COLORS[v]) : [OPEN_FINGERING_COLOR];
-  const charWidth = fontSize * 0.62;
-  let cx = x - (charWidth * chars.length) / 2 + charWidth / 2;
+  const diameter = fontSize * 1.18;
+  const gap = fontSize * 0.22;
+  const totalWidth = chars.length * diameter + (chars.length - 1) * gap;
+  const centerY = y - fontSize * 0.34;
+  let cx = x - totalWidth / 2 + diameter / 2;
 
   chars.forEach((ch, i) => {
+    const circle = document.createElementNS(NS, "circle");
+    circle.setAttribute("cx", String(cx));
+    circle.setAttribute("cy", String(centerY));
+    circle.setAttribute("r", String(diameter / 2));
+    circle.setAttribute("fill", colors[i]);
+    circle.setAttribute("stroke", "rgba(255,255,255,.9)");
+    circle.setAttribute("stroke-width", "1.3");
+    svgRoot.appendChild(circle);
+
     const text = document.createElementNS(NS, "text");
     text.setAttribute("x", String(cx));
-    text.setAttribute("y", String(y));
+    text.setAttribute("y", String(centerY + fontSize * 0.31));
     text.setAttribute("font-family", "Arial, sans-serif");
     text.setAttribute("font-weight", "bold");
-    text.setAttribute("font-size", String(fontSize));
+    text.setAttribute("font-size", String(fontSize * 0.72));
     text.setAttribute("text-anchor", "middle");
-    text.setAttribute("fill", colors[i]);
-    // A thin stroke in the same color fakes extra boldness beyond what the
-    // font's own "bold" weight gives - keeps the digits readable at a glance.
-    text.setAttribute("stroke", colors[i]);
-    text.setAttribute("stroke-width", "0.9");
+    text.setAttribute("fill", ch === "0" ? "#ffffff" : "#17201d");
     text.textContent = ch;
     svgRoot.appendChild(text);
-    cx += charWidth;
+    cx += diameter + gap;
   });
 }
 
@@ -3628,6 +3640,13 @@ function enterTrumpetWorkspace() {
   // 1x1px forever. Re-open (re-frame) it now that the panel is actually on
   // screen with real dimensions.
   openInstrumentStage();
+  requestAnimationFrame(() => {
+    if (state.mode === "improvisation") renderScaleReference();
+    else {
+      state.lastRenderKey = null;
+      refreshPlayhead(currentPlaybackPosition());
+    }
+  });
 }
 
 function showBoardingSpace() {
@@ -3641,6 +3660,19 @@ el.boardTrumpetBtn.addEventListener("click", enterTrumpetWorkspace);
 el.backToBoardingLink.addEventListener("click", (event) => {
   event.preventDefault();
   showBoardingSpace();
+});
+
+let workspaceResizeTimer = null;
+window.addEventListener("resize", () => {
+  if (el.mainApp.hidden) return;
+  clearTimeout(workspaceResizeTimer);
+  workspaceResizeTimer = setTimeout(() => {
+    if (state.mode === "improvisation") renderScaleReference();
+    else {
+      state.lastRenderKey = null;
+      refreshPlayhead(currentPlaybackPosition());
+    }
+  }, 120);
 });
 
 // ---------------------------------------------------------------------------

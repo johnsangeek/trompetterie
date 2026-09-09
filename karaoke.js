@@ -49,7 +49,7 @@ const noteElements = [];
 for (let cycle = 0; cycle < 2; cycle++) {
   events.forEach((event) => {
     const writtenMidi = event.midi + 2;
-    const fingering = fingeringFor(event.midi);
+    const fingering = fingeringDotsHTML(event.midi);
     const note = document.createElement("div");
     note.className = "karaoke-note";
     note.dataset.index = event.index;
@@ -84,9 +84,9 @@ function fingeringValues(concertMidi) {
   return FINGERINGS[((writtenMidi - 60) % 12 + 12) % 12];
 }
 
-function fingeringFor(concertMidi) {
+function fingeringDotsHTML(concertMidi) {
   const values = fingeringValues(concertMidi);
-  return values.length ? values.join("") : "0";
+  return (values.length ? values : [0]).map((value) => `<span class="karaoke-fingering-dot fingering-${value}">${value}</span>`).join("");
 }
 
 function ensureAudio() {
@@ -169,11 +169,11 @@ function setActive(event) {
   valveTargets.forEach((_, targetIndex) => { valveTargets[targetIndex] = values.includes(targetIndex + 1) ? 1 : 0; });
   if (event) {
     activeNote.textContent = writtenName(event.midi);
-    activeFingering.textContent = fingeringFor(event.midi);
+    activeFingering.innerHTML = fingeringDotsHTML(event.midi);
     if (playing) soundNote(event);
   } else {
     activeNote.textContent = playing ? "—" : "Prêt";
-    activeFingering.textContent = "0";
+    activeFingering.innerHTML = '<span class="karaoke-fingering-dot fingering-0">0</span>';
   }
 }
 
@@ -181,7 +181,7 @@ function updateFrame() {
   const elapsed = currentPosition();
   const position = totalDuration ? elapsed % totalDuration : 0;
 
-  const anchor = staffViewport.clientWidth * .48;
+  const anchor = staffViewport.clientWidth * .5;
   const pixelsPerSecond = Math.max(128, staffViewport.clientWidth * .14);
   noteElements.forEach(({ element, event, cycle }) => {
     element.style.left = `${anchor + (event.startTime + cycle * totalDuration) * pixelsPerSecond}px`;
@@ -236,8 +236,8 @@ function frameTrumpet() {
   const height = Math.max(1, canvas.clientHeight);
   renderer.setSize(width, height, false);
   const aspect = width / height;
-  const modelWidth = bounds ? bounds.size.x * 1.08 : 10;
-  const modelHeight = bounds ? bounds.size.y * 1.32 : 4;
+  const modelWidth = bounds ? bounds.size.x * 1.16 : 10;
+  const modelHeight = bounds ? bounds.size.y * 1.42 : 4;
   const viewHeight = Math.max(modelHeight, modelWidth / aspect);
   const viewWidth = viewHeight * aspect;
   camera.left = -viewWidth / 2; camera.right = viewWidth / 2; camera.top = viewHeight / 2; camera.bottom = -viewHeight / 2;
