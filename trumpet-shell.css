@@ -1,0 +1,363 @@
+/* Écran Trompette : une seule surface de travail, pensée comme une partition. */
+body.trumpet-workspace-open {
+  height: 100vh;
+  overflow: hidden;
+  background: #f4efe3;
+}
+
+body.trumpet-workspace-open .glow-blob { display: none; }
+
+body.trumpet-workspace-open .app {
+  width: 100vw;
+  max-width: none;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body.trumpet-workspace-open .app > header {
+  position: absolute;
+  z-index: 40;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 54px;
+  pointer-events: none;
+}
+
+body.trumpet-workspace-open .title-row { display: none; }
+
+body.trumpet-workspace-open .mini-nav {
+  width: max-content;
+  margin: 0;
+  padding: 14px 18px;
+  pointer-events: auto;
+}
+
+body.trumpet-workspace-open .mini-nav a { display: none; }
+body.trumpet-workspace-open .mini-nav a:first-child {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(32, 40, 36, .13);
+  border-radius: 999px;
+  color: #46504b;
+  background: rgba(250, 247, 239, .82);
+  box-shadow: 0 6px 20px rgba(76, 62, 35, .06);
+  backdrop-filter: blur(12px);
+}
+
+body.trumpet-workspace-open #workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(285px, 42vh) minmax(0, 1fr);
+  gap: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body.trumpet-workspace-open .notation-panel,
+body.trumpet-workspace-open .piston-panel {
+  grid-column: 1;
+  min-width: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body.trumpet-workspace-open .notation-panel {
+  position: relative;
+  z-index: 5;
+  grid-row: 1;
+  padding: 58px clamp(18px, 3vw, 54px) 12px;
+  overflow: hidden;
+  background: #f8f5ed;
+  border-bottom: 1px solid rgba(60, 53, 39, .12);
+}
+
+body.trumpet-workspace-open .notation-panel > .panel-header {
+  position: absolute;
+  z-index: 30;
+  top: 48px;
+  left: clamp(18px, 3vw, 54px);
+  right: clamp(18px, 3vw, 54px);
+  height: 58px;
+  margin: 0;
+  pointer-events: none;
+}
+
+body.trumpet-workspace-open .clef-toggle-btn,
+body.trumpet-workspace-open .more-tools-toggle-btn { pointer-events: auto; }
+
+body.trumpet-workspace-open .clef-toggle-btn {
+  width: 58px;
+  height: 58px;
+  padding: 0;
+  border-radius: 16px;
+  font-size: 4rem;
+  color: #1f2824;
+  background: rgba(248, 245, 237, .92);
+}
+
+body.trumpet-workspace-open .clef-toggle-btn::after {
+  content: "Menu musical";
+  position: absolute;
+  top: 16px;
+  left: 65px;
+  color: #7a756b;
+  font: 800 .62rem/1 "Satoshi", sans-serif;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+body.trumpet-workspace-open .current-note-label {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  transform: translateX(-50%);
+  min-width: 74px;
+  text-align: center;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #d79429;
+}
+
+body.trumpet-workspace-open .more-tools-toggle-btn {
+  width: 42px;
+  height: 42px;
+  color: #39433e;
+  background: rgba(248, 245, 237, .92);
+  box-shadow: 0 7px 20px rgba(70, 57, 32, .08);
+}
+
+body.trumpet-workspace-open #staff {
+  width: 100%;
+  height: calc(100% - 52px);
+  min-height: 205px;
+  margin-top: 52px;
+  padding: 4px 0;
+  overflow: auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(104, 97, 82, .28) transparent;
+}
+
+body.trumpet-workspace-open .degree-chips {
+  position: absolute;
+  z-index: 12;
+  left: 50%;
+  bottom: 12px;
+  width: min(72vw, 900px);
+  margin: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  transform: translateX(-50%);
+  scrollbar-width: none;
+}
+
+body.trumpet-workspace-open .degree-chips::-webkit-scrollbar { display: none; }
+
+body.trumpet-workspace-open .degree-chip {
+  flex: 0 0 auto;
+  min-width: 64px;
+  min-height: 48px;
+  padding: 7px 10px;
+  background: rgba(239, 234, 221, .92);
+}
+
+body.trumpet-workspace-open .practice-launch {
+  position: absolute;
+  z-index: 25;
+  right: clamp(20px, 3vw, 54px);
+  bottom: 15px;
+}
+
+body.trumpet-workspace-open .practice-launch .btn {
+  min-height: 46px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  box-shadow: 0 10px 28px rgba(199, 129, 22, .2);
+  font-weight: 900;
+}
+
+body.trumpet-workspace-open #improvisationControls {
+  position: absolute;
+  z-index: 60;
+  top: 108px;
+  left: clamp(18px, 3vw, 54px);
+  width: min(470px, calc(100vw - 36px));
+  max-height: calc(100vh - 140px);
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+  border: 1px solid rgba(55, 49, 38, .13);
+  border-radius: 18px;
+  background: rgba(250, 247, 239, .97);
+  box-shadow: 0 24px 70px rgba(61, 50, 30, .2);
+  backdrop-filter: blur(18px);
+}
+
+body.trumpet-workspace-open #scaleRootSelect { min-width: min(280px, 72vw); }
+
+body.trumpet-workspace-open .piston-panel {
+  position: relative;
+  z-index: 1;
+  grid-row: 2;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #e9e3d6;
+}
+
+body.trumpet-workspace-open .piston-panel-header,
+body.trumpet-workspace-open .octave-shift-stepper,
+body.trumpet-workspace-open .note-scanner,
+body.trumpet-workspace-open .piston-panel > .pistons { display: none; }
+
+body.trumpet-workspace-open .instrument-stage {
+  width: 100%;
+  height: 100%;
+  min-height: 340px;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse at 50% 43%, rgba(255,255,255,.82), transparent 46%),
+    linear-gradient(180deg, #f0ebdf 0%, #ded6c5 100%);
+}
+
+body.trumpet-workspace-open .instrument-stage-vignette {
+  background: radial-gradient(ellipse at center, transparent 52%, rgba(89, 72, 42, .13) 100%);
+}
+
+body.trumpet-workspace-open .instrument-note-hud {
+  top: 18px;
+  padding: 9px 16px;
+  color: #202824;
+  border-color: rgba(45, 39, 28, .12);
+  background: rgba(250, 247, 239, .82);
+  box-shadow: 0 12px 34px rgba(80, 64, 35, .1);
+}
+
+body.trumpet-workspace-open .instrument-note-hud small { color: #707771; }
+body.trumpet-workspace-open .instrument-note-hud strong { color: #d8952d; }
+body.trumpet-workspace-open .instrument-clef { color: #8f948d; }
+
+body.trumpet-workspace-open .instrument-stage-footer {
+  top: 21%;
+  bottom: auto;
+  left: calc(50% - 60px);
+  right: auto;
+  z-index: 8;
+  transform: translateX(-50%);
+}
+
+body.trumpet-workspace-open .instrument-valve-legend { gap: 22px; }
+
+body.trumpet-workspace-open .instrument-valve-dot {
+  width: 38px;
+  height: 38px;
+  border: 2px solid rgba(255,255,255,.84);
+  color: #18201d;
+  opacity: .84;
+  box-shadow: 0 6px 16px rgba(61,48,24,.2);
+}
+
+body.trumpet-workspace-open .instrument-valve-dot.valve-one { background: #ef6658; }
+body.trumpet-workspace-open .instrument-valve-dot.valve-two { background: #51d1c4; }
+body.trumpet-workspace-open .instrument-valve-dot.valve-three { background: #f3bd4f; }
+body.trumpet-workspace-open .instrument-valve-dot.pressed { opacity: 1; transform: translateY(7px) scale(1.08); }
+
+.tools-drawer[hidden] { display: none; }
+.tools-drawer {
+  position: fixed;
+  z-index: 100;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(510px, 100vw);
+  padding: 76px 16px 24px;
+  overflow-y: auto;
+  background: rgba(244, 239, 227, .98);
+  border-left: 1px solid rgba(50, 44, 33, .13);
+  box-shadow: -20px 0 70px rgba(55, 45, 27, .18);
+  backdrop-filter: blur(22px);
+}
+
+.tools-drawer-head {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  right: 0;
+  width: min(510px, 100vw);
+  height: 64px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(250, 247, 239, .94);
+  border-bottom: 1px solid rgba(50, 44, 33, .1);
+}
+
+.tools-drawer-head strong { font-size: 1rem; }
+.tools-drawer-close {
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(32,40,36,.14);
+  border-radius: 50%;
+  background: #f4efe3;
+  cursor: pointer;
+}
+
+.tools-drawer .dropzone { margin-bottom: 12px; }
+.tools-drawer .panel {
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+body.trumpet-workspace-open #hiddenModeToggle,
+body.trumpet-workspace-open #scorePlaybackRow {
+  position: absolute;
+  z-index: 55;
+  right: clamp(18px, 3vw, 54px);
+  top: 108px;
+  max-width: min(560px, calc(100vw - 36px));
+  padding: 10px;
+  border: 1px solid rgba(55,49,38,.12);
+  border-radius: 14px;
+  background: rgba(250,247,239,.96);
+  box-shadow: 0 18px 50px rgba(61,50,30,.15);
+}
+
+body.trumpet-workspace-open #hiddenModeToggle { top: 172px; }
+
+@media (max-width: 760px) {
+  body.trumpet-workspace-open { height: auto; min-height: 100vh; overflow-y: auto; }
+  body.trumpet-workspace-open .app { height: auto; min-height: 100vh; overflow: visible; }
+  body.trumpet-workspace-open #workspace { grid-template-rows: minmax(310px, 48vh) minmax(390px, 52vh); height: 100vh; min-height: 700px; }
+  body.trumpet-workspace-open .notation-panel { padding-inline: 12px; }
+  body.trumpet-workspace-open .notation-panel > .panel-header { left: 12px; right: 12px; }
+  body.trumpet-workspace-open .clef-toggle-btn::after { display: none; }
+  body.trumpet-workspace-open .practice-launch { right: 12px; bottom: 10px; }
+  body.trumpet-workspace-open .practice-launch .btn { min-height: 40px; padding-inline: 14px; font-size: .78rem; }
+  body.trumpet-workspace-open .degree-chips { left: 12px; width: calc(100vw - 170px); transform: none; }
+  body.trumpet-workspace-open #improvisationControls { left: 12px; top: 104px; width: calc(100vw - 24px); }
+  body.trumpet-workspace-open .instrument-stage-footer { left: calc(50% - 34px); top: 24%; }
+  body.trumpet-workspace-open .instrument-valve-legend { gap: 12px; }
+  body.trumpet-workspace-open .instrument-valve-dot { width: 32px; height: 32px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .tools-drawer { animation: drawer-in .2s ease-out; }
+  @keyframes drawer-in { from { transform: translateX(28px); opacity: 0; } }
+}

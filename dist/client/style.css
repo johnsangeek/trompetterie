@@ -1,15 +1,31 @@
+/* Unified "blanc cassé" theme - off-white/cream base with a brass-copper-steel
+   accent, matching the karaoke view's palette (karaoke.css) so the whole app
+   reads as one instrument, not four different tools stitched together. */
+@font-face {
+  font-family: "Miracle History";
+  src: url("assets/fonts/MiracleHistory.ttf") format("truetype");
+  font-display: swap;
+}
+
 :root {
-  --bg: #101311;
-  --panel: #181c19;
-  --panel-2: #202521;
-  --border: #343b35;
-  --text: #f2f3ed;
-  --text-dim: #a4aca3;
-  --accent: #e8b85c;
-  --accent-rgb: 232, 184, 92;
-  --accent-2: #77b9a5;
-  --accent-2-rgb: 119, 185, 165;
-  --danger: #df736d;
+  --bg: #ece6d8;
+  --panel: #f4efe3;
+  --panel-2: #e8e1d0;
+  --border: #d9d1bd;
+  --text: #202824;
+  --text-dim: #69736e;
+  --accent: #d8952d;
+  --accent-rgb: 216, 149, 45;
+  --accent-2: #51d1c4;
+  --accent-2-rgb: 81, 209, 196;
+  --danger: #ef6658;
+  --danger-rgb: 239, 102, 88;
+  --gold: #f2bc54;
+  --gold-rgb: 242, 188, 84;
+  --ink-rgb: 32, 40, 36;
+  --valve-1: #ef6658;
+  --valve-2: #51d1c4;
+  --valve-3: #f3bd4f;
   --radius: 12px;
   --glass-blur: blur(18px);
 }
@@ -18,11 +34,112 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.6), transparent 45%),
+    linear-gradient(180deg, #f6f2e9 0%, var(--bg) 60%, #ddd5c4 100%);
+  background-attachment: fixed;
   color: var(--text);
   font-family: "Satoshi", "Segoe UI", system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   min-height: 100vh;
+}
+
+.wordmark {
+  font-family: "Miracle History", "Satoshi", serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Boarding space - the app's entry screen (pick Trompette or Piano)       */
+/* ---------------------------------------------------------------------- */
+
+.boarding-space {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.boarding-space[hidden] { display: none; }
+
+.boarding-content {
+  width: 100%;
+  max-width: 620px;
+  text-align: center;
+}
+
+.boarding-eyebrow {
+  display: inline-block;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.boarding-wordmark {
+  margin: 0 0 6px;
+  font-size: clamp(3rem, 9vw, 5.2rem);
+  line-height: 1.05;
+}
+
+.boarding-subtitle {
+  margin: 0 0 40px;
+  color: var(--text-dim);
+  font-size: 1rem;
+}
+
+.boarding-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 560px) {
+  .boarding-cards { grid-template-columns: 1fr; }
+}
+
+.boarding-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 36px 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
+  background: rgba(248, 245, 237, 0.72);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: 0 18px 45px rgba(81, 68, 42, 0.08);
+  color: var(--text);
+  text-decoration: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.boarding-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(var(--accent-rgb), 0.45);
+  box-shadow: 0 22px 55px rgba(81, 68, 42, 0.14);
+}
+
+.boarding-card-icon {
+  font-size: 2.6rem;
+}
+
+.boarding-card-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.boarding-card-desc {
+  color: var(--text-dim);
+  font-size: 0.82rem;
 }
 
 .glow-blob {
@@ -64,11 +181,12 @@ header h1 {
   gap: 10px;
 }
 
+/* The 3D trumpet is now an always-visible inline panel, so the button that
+   used to open it as a fullscreen modal is redundant - kept in the DOM
+   (hidden) rather than removed, so its click listener in app.js still has a
+   real element to attach to. */
 .instrument-view-launch {
-  border-color: rgba(var(--accent-rgb), 0.42);
-  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.16), rgba(var(--accent-rgb), 0.06));
-  color: var(--accent);
-  font-weight: 700;
+  display: none;
 }
 
 .title-row .subtitle {
@@ -185,12 +303,13 @@ body.standalone-app .mini-nav {
 }
 
 .panel {
-  background: rgba(255, 255, 255, 0.025);
+  background: rgba(248, 245, 237, 0.72);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(var(--ink-rgb), 0.1);
   border-radius: 14px;
   padding: 18px 20px;
+  box-shadow: 0 18px 45px rgba(81, 68, 42, 0.08);
   transition: border-color 0.3s ease;
 }
 
@@ -208,7 +327,7 @@ body.standalone-app .mini-nav {
   top: 16px;
   min-height: 410px;
   border-color: rgba(var(--accent-rgb), 0.25);
-  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.07), rgba(255,255,255,0.025) 34%);
+  background: linear-gradient(180deg, rgba(var(--accent-rgb), 0.1), rgba(248, 245, 237, 0.72) 34%);
 }
 
 .panel:hover {
@@ -225,6 +344,55 @@ body.standalone-app .mini-nav {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 12px;
+}
+
+/* The treble clef doubles as a button: click it to reveal the gamme/tonalité
+   picker, keeping the default view down to just the score + the 3D trumpet
+   ("page blanche, c'est tout"). font-family: serif for a proper clef glyph;
+   text-shadow fakes a slight brass relief/emboss. */
+.clef-toggle-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0 8px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6), 0 -1px 1px rgba(var(--ink-rgb), 0.25);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.clef-toggle-btn:hover {
+  transform: scale(1.06);
+}
+
+.clef-toggle-btn[aria-expanded="true"] {
+  color: var(--danger);
+}
+
+.more-tools-toggle-btn {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+}
+
+.more-tools-toggle-btn[aria-expanded="true"] {
+  color: var(--accent);
+  border-color: rgba(var(--accent-rgb), 0.45);
+}
+
+/* .mode-toggle and .score-playback-row both set display:flex elsewhere in
+   this file - an equal-specificity class rule beats the [hidden] UA rule
+   regardless of source order, so these need to win explicitly. */
+#hiddenModeToggle[hidden],
+#scorePlaybackRow[hidden] {
+  display: none !important;
 }
 
 .score-playback-row {
@@ -279,7 +447,7 @@ body.standalone-app .mini-nav {
 }
 
 .btn {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.45);
   border: 1px solid var(--border);
   color: var(--text);
   padding: 9px 18px;
@@ -408,7 +576,7 @@ input:disabled {
 .mode-toggle {
   display: flex;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(var(--ink-rgb), 0.05);
   border: 1px solid var(--border-color, var(--border));
   border-radius: 100px;
   padding: 4px;
@@ -437,7 +605,7 @@ input:disabled {
 
 .improvisation-controls,
 .manual-controls {
-  background: rgba(255, 255, 255, 0.018);
+  background: rgba(var(--ink-rgb), 0.03);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
@@ -1038,24 +1206,38 @@ body.standalone-app .chip-fingering {
 /* Fixed-camera 3D instrument stage                                       */
 /* ---------------------------------------------------------------------- */
 
-body.instrument-view-open {
-  overflow: hidden;
-}
-
 .instrument-stage[hidden] {
   display: none;
 }
 
+/* Always-visible inline panel now (was a fullscreen overlay) - a permanent
+   companion to the score instead of an on-demand modal. The 3D render loop
+   itself just needs stage.clientWidth/Height, which trumpet-3d.js already
+   reads dynamically via frameModel(), so this size change alone is enough. */
 .instrument-stage {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
+  position: relative;
+  width: 100%;
+  height: 260px;
+  border-radius: 16px;
   overflow: hidden;
   color: #f5f3ed;
   background:
-    radial-gradient(circle at 50% 44%, rgba(219, 216, 203, 0.28) 0, rgba(115, 119, 116, 0.1) 35%, transparent 68%),
-    linear-gradient(145deg, #858987 0%, #686d6a 52%, #555a58 100%);
+    radial-gradient(circle at 50% 44%, rgba(255, 255, 255, 0.35) 0, rgba(180, 170, 145, 0.12) 35%, transparent 68%),
+    linear-gradient(145deg, #d9d2bf 0%, #c7bfa8 52%, #b6ad92 100%);
   isolation: isolate;
+}
+
+/* The header (back/fullscreen chrome) and the duplicate play/pause/stop
+   controls only made sense for a fullscreen modal - the real transport
+   controls are right there in the main panel now, so they're redundant
+   inline. Kept in the DOM (not removed) so app.js/trumpet-3d.js's existing
+   element wiring keeps working unchanged; just visually dropped. */
+.instrument-stage-header,
+.instrument-stage-controls {
+  /* !important: later rules in this file also set display:flex on these
+     same selectors (for the old fullscreen-modal layout) - this has to win
+     regardless of source order. */
+  display: none !important;
 }
 
 .trumpet-3d-canvas {
@@ -1080,21 +1262,21 @@ body.instrument-view-open {
 .instrument-stage-header,
 .instrument-stage-footer {
   position: absolute;
-  left: clamp(18px, 3vw, 46px);
-  right: clamp(18px, 3vw, 46px);
+  left: 12px;
+  right: 12px;
   z-index: 2;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 18px;
 }
 
 .instrument-stage-header {
-  top: max(20px, env(safe-area-inset-top));
+  top: 10px;
 }
 
 .instrument-stage-footer {
-  bottom: max(24px, env(safe-area-inset-bottom));
+  bottom: 10px;
 }
 
 .instrument-stage-button {
@@ -1165,12 +1347,12 @@ body.instrument-view-open {
 .instrument-note-hud {
   position: absolute;
   left: 50%;
-  bottom: clamp(92px, 14vh, 150px);
+  top: 10px;
   z-index: 2;
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 11px 18px 12px;
+  padding: 8px 16px 9px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 18px;
   background: rgba(28, 32, 30, 0.42);

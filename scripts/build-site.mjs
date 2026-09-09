@@ -7,7 +7,7 @@ const dist = join(root, "dist");
 const client = join(dist, "client");
 const server = join(dist, "server");
 const metadata = join(dist, ".openai");
-const includedExtensions = new Set([".html", ".css", ".js", ".json", ".png", ".jpg", ".jpeg", ".svg", ".webp", ".ico", ".glb", ".mp3", ".txt"]);
+const includedExtensions = new Set([".html", ".css", ".js", ".json", ".png", ".jpg", ".jpeg", ".svg", ".webp", ".ico", ".glb", ".mp3", ".txt", ".ttf"]);
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(client, { recursive: true });
@@ -37,7 +37,7 @@ for (const source of paths) {
 }
 
 const worker = `const ASSETS = ${JSON.stringify(assets)};
-const TYPES = {html:"text/html; charset=utf-8",css:"text/css; charset=utf-8",js:"text/javascript; charset=utf-8",json:"application/json; charset=utf-8",txt:"text/plain; charset=utf-8",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",svg:"image/svg+xml",webp:"image/webp",ico:"image/x-icon",glb:"model/gltf-binary",mp3:"audio/mpeg"};
+const TYPES = {html:"text/html; charset=utf-8",css:"text/css; charset=utf-8",js:"text/javascript; charset=utf-8",json:"application/json; charset=utf-8",txt:"text/plain; charset=utf-8",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",svg:"image/svg+xml",webp:"image/webp",ico:"image/x-icon",glb:"model/gltf-binary",mp3:"audio/mpeg",ttf:"font/ttf"};
 function decode(value){const raw=atob(value);const bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return bytes;}
 export default {async fetch(request){const url=new URL(request.url);let path=decodeURIComponent(url.pathname);if(path==="/")path="/index.html";if(!ASSETS[path]&&!path.includes("."))path="/index.html";const asset=ASSETS[path];if(!asset)return new Response("Not found",{status:404});const ext=path.split(".").pop().toLowerCase();return new Response(request.method==="HEAD"?null:decode(asset),{headers:{"content-type":TYPES[ext]||"application/octet-stream","cache-control":ext==="html"?"no-cache":"public, max-age=3600"}});}};
 `;

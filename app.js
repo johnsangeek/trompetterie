@@ -60,6 +60,8 @@ const state = {
   manualMeasures: [],
   manualCaptureMode: false,
   deleteNoteMode: false, // when true, clicking a staff note removes it instead of previewing it
+  scaleOptionsOpen: false, // gamme/tonalité picker, revealed by clicking the treble clef
+  moreToolsOpen: false,    // transport/BPM/looper, chord tool, saved scores - tucked away by default
   selectedManualNoteIndex: null,
   twelveKeyBaseNotes: null,
   twelveKeyBaseRoot: null,
@@ -101,6 +103,17 @@ const TICKS_PER_MEASURE = 16;  // 4/4 time signature
 // ---------------------------------------------------------------------------
 
 const el = {
+  boardingSpace: document.getElementById("boardingSpace"),
+  mainApp: document.getElementById("mainApp"),
+  boardTrumpetBtn: document.getElementById("boardTrumpetBtn"),
+  backToBoardingLink: document.getElementById("backToBoardingLink"),
+  clefToggleBtn: document.getElementById("clefToggleBtn"),
+  moreToolsToggleBtn: document.getElementById("moreToolsToggleBtn"),
+  hiddenModeToggle: document.getElementById("hiddenModeToggle"),
+  scorePlaybackRow: document.getElementById("scorePlaybackRow"),
+  transportPanel: document.getElementById("transportPanel"),
+  pianoToolPanel: document.getElementById("pianoToolPanel"),
+  savedScoresPanel: document.getElementById("savedScoresPanel"),
   dropzone: document.getElementById("dropzone"),
   fileInput: document.getElementById("fileInput"),
   status: document.getElementById("status"),
@@ -212,14 +225,39 @@ const el = {
   quizMicHint: document.getElementById("quizMicHint"),
 };
 
-// Keep opening and closing the instrument view in the main application
-// script. This shell must remain usable even if WebGL or the 3D model fails.
+// Les outils avancés restent disponibles sans encombrer le pupitre principal.
+// On déplace leurs panneaux dans un tiroir unique ouvert par la roue dentée.
+const toolsDrawer = document.createElement("aside");
+toolsDrawer.className = "tools-drawer";
+toolsDrawer.hidden = true;
+toolsDrawer.setAttribute("aria-label", "Outils de la trompette");
+const toolsDrawerHead = document.createElement("div");
+toolsDrawerHead.className = "tools-drawer-head";
+toolsDrawerHead.innerHTML = '<strong>Outils</strong><button type="button" class="tools-drawer-close" aria-label="Fermer les outils">×</button>';
+toolsDrawer.appendChild(toolsDrawerHead);
+[
+  el.dropzone,
+  el.status,
+  el.progressWrap,
+  el.transportPanel,
+  el.pianoToolPanel,
+  el.savedScoresPanel,
+  document.querySelector(".octave-shift-stepper"),
+  document.querySelector(".note-scanner"),
+].filter(Boolean).forEach((node) => toolsDrawer.appendChild(node));
+el.mainApp.appendChild(toolsDrawer);
+
+// The 3D trumpet is now an always-visible inline panel (not an on-demand
+// fullscreen modal), so it's activated once at startup and never closed.
+// openInstrumentStage/closeInstrumentStage are kept only because
+// trumpet-3d.js's render loop still gates on the "trumpet:view-open/close"
+// events and on el.instrumentStage.hidden - this shell must remain usable
+// even if WebGL or the 3D model fails.
 function openInstrumentStage() {
   el.instrumentStage.hidden = false;
   el.instrumentStage.setAttribute("aria-hidden", "false");
   document.body.classList.add("instrument-view-open");
   window.dispatchEvent(new CustomEvent("trumpet:view-open"));
-  el.instrumentStage.requestFullscreen?.().catch(() => {});
 }
 
 function closeInstrumentStage() {
@@ -227,11 +265,11 @@ function closeInstrumentStage() {
   el.instrumentStage.setAttribute("aria-hidden", "true");
   document.body.classList.remove("instrument-view-open");
   window.dispatchEvent(new CustomEvent("trumpet:view-close"));
-  if (document.fullscreenElement === el.instrumentStage) document.exitFullscreen?.().catch(() => {});
 }
 
 el.openInstrumentViewBtn.addEventListener("click", openInstrumentStage);
 el.closeInstrumentViewBtn.addEventListener("click", closeInstrumentStage);
+openInstrumentStage();
 
 // ---------------------------------------------------------------------------
 // Standalone PWA layout — a dedicated scale-study app, front and center,
@@ -2395,7 +2433,7 @@ function setMode(mode) {
   el.deleteNoteModeBtn.classList.remove("btn-danger-active");
   el.deleteNoteModeBtn.textContent = "🗑️ Supprimer une note";
   el.modeBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === mode));
-  el.improvisationControls.hidden = mode !== "improvisation";
+  el.improvisationControls.hidden = mode !== "improvisation" || !state.scaleOptionsOpen;
   el.manualControls.hidden = mode !== "manual";
   el.transcriptionTools.hidden = mode !== "transcription";
   el.degreeChips.hidden = mode !== "improvisation";
@@ -3574,8 +3612,73 @@ applyStandaloneLayout();
 // skip the default Gammes view entirely (it used to flash on screen for the
 // fetch's round-trip before swapping to the real score, which read as "the
 // score only shows up once you press play") and show a loading status instead.
+// ---------------------------------------------------------------------------
+// Boarding space — the app's entry screen (pick Trompette or Piano) instead
+// of landing straight in the workspace. A catalog link (?track=) implies the
+// choice was already made, so it skips straight past the boarding screen.
+// ---------------------------------------------------------------------------
+
+function enterTrumpetWorkspace() {
+  el.boardingSpace.hidden = true;
+  el.mainApp.hidden = false;
+  document.body.classList.add("trumpet-workspace-open");
+  // trumpet-3d.js sizes its canvas from #instrumentStage's clientWidth/Height
+  // the moment it loads/activates - which happens while the boarding space
+  // still hides the whole app (0x0 layout), leaving the canvas stuck at
+  // 1x1px forever. Re-open (re-frame) it now that the panel is actually on
+  // screen with real dimensions.
+  openInstrumentStage();
+}
+
+function showBoardingSpace() {
+  el.mainApp.hidden = true;
+  el.boardingSpace.hidden = false;
+  document.body.classList.remove("trumpet-workspace-open", "tools-open");
+  toolsDrawer.hidden = true;
+}
+
+el.boardTrumpetBtn.addEventListener("click", enterTrumpetWorkspace);
+el.backToBoardingLink.addEventListener("click", (event) => {
+  event.preventDefault();
+  showBoardingSpace();
+});
+
+// ---------------------------------------------------------------------------
+// Keep the default Trompette workspace down to just the score + the 3D
+// trumpet ("page blanche, c'est tout"). The treble clef reveals the gamme/
+// tonalité picker; the gear icon reveals everything else (transport/BPM/
+// looper, the chord tool, saved scores) - both start closed.
+// ---------------------------------------------------------------------------
+
+function toggleScaleOptions() {
+  if (!state.scaleOptionsOpen && state.moreToolsOpen) toggleMoreTools();
+  state.scaleOptionsOpen = !state.scaleOptionsOpen;
+  el.clefToggleBtn.setAttribute("aria-expanded", String(state.scaleOptionsOpen));
+  if (state.mode === "improvisation") {
+    el.improvisationControls.hidden = !state.scaleOptionsOpen;
+  }
+}
+
+function toggleMoreTools() {
+  if (!state.moreToolsOpen && state.scaleOptionsOpen) toggleScaleOptions();
+  state.moreToolsOpen = !state.moreToolsOpen;
+  el.moreToolsToggleBtn.setAttribute("aria-expanded", String(state.moreToolsOpen));
+  toolsDrawer.hidden = !state.moreToolsOpen;
+  document.body.classList.toggle("tools-open", state.moreToolsOpen);
+  el.transportPanel.hidden = !state.moreToolsOpen;
+  el.pianoToolPanel.hidden = !state.moreToolsOpen;
+  el.savedScoresPanel.hidden = !state.moreToolsOpen;
+  el.hiddenModeToggle.hidden = !state.moreToolsOpen;
+  el.scorePlaybackRow.hidden = !state.moreToolsOpen;
+}
+
+el.clefToggleBtn.addEventListener("click", toggleScaleOptions);
+el.moreToolsToggleBtn.addEventListener("click", toggleMoreTools);
+toolsDrawer.querySelector(".tools-drawer-close").addEventListener("click", toggleMoreTools);
+
 const pendingTrackId = new URLSearchParams(window.location.search).get("track");
 if (pendingTrackId) {
+  enterTrumpetWorkspace();
   setStatus("Chargement de la partition…");
 } else {
   setMode("improvisation");

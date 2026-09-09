@@ -4,11 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Trompette Trainer — Boucle, partition &amp; doigtés</title>
+  <link rel="preload" href="assets/fonts/MiracleHistory.ttf" as="font" type="font/ttf" crossorigin />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="trumpet-shell.css" />
 
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#101311" />
+  <meta name="theme-color" content="#ece6d8" />
   <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -19,10 +21,32 @@
 <body>
   <div class="glow-blob glow-1"></div>
   <div class="glow-blob glow-2"></div>
-  <div class="app">
+
+  <div id="boardingSpace" class="boarding-space">
+    <div class="boarding-content">
+      <span class="boarding-eyebrow">Trompetterie.lol</span>
+      <h1 class="wordmark boarding-wordmark">Trompetterie</h1>
+      <p class="boarding-subtitle">Boarding space — choisis ton espace de travail.</p>
+      <div class="boarding-cards">
+        <button type="button" class="boarding-card" id="boardTrumpetBtn">
+          <span class="boarding-card-icon">🎺</span>
+          <span class="boarding-card-title">Trompette</span>
+          <span class="boarding-card-desc">Partition, doigtés, gammes, trompette 3D</span>
+        </button>
+        <a class="boarding-card" id="boardPianoBtn" href="chords.html">
+          <span class="boarding-card-icon">🎹</span>
+          <span class="boarding-card-title">Piano</span>
+          <span class="boarding-card-desc">Résolveur d'accords, progressions</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="app" id="mainApp" hidden>
     <header>
         <div id="miniNav" class="mini-nav">
-          <a href="home.html">← Accueil</a>
+          <a href="#" id="backToBoardingLink">← Boarding space</a>
+          <a href="home.html">Accueil</a>
           <a href="training.html">📀 Training</a>
           <a href="karaoke.html">🎤 Karaoké</a>
           <a href="chords.html">🎹 Chords Resolver</a>
@@ -52,7 +76,7 @@
 
     <section id="workspace" class="workspace">
 
-      <section class="panel transport-panel">
+      <section class="panel transport-panel" id="transportPanel" hidden>
         <div class="stats">
           <div class="stat">
             <span class="stat-value" id="bpmDisplay">--</span>
@@ -110,17 +134,22 @@
 
       <section class="panel notation-panel">
         <div class="panel-header">
-          <h2>Partition</h2>
-          <div class="mode-toggle">
-            <button type="button" class="mode-btn" data-mode="transcription" disabled>Transcription</button>
-            <button type="button" class="mode-btn active" data-mode="improvisation">Gammes</button>
-            <button type="button" class="mode-btn" data-mode="manual" disabled>Partition libre</button>
-          </div>
+          <button type="button" id="clefToggleBtn" class="clef-toggle-btn" aria-expanded="false" title="Gammes et tonalité">𝄞</button>
           <span id="currentNoteLabel" class="current-note-label">--</span>
+          <button type="button" id="moreToolsToggleBtn" class="more-tools-toggle-btn" aria-expanded="false" title="Plus d'outils">⚙</button>
         </div>
 
-        <div class="score-playback-row">
-          <button type="button" id="openKaraokeBtn" class="btn btn-primary">🎺 Apprendre avec la trompette</button>
+        <div class="practice-launch">
+          <button type="button" id="openKaraokeBtn" class="btn btn-primary">▶ Commencer l’entraînement</button>
+        </div>
+
+        <div id="hiddenModeToggle" class="mode-toggle" hidden>
+          <button type="button" class="mode-btn" data-mode="transcription" disabled>Transcription</button>
+          <button type="button" class="mode-btn active" data-mode="improvisation">Gammes</button>
+          <button type="button" class="mode-btn" data-mode="manual" disabled>Partition libre</button>
+        </div>
+
+        <div class="score-playback-row" id="scorePlaybackRow" hidden>
           <button type="button" id="playScoreBtn" class="btn">🔁 Écouter en boucle</button>
           <button type="button" id="stopScoreBtn" class="btn" hidden>⏹ Stop partition</button>
           <button type="button" id="exportScorePdfBtn" class="btn">Exporter PDF</button>
@@ -278,6 +307,38 @@
           </div>
           <span id="pistonNoteLabel" class="piston-note-label">--</span>
         </div>
+
+        <section id="instrumentStage" class="instrument-stage" aria-label="Vue animée de la trompette">
+          <canvas id="trumpet3dCanvas" class="trumpet-3d-canvas" aria-label="Trompette en trois dimensions, vue fixe"></canvas>
+          <div class="instrument-stage-vignette" aria-hidden="true"></div>
+          <header class="instrument-stage-header">
+            <button type="button" id="closeInstrumentViewBtn" class="instrument-stage-button" aria-label="Revenir à l'application">← Retour</button>
+            <div class="instrument-stage-title">
+              <span>Vue instrument</span>
+              <small>Caméra fixe · trompette Sib</small>
+            </div>
+            <span id="instrument3dStatus" class="instrument-3d-status">Chargement du modèle…</span>
+          </header>
+          <div class="instrument-note-hud" aria-live="polite">
+            <span id="instrumentTrebleClef" class="instrument-clef" aria-hidden="true">𝄞</span>
+            <div>
+              <small>Note jouée</small>
+              <strong id="instrumentNoteLabel">--</strong>
+            </div>
+          </div>
+          <footer class="instrument-stage-footer">
+            <div class="instrument-valve-legend" aria-label="État des pistons">
+              <span id="instrumentValve1" class="instrument-valve-dot valve-one">1</span>
+              <span id="instrumentValve2" class="instrument-valve-dot valve-two">2</span>
+              <span id="instrumentValve3" class="instrument-valve-dot valve-three">3</span>
+            </div>
+            <div class="instrument-stage-controls">
+              <button type="button" id="instrumentPlayPauseBtn" class="instrument-stage-button instrument-stage-primary">▶ Jouer</button>
+              <button type="button" id="instrumentStopBtn" class="instrument-stage-button">■ Stop</button>
+            </div>
+          </footer>
+        </section>
+
         <div class="octave-shift-stepper">
           <button type="button" id="octaveDownBtn" class="btn">🔽 Octave</button>
           <span id="octaveShiftLabel" class="octave-shift-label">Octave normale</span>
@@ -314,7 +375,7 @@
         </div>
       </section>
 
-      <section class="panel piano-panel">
+      <section class="panel piano-panel" id="pianoToolPanel" hidden>
         <div class="piano-roll-panel">
           <div class="piano-roll-header">
             <h2><span class="instrument-tag piano-tag">Piano</span> Accords et réponses</h2>
@@ -333,7 +394,7 @@
         </div>
       </section>
 
-      <section class="panel saved-scores-panel">
+      <section class="panel saved-scores-panel" id="savedScoresPanel" hidden>
         <div class="panel-header">
           <h2>📁 Partitions sauvegardées</h2>
           <button type="button" id="saveScoreBtn" class="btn btn-primary">💾 Sauvegarder la partition actuelle</button>
@@ -344,37 +405,6 @@
 
     </section>
   </div>
-
-  <section id="instrumentStage" class="instrument-stage" hidden aria-hidden="true" aria-label="Vue animée de la trompette">
-    <canvas id="trumpet3dCanvas" class="trumpet-3d-canvas" aria-label="Trompette en trois dimensions, vue fixe"></canvas>
-    <div class="instrument-stage-vignette" aria-hidden="true"></div>
-    <header class="instrument-stage-header">
-      <button type="button" id="closeInstrumentViewBtn" class="instrument-stage-button" aria-label="Revenir à l'application">← Retour</button>
-      <div class="instrument-stage-title">
-        <span>Vue instrument</span>
-        <small>Caméra fixe · trompette Sib</small>
-      </div>
-      <span id="instrument3dStatus" class="instrument-3d-status">Chargement du modèle…</span>
-    </header>
-    <div class="instrument-note-hud" aria-live="polite">
-      <span id="instrumentTrebleClef" class="instrument-clef" aria-hidden="true">𝄞</span>
-      <div>
-        <small>Note écrite</small>
-        <strong id="instrumentNoteLabel">--</strong>
-      </div>
-    </div>
-    <footer class="instrument-stage-footer">
-      <div class="instrument-valve-legend" aria-label="État des pistons">
-        <span id="instrumentValve1" class="instrument-valve-dot valve-one">1</span>
-        <span id="instrumentValve2" class="instrument-valve-dot valve-two">2</span>
-        <span id="instrumentValve3" class="instrument-valve-dot valve-three">3</span>
-      </div>
-      <div class="instrument-stage-controls">
-        <button type="button" id="instrumentPlayPauseBtn" class="instrument-stage-button instrument-stage-primary">▶ Jouer</button>
-        <button type="button" id="instrumentStopBtn" class="instrument-stage-button">■ Stop</button>
-      </div>
-    </footer>
-  </section>
 
   <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
   <script src="app.js"></script>
