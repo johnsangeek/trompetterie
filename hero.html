@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trompetterie Hero — Apprendre un morceau</title>
+  <link rel="stylesheet" href="hero.css" />
+  <link rel="stylesheet" href="trompetterie-shell.css" />
+</head>
+<body>
+  <button class="music-clef-handle" id="musicClefHandle" type="button" aria-controls="musicDrawer" aria-expanded="false" aria-label="Ouvrir le menu musical">
+    <span aria-hidden="true">𝄞</span><small>MENU</small>
+  </button>
+  <div class="drawer-veil" id="drawerVeil" hidden></div>
+  <aside class="music-drawer" id="musicDrawer" aria-hidden="true" aria-label="Menu musical Trompetterie">
+    <header class="drawer-header">
+      <div><span>TROMPETTERIE</span><strong>Que veux-tu jouer ?</strong></div>
+      <button id="drawerClose" type="button" aria-label="Fermer le menu">×</button>
+    </header>
+
+    <div class="source-tabs" role="tablist" aria-label="Type de contenu">
+      <button type="button" class="active" data-source-tab="scale" role="tab" aria-selected="true">Gammes</button>
+      <button type="button" data-source-tab="music" role="tab" aria-selected="false">Musiques</button>
+    </div>
+
+    <section class="drawer-source active" data-source-panel="scale">
+      <label>Note de départ
+        <select id="drawerRoot">
+          <option value="0">Do trompette</option><option value="1">Do♯ trompette</option><option value="2" selected>Ré trompette</option>
+          <option value="3">Mi♭ trompette</option><option value="4">Mi trompette</option><option value="5">Fa trompette</option>
+          <option value="6">Fa♯ trompette</option><option value="7">Sol trompette</option><option value="8">La♭ trompette</option>
+          <option value="9">La trompette</option><option value="10">Si♭ trompette</option><option value="11">Si trompette</option>
+        </select>
+      </label>
+      <label>Gamme
+        <select id="drawerScale">
+          <option value="blues" selected>Blues</option><option value="major">Majeure</option><option value="minor">Mineure naturelle</option>
+          <option value="pentatonic">Pentatonique majeure</option><option value="minorPentatonic">Pentatonique mineure</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="drawer-source" data-source-panel="music" hidden>
+      <label class="music-choice"><input type="radio" name="drawerMusic" value="demo" checked /><span><strong>Premiers pas</strong><small>Démo originale · 92 BPM</small></span></label>
+      <button class="drawer-import" id="drawerImportMidi" type="button"><span>＋</span><strong>Importer un MIDI</strong><small>Notes exactes et accompagnement</small></button>
+    </section>
+
+    <section class="mode-picker">
+      <span class="drawer-section-title">Mode d’apprentissage</span>
+      <div class="mode-options">
+        <label><input type="radio" name="drawerMode" value="hero" checked /><span><strong>Héros</strong><small>Réflexes</small></span></label>
+        <label><input type="radio" name="drawerMode" value="instrument" /><span><strong>Instrument</strong><small>Trompette 3D</small></span></label>
+        <label><input type="radio" name="drawerMode" value="partition" /><span><strong>Partition</strong><small>Lecture pure</small></span></label>
+      </div>
+    </section>
+
+    <footer class="drawer-footer">
+      <p id="drawerSummary">Ré trompette · Blues · Héros</p>
+      <button id="drawerPlay" type="button"><span>▶</span> Jouer</button>
+    </footer>
+  </aside>
+
+  <main class="hero-app">
+    <header class="topbar">
+      <a class="back-link" href="index.html" aria-label="Retour à Trompetterie">← Trompetterie</a>
+      <div class="brand">
+        <span class="brand-kicker">MODE MORCEAU</span>
+        <strong>Trompetterie <i>Hero</i></strong>
+      </div>
+      <button class="icon-button" id="fullscreenBtn" type="button" aria-label="Plein écran">⛶</button>
+    </header>
+
+    <section class="songbar" aria-label="Morceau et réglages">
+      <div class="song-identity">
+        <span class="cover">TH</span>
+        <div>
+          <span class="eyebrow">MORCEAU EN COURS</span>
+          <strong id="songTitle">Premiers pas — démo originale</strong>
+        </div>
+      </div>
+
+      <div class="transport-settings">
+        <label class="bpm-control">BPM
+          <input id="bpmInput" type="range" min="30" max="200" value="92" />
+          <output id="bpmOutput">92</output>
+        </label>
+        <label class="switch"><input id="metronomeToggle" type="checkbox" checked /><span></span>Métronome</label>
+        <label class="switch"><input id="loopToggle" type="checkbox" checked /><span></span>Boucle</label>
+      </div>
+
+      <button class="import-button" id="importButton" type="button">Importer un MIDI</button>
+      <input id="midiInput" type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden />
+    </section>
+
+    <section class="stage" aria-label="Piste d'apprentissage">
+      <div class="stage-copy">
+        <span class="eyebrow">LIS • ANTICIPE • JOUE</span>
+        <h1>La partition devient<br /><em>un réflexe.</em></h1>
+        <p>Les notes descendent sur la ligne dorée. Lis leur nom, prépare les pistons, puis joue au bon moment.</p>
+        <div class="notation-mode">
+          <span>Lecture</span>
+          <strong>Notes écrites trompette Sib</strong>
+          <label><input id="concertMidiToggle" type="checkbox" checked /> MIDI importé en sons concert</label>
+        </div>
+      </div>
+
+      <div class="highway-shell">
+        <div class="highway-head">
+          <div><span class="live-dot"></span><span id="playState">PRÊT</span></div>
+          <div class="air-legend" aria-label="Couleur par octave"><span class="oct3"></span>OCT.3 <span class="oct4"></span>4 <span class="oct5"></span>5 <span class="oct6"></span>6 <span class="oct7"></span>7+</div>
+          <span id="barCounter">MESURE 1</span>
+        </div>
+        <div class="lane-labels" aria-hidden="true">
+          <span>PISTON 1</span><span>PISTON 2</span><span>PISTON 3</span>
+        </div>
+        <canvas id="highway" aria-label="Notes qui défilent vers la ligne de jeu"></canvas>
+        <div class="hit-label">JOUE</div>
+        <div class="hit-line"></div>
+        <div class="piston-targets" aria-label="Zone d'activation des pistons">
+          <span data-target="1">1</span><span data-target="2">2</span><span data-target="3">3</span>
+        </div>
+      </div>
+
+      <aside class="coach-panel">
+        <span class="eyebrow">MAINTENANT</span>
+        <div class="current-note" id="currentNote">—</div>
+        <div class="register" id="registerLabel">Prépare-toi</div>
+
+        <div class="valves" aria-label="Pistons à presser">
+          <div class="valve valve-1" data-valve="1"><span class="valve-cap">1</span><i></i></div>
+          <div class="valve valve-2" data-valve="2"><span class="valve-cap">2</span><i></i></div>
+          <div class="valve valve-3" data-valve="3"><span class="valve-cap">3</span><i></i></div>
+        </div>
+        <div class="valve-legend"><span>1</span><span>2</span><span>3</span></div>
+        <p id="fingeringText">Pistons libres</p>
+
+        <div class="next-note">
+          <span>SUIVANTE</span>
+          <strong id="nextNote">—</strong>
+        </div>
+      </aside>
+
+      <div class="score-strip" aria-label="Partition défilante">
+        <canvas id="scoreCanvas"></canvas>
+      </div>
+    </section>
+
+    <footer class="transport">
+      <button class="play-button" id="playButton" type="button" aria-label="Lecture"><span>▶</span></button>
+      <div class="time"><strong id="currentTime">0:00</strong><span id="totalTime">0:00</span></div>
+      <div class="progress" id="progress" role="slider" aria-label="Position dans le morceau" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="progressFill"></i><b id="progressThumb"></b></div>
+      <button class="restart-button" id="restartButton" type="button">↺ Recommencer</button>
+    </footer>
+  </main>
+
+  <div class="drop-overlay" id="dropOverlay" hidden>
+    <div><strong>Dépose ton fichier MIDI</strong><span>Les notes et l’accompagnement seront séparés automatiquement.</span></div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="hero.js"></script>
+  <script src="trompetterie-shell.js"></script>
+</body>
+</html>
