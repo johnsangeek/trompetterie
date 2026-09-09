@@ -84,6 +84,7 @@ const state = {
   manualNotes: [],      // [{time, midi}] concert pitch, user-placed, time-sorted
   manualMeasures: [],
   manualCaptureMode: false,
+  trackStems: [], // other instruments from a catalog track: [{instrument, notes:[{time,midi,duration}], muted}]
   deleteNoteMode: false, // when true, clicking a staff note removes it instead of previewing it
   scaleOptionsOpen: false, // gamme/tonalité picker, revealed by clicking the treble clef
   moreToolsOpen: false,    // transport/BPM/looper, chord tool, saved scores - tucked away by default
@@ -219,6 +220,8 @@ const el = {
   soundEngineSelect: document.getElementById("soundEngineSelect"),
   metronomeBtn: document.getElementById("metronomeBtn"),
   muteScoreCheckbox: document.getElementById("muteScoreCheckbox"),
+  stemsPanel: document.getElementById("stemsPanel"),
+  stemsList: document.getElementById("stemsList"),
   saveScoreBtn: document.getElementById("saveScoreBtn"),
   savedScoresList: document.getElementById("savedScoresList"),
   noFileHint: document.getElementById("noFileHint"),
@@ -463,6 +466,8 @@ async function loadFile(file) {
 
     state.manualNotes = [];
     state.manualCaptureMode = false;
+    state.trackStems = [];
+    renderStemsPanel();
     rebuildManualMeasures();
 
     setProgress(null);
@@ -511,6 +516,8 @@ function ejectLoadedFile() {
   state.measures = [];
   state.manualNotes = [];
   state.manualCaptureMode = false;
+  state.trackStems = [];
+  renderStemsPanel();
   rebuildManualMeasures();
 
   el.fileAnalyzedBanner.hidden = true;
@@ -1806,6 +1813,22 @@ const MASTERY_RING_CIRCUMFERENCE = 2 * Math.PI * 44;
 // more tracks are added to the catalog.
 const TRACK_CATALOG = [
   { id: "soda-daoud", name: "Soda — Daoud", root: 5, mode: "minor" }, // F minor
+  { id: "all-blues", name: "All Blues", root: 11, mode: "minor" },
+  { id: "take-the-a-train", name: "Take the A Train", root: 9, mode: "minor" },
+  { id: "four-brothers", name: "Four Brothers", root: 5, mode: "minor" },
+  { id: "stolen-moments", name: "Stolen Moments", root: 0, mode: "major" },
+  { id: "cherokee", name: "Cherokee", root: 10, mode: "major" },
+  { id: "it-don-t-mean-a-thing", name: "It Don't Mean a Thing", root: 7, mode: "minor" },
+  { id: "moanin", name: "Moanin'", root: 3, mode: "major" },
+  { id: "satin-doll", name: "Satin Doll", root: 7, mode: "major" },
+  { id: "misty", name: "Misty", root: 10, mode: "major" },
+  { id: "mack-the-knife", name: "Mack the Knife", root: 9, mode: "minor" },
+  { id: "on-green-dolphin-street", name: "On Green Dolphin Street", root: 10, mode: "major" },
+  { id: "billie-s-bounce", name: "Billie's Bounce", root: 5, mode: "major" },
+  { id: "st-thomas", name: "St. Thomas", root: 1, mode: "major" },
+  { id: "new-york-new-york", name: "New York, New York", root: 3, mode: "major" },
+  { id: "b-y-t", name: "B.Y.T.", root: 7, mode: "minor" },
+  { id: "a-night-in-tunisia", name: "A Night in Tunisia", root: 9, mode: "minor" },
 ];
 
 const masteryState = {
@@ -3549,6 +3572,83 @@ function scheduleTone(concertMidi, when, duration) {
   };
 }
 
+// Softer/quieter than scheduleTone so a catalog track's backing instruments
+// (piano, bass, sax...) sit behind the trumpet line instead of competing
+// with it - same triangle-wave voice would just sound like unison trumpets.
+function scheduleStemTone(concertMidi, when, duration, volumeScale = 1) {
+  const ctx = state.audioContext;
+  const freq = 440 * Math.pow(2, (concertMidi - 69) / 12);
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+
+  const peak = 0.14 * volumeScale;
+  const attack = 0.015;
+  const release = Math.min(0.1, duration * 0.3);
+  gain.gain.setValueAtTime(0, when);
+  gain.gain.linearRampToValueAtTime(peak, when + attack);
+  gain.gain.setValueAtTime(peak, Math.max(when + attack, when + duration - release));
+  gain.gain.linearRampToValueAtTime(0.0001, when + duration);
+
+  osc.connect(gain);
+  gain.connect(getScoreMasterGain());
+  osc.start(when);
+  osc.stop(when + duration + 0.02);
+
+  state.scheduledOscillators.push(osc);
+  osc.onended = () => {
+    const i = state.scheduledOscillators.indexOf(osc);
+    if (i >= 0) state.scheduledOscillators.splice(i, 1);
+  };
+}
+
+const STEM_ICON_ON = svgIcon('<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/>', { solo: true });
+const STEM_ICON_OFF = svgIcon('<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/>', { solo: true });
+
+function renderStemsPanel() {
+  el.stemsList.innerHTML = "";
+  if (!state.trackStems.length) {
+    el.stemsPanel.hidden = true;
+    return;
+  }
+  el.stemsPanel.hidden = false;
+  state.trackStems.forEach((stem) => {
+    const row = document.createElement("div");
+    row.className = "stem-row" + (stem.muted ? " muted" : "");
+
+    const muteBtn = document.createElement("button");
+    muteBtn.type = "button";
+    muteBtn.className = "stem-mute-btn";
+    muteBtn.title = stem.muted ? "Remettre cet instrument" : "Couper cet instrument";
+    muteBtn.innerHTML = stem.muted ? STEM_ICON_OFF : STEM_ICON_ON;
+    muteBtn.addEventListener("click", () => {
+      stem.muted = !stem.muted;
+      renderStemsPanel();
+    });
+
+    const name = document.createElement("span");
+    name.className = "stem-name";
+    name.textContent = stem.instrument;
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.className = "stem-volume";
+    slider.min = "0";
+    slider.max = "100";
+    slider.value = String(Math.round(stem.volume * 100));
+    slider.setAttribute("aria-label", `Volume ${stem.instrument}`);
+    slider.addEventListener("input", () => {
+      stem.volume = Number(slider.value) / 100;
+    });
+
+    row.appendChild(muteBtn);
+    row.appendChild(name);
+    row.appendChild(slider);
+    el.stemsList.appendChild(row);
+  });
+}
+
 const SCORE_LOOKAHEAD_SECONDS = 2;
 
 function startScorePlayback() {
@@ -3574,6 +3674,12 @@ function startScorePlayback() {
     const passStart = nextLoopStart;
     for (const e of events) {
       scheduleTone(e.midi, passStart + e.startTime, e.endTime - e.startTime);
+    }
+    for (const stem of state.trackStems) {
+      if (stem.muted) continue;
+      for (const n of stem.notes) {
+        scheduleStemTone(n.midi, passStart + n.time, n.duration, stem.volume);
+      }
     }
     nextLoopStart += totalDuration;
   }
@@ -4531,6 +4637,10 @@ async function loadTrackFromQueryParam() {
     el.bpmDisplay.textContent = entry.bpm.toFixed(1);
     el.durationValue.textContent = formatTime(state.duration);
     state.manualMeasures = buildManualMeasuresFor(state.manualNotes, state.bpm, state.duration);
+    state.trackStems = (entry.stems || [])
+      .filter((s) => !s.isLead)
+      .map((s) => ({ instrument: s.instrument, notes: s.notes, muted: false, volume: 0.7 }));
+    renderStemsPanel();
     setMode("manual");
     setStatus(`"${entry.name}" chargé — clique "Jouer la partition en boucle" pour l'écouter.`);
     setTimeout(() => setStatus(""), 5000);

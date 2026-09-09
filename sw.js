@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "trumpet-trainer-v72";
+const CACHE_NAME = "trumpet-trainer-v76";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -38,6 +38,22 @@ const CORE_ASSETS = [
   "./covers/soda-daoud.jpg",
   "./covers/soda-daoud-thumb.jpg",
   "./tracks/soda-daoud.json",
+  "./tracks/all-blues.json",
+  "./tracks/take-the-a-train.json",
+  "./tracks/four-brothers.json",
+  "./tracks/stolen-moments.json",
+  "./tracks/cherokee.json",
+  "./tracks/it-don-t-mean-a-thing.json",
+  "./tracks/moanin.json",
+  "./tracks/satin-doll.json",
+  "./tracks/misty.json",
+  "./tracks/mack-the-knife.json",
+  "./tracks/on-green-dolphin-street.json",
+  "./tracks/billie-s-bounce.json",
+  "./tracks/st-thomas.json",
+  "./tracks/new-york-new-york.json",
+  "./tracks/b-y-t.json",
+  "./tracks/a-night-in-tunisia.json",
   "https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js",
 ];
 

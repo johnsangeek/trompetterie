@@ -502,6 +502,68 @@ body.standalone-app .mini-nav {
   font-size: 0.8rem;
 }
 
+.stems-panel {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.stems-panel strong { font-size: 0.86rem; }
+.stems-panel small { display: block; color: var(--text-dim); font-size: 0.72rem; margin-top: 2px; }
+
+.stems-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.stem-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(var(--accent-rgb), 0.06);
+}
+
+.stem-row.muted { opacity: 0.55; }
+
+.stem-mute-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text);
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.stem-row.muted .stem-mute-btn { color: var(--danger); border-color: var(--danger); }
+.stem-mute-btn .icon { width: 0.85em; height: 0.85em; }
+
+.stem-name {
+  flex: none;
+  width: 108px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.stem-volume {
+  flex: 1;
+  min-width: 60px;
+  accent-color: var(--accent);
+}
+
 .stats {
   display: flex;
   gap: 24px;
