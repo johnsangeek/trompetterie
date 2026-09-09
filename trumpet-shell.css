@@ -90,7 +90,7 @@ body.trumpet-workspace-open .notation-panel {
   padding: 58px clamp(18px, 3vw, 54px) 12px;
   overflow: hidden;
   background: #f8f5ed;
-  border-bottom: 1px solid rgba(60, 53, 39, .12);
+  border-bottom: 0;
 }
 
 body.trumpet-workspace-open .notation-panel > .panel-header {
@@ -130,15 +130,7 @@ body.trumpet-workspace-open .clef-toggle-btn::after {
 }
 
 body.trumpet-workspace-open .current-note-label {
-  position: absolute;
-  left: 50%;
-  top: 10px;
-  transform: translateX(-50%);
-  min-width: 74px;
-  text-align: center;
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: #d79429;
+  display: none;
 }
 
 body.trumpet-workspace-open .more-tools-toggle-btn {
@@ -151,9 +143,9 @@ body.trumpet-workspace-open .more-tools-toggle-btn {
 
 body.trumpet-workspace-open #staff {
   width: 100%;
-  height: calc(100% - 52px);
+  height: calc(100% - 72px);
   min-height: 205px;
-  margin-top: 52px;
+  margin-top: 72px;
   padding: 4px 0;
   overflow: auto;
   border: 0;
@@ -161,6 +153,23 @@ body.trumpet-workspace-open #staff {
   background: transparent;
   scrollbar-width: thin;
   scrollbar-color: rgba(104, 97, 82, .28) transparent;
+}
+
+body.trumpet-workspace-open .practice-title {
+  position: absolute;
+  z-index: 9;
+  top: 62px;
+  left: 50%;
+  max-width: 58vw;
+  margin: 0;
+  transform: translateX(-50%);
+  overflow: hidden;
+  color: #202824;
+  font-size: clamp(.92rem, 1.45vw, 1.22rem);
+  font-weight: 800;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 body.trumpet-workspace-open #staff > svg { margin-inline: auto; }
@@ -274,6 +283,12 @@ body.trumpet-workspace-open .practice-launch-button:focus-visible .practice-play
   box-shadow: 0 18px 36px rgba(49, 42, 29, .25), 0 0 0 5px rgba(242,188,84,.14);
 }
 
+body.trumpet-workspace-open .practice-launch-button.playing .practice-play-disc {
+  color: #fff7e9;
+  background: #b85c45;
+  box-shadow: 0 14px 30px rgba(142, 65, 46, .24), inset 0 0 0 6px rgba(255,255,255,.05);
+}
+
 body.trumpet-workspace-open .practice-play-label {
   font-size: .65rem;
   letter-spacing: .08em;
@@ -281,12 +296,12 @@ body.trumpet-workspace-open .practice-play-label {
 }
 
 body.trumpet-workspace-open #improvisationControls {
-  position: absolute;
-  z-index: 60;
-  top: 108px;
+  position: fixed;
+  z-index: 120;
+  top: 76px;
   left: clamp(18px, 3vw, 54px);
   width: min(470px, calc(100vw - 36px));
-  max-height: calc(100vh - 140px);
+  max-height: calc(100vh - 94px);
   margin: 0;
   padding: 18px;
   overflow: auto;
@@ -296,6 +311,62 @@ body.trumpet-workspace-open #improvisationControls {
   box-shadow: 0 24px 70px rgba(61, 50, 30, .2);
   backdrop-filter: blur(18px);
 }
+
+body.trumpet-workspace-open .pitch-details-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  color: #6d756f;
+  font-size: .78rem;
+  line-height: 1.35;
+}
+
+body.trumpet-workspace-open .pitch-details-option input { margin-top: 2px; accent-color: #d99728; }
+
+body.trumpet-workspace-open .scale-sequence-builder {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(45, 41, 33, .11);
+}
+
+body.trumpet-workspace-open .scale-sequence-heading { display: grid; gap: 3px; }
+body.trumpet-workspace-open .scale-sequence-heading strong { font-size: .86rem; }
+body.trumpet-workspace-open .scale-sequence-heading small { color: #7d827d; font-size: .72rem; }
+body.trumpet-workspace-open .scale-sequence-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+body.trumpet-workspace-open .scale-sequence-actions .btn { min-height: 34px; padding: 7px 10px; font-size: .72rem; }
+body.trumpet-workspace-open .scale-queue-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+body.trumpet-workspace-open .scale-queue-empty { color: #90948f; font-size: .72rem; }
+body.trumpet-workspace-open .scale-queue-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 1px solid rgba(48,43,34,.13);
+  border-radius: 999px;
+  color: #303a35;
+  background: #f1ecdf;
+  font-size: .68rem;
+  cursor: pointer;
+}
+body.trumpet-workspace-open .scale-queue-chip > span { display: grid; width: 18px; height: 18px; place-items: center; border-radius: 50%; color: #fff; background: #202824; font-weight: 900; }
+body.trumpet-workspace-open .scale-queue-chip b { color: #a26422; font-size: .9rem; }
+
+body.trumpet-workspace-open #staff.inline-score-active { overflow: hidden; }
+body.trumpet-workspace-open .inline-score-paper { display: grid; grid-template-columns: 72px 1fr; width: 100%; height: 100%; min-height: 190px; overflow: hidden; }
+body.trumpet-workspace-open .inline-score-clef { z-index: 4; display: grid; place-items: center; padding-bottom: 8px; color: #18211e; background: #f8f5ed; font-family: Georgia, serif; font-size: 5.3rem; }
+body.trumpet-workspace-open .inline-score-viewport { position: relative; overflow: hidden; }
+body.trumpet-workspace-open .inline-staff-lines { position: absolute; top: 62px; left: 0; right: 0; height: 61px; background: repeating-linear-gradient(to bottom, rgba(24,31,28,.48) 0 1px, transparent 1px 12px); }
+body.trumpet-workspace-open .inline-score-anchor { position: absolute; z-index: 6; top: 5px; bottom: 5px; left: 50%; width: 2px; background: linear-gradient(transparent, #df9928 14%, #df9928 88%, transparent); box-shadow: 0 0 14px rgba(223,153,40,.34); }
+body.trumpet-workspace-open .inline-score-anchor span { position: absolute; top: 0; left: 50%; padding: 3px 7px; transform: translateX(-50%); border-radius: 999px; color: #f2bc54; background: #202824; font-size: .54rem; font-weight: 900; letter-spacing: .1em; }
+body.trumpet-workspace-open .inline-score-track { position: absolute; inset: 0; will-change: transform; }
+body.trumpet-workspace-open .inline-score-note { position: absolute; width: 64px; height: 132px; padding: 0; border: 0; color: #18211e; background: transparent; transform: translate(-32px, -50%); cursor: pointer; }
+body.trumpet-workspace-open .inline-note-head { position: absolute; top: 43px; left: 18px; width: 22px; height: 15px; border-radius: 50%; background: currentColor; transform: rotate(-16deg); }
+body.trumpet-workspace-open .inline-note-stem { position: absolute; top: 3px; left: 38px; width: 2px; height: 48px; background: currentColor; }
+body.trumpet-workspace-open .inline-note-duration { position: absolute; top: 3px; left: 38px; height: 3px; border-radius: 4px; background: currentColor; }
+body.trumpet-workspace-open .inline-note-name { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); font-size: .71rem; font-weight: 900; white-space: nowrap; }
+body.trumpet-workspace-open .inline-note-fingering { position: absolute; top: 83px; left: 50%; display: flex; gap: 3px; transform: translateX(-50%); }
+body.trumpet-workspace-open .inline-score-note.active { color: #df9928; filter: drop-shadow(0 0 6px rgba(223,153,40,.28)); }
 
 body.trumpet-workspace-open #scaleRootSelect { min-width: min(280px, 72vw); }
 
@@ -368,24 +439,6 @@ body.trumpet-workspace-open .instrument-valve-dot.valve-one { background: #ef665
 body.trumpet-workspace-open .instrument-valve-dot.valve-two { background: #51d1c4; }
 body.trumpet-workspace-open .instrument-valve-dot.valve-three { background: #f3bd4f; }
 body.trumpet-workspace-open .instrument-valve-dot.pressed { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-
-body.trumpet-workspace-open::after {
-  content: "";
-  position: fixed;
-  z-index: 200;
-  inset: 0;
-  pointer-events: none;
-  background: #f8f5ed;
-  opacity: 0;
-  transition: opacity .38s ease;
-}
-
-body.trumpet-workspace-open.karaoke-transitioning::after { opacity: 1; }
-body.trumpet-workspace-open.karaoke-transitioning .app {
-  transform: scale(.992);
-  filter: blur(2px);
-  transition: transform .38s ease, filter .38s ease;
-}
 
 .tools-drawer[hidden] { display: none; }
 .tools-drawer {
@@ -465,7 +518,10 @@ body.trumpet-workspace-open #hiddenModeToggle { top: 172px; }
   body.trumpet-workspace-open .practice-play-label { font-size: .56rem; }
   body.trumpet-workspace-open .degree-chips { left: 12px; width: calc(100vw - 170px); transform: none; }
   body.trumpet-workspace-open #improvisationControls .degree-chips { width: 100%; }
-  body.trumpet-workspace-open #improvisationControls { left: 12px; top: 104px; width: calc(100vw - 24px); }
+  body.trumpet-workspace-open #improvisationControls { left: 12px; top: 72px; width: calc(100vw - 24px); max-height: calc(100vh - 84px); }
+  body.trumpet-workspace-open .practice-title { top: 66px; max-width: 55vw; }
+  body.trumpet-workspace-open .inline-score-paper { grid-template-columns: 48px 1fr; }
+  body.trumpet-workspace-open .inline-score-clef { font-size: 3.8rem; }
   body.trumpet-workspace-open .instrument-valve-dot { width: 32px; height: 32px; }
 }
 

@@ -48,7 +48,6 @@
           <a href="#" id="backToBoardingLink">← Boarding space</a>
           <a href="home.html">Accueil</a>
           <a href="training.html">📀 Training</a>
-          <a href="karaoke.html">🎤 Karaoké</a>
           <a href="chords.html">🎹 Chords Resolver</a>
       </div>
       <div class="workspace-wordmark" aria-label="Trompetterie">Trompetterie</div>
@@ -142,8 +141,8 @@
 
         <div class="practice-launch">
           <button type="button" id="openKaraokeBtn" class="practice-launch-button" aria-label="Commencer maintenant">
-            <span class="practice-play-disc" aria-hidden="true"><span>▶</span></span>
-            <span class="practice-play-label">Commencer maintenant</span>
+            <span class="practice-play-disc" aria-hidden="true"><span id="practicePlayIcon">▶</span></span>
+            <span id="practicePlayLabel" class="practice-play-label">Commencer maintenant</span>
           </button>
         </div>
 
@@ -159,8 +158,7 @@
           <button type="button" id="exportScorePdfBtn" class="btn">Exporter PDF</button>
           <label class="sound-engine-label">Son
             <select id="soundEngineSelect">
-              <option value="sample">Trompette échantillonnée</option>
-              <option value="synth">Synthé rapide</option>
+              <option value="synth" selected>Son numérique instantané</option>
             </select>
           </label>
           <label class="checkbox-label">
@@ -197,7 +195,7 @@
 
           <div class="improv-row">
             <label>
-              Tonalité (trompette / concert)
+              Tonalité pour la trompette
               <select id="scaleRootSelect"></select>
             </label>
             <label id="scaleTypeLabel">
@@ -211,7 +209,23 @@
             <button type="button" id="toggleFavoriteScaleBtn" class="btn" title="Ajouter aux favoris">☆ Favori</button>
           </div>
 
-          <p class="notation-convention"><strong>Repère universel :</strong> Do / C trompette Sib = Sib / B♭ concert.</p>
+          <label class="pitch-details-option">
+            <input type="checkbox" id="showPitchDetailsCheckbox" />
+            Afficher aussi les noms internationaux et le son concert
+          </label>
+
+          <section class="scale-sequence-builder" aria-label="Gammes à enchaîner">
+            <div class="scale-sequence-heading">
+              <strong>Programme de gammes</strong>
+              <small>Choisis plusieurs exercices, puis lance la lecture.</small>
+            </div>
+            <div class="scale-sequence-actions">
+              <button type="button" id="addCurrentScaleBtn" class="btn">+ Ajouter cette gamme</button>
+              <button type="button" id="addAllBluesKeysBtn" class="btn">Blues · 12 tonalités</button>
+              <button type="button" id="clearScaleQueueBtn" class="btn" hidden>Effacer</button>
+            </div>
+            <div id="scaleQueueList" class="scale-queue-list" aria-live="polite"></div>
+          </section>
 
           <div class="improv-row" id="insideOutsideRow" hidden>
             <div class="mode-toggle">
@@ -288,6 +302,7 @@
           </div>
         </div>
 
+        <h2 id="practiceTitle" class="practice-title">Gamme blues</h2>
         <div id="staff" class="staff"></div>
         <div id="degreeChips" class="degree-chips" hidden></div>
 

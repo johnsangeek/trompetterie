@@ -65,7 +65,9 @@ const state = {
   selectedManualNoteIndex: null,
   twelveKeyBaseNotes: null,
   twelveKeyBaseRoot: null,
-  soundEngine: "sample",
+  soundEngine: "synth",
+  showPitchDetails: false,
+  scaleQueue: [],
 
   scoreLoopActive: false,
   scoreLoopTimer: null,
@@ -171,6 +173,14 @@ const el = {
   playScoreBtn: document.getElementById("playScoreBtn"),
   stopScoreBtn: document.getElementById("stopScoreBtn"),
   openKaraokeBtn: document.getElementById("openKaraokeBtn"),
+  practicePlayIcon: document.getElementById("practicePlayIcon"),
+  practicePlayLabel: document.getElementById("practicePlayLabel"),
+  practiceTitle: document.getElementById("practiceTitle"),
+  showPitchDetailsCheckbox: document.getElementById("showPitchDetailsCheckbox"),
+  addCurrentScaleBtn: document.getElementById("addCurrentScaleBtn"),
+  addAllBluesKeysBtn: document.getElementById("addAllBluesKeysBtn"),
+  clearScaleQueueBtn: document.getElementById("clearScaleQueueBtn"),
+  scaleQueueList: document.getElementById("scaleQueueList"),
   exportScorePdfBtn: document.getElementById("exportScorePdfBtn"),
   soundEngineSelect: document.getElementById("soundEngineSelect"),
   metronomeBtn: document.getElementById("metronomeBtn"),
@@ -247,6 +257,7 @@ toolsDrawer.appendChild(toolsDrawerHead);
 ].filter(Boolean).forEach((node) => toolsDrawer.appendChild(node));
 el.mainApp.appendChild(toolsDrawer);
 [el.degreeChips, el.songNotesHeader, el.songKeyPanel].filter(Boolean).forEach((node) => el.improvisationControls.appendChild(node));
+el.mainApp.appendChild(el.improvisationControls);
 
 // The 3D trumpet is now an always-visible inline panel (not an on-demand
 // fullscreen modal), so it's activated once at startup and never closed.
@@ -1716,9 +1727,15 @@ function midiToInternationalName(midi) {
   return `${INTERNATIONAL_NOTE_NAMES[((midi % 12) + 12) % 12]}${octave}`;
 }
 
+function writtenNoteDisplayName(writtenMidi, concertMidi = writtenMidi - 2) {
+  const french = midiToFrenchName(writtenMidi);
+  if (!state.showPitchDetails) return french;
+  return `${french} / ${midiToInternationalName(writtenMidi)} · ${midiToConcertDisplayName(concertMidi)}`;
+}
+
 function midiToTrumpetWrittenName(concertMidi) {
   const writtenMidi = concertMidi + 2;
-  return `${midiToFrenchName(writtenMidi)} / ${midiToInternationalName(writtenMidi)}`;
+  return writtenNoteDisplayName(writtenMidi, concertMidi);
 }
 
 function midiToConcertDisplayName(concertMidi) {
@@ -1727,7 +1744,9 @@ function midiToConcertDisplayName(concertMidi) {
 
 function trumpetPitchClassLabel(concertPitchClass) {
   const writtenPitchClass = (concertPitchClass + 2) % 12;
-  return `${FRENCH_NOTE_NAMES[writtenPitchClass]} / ${INTERNATIONAL_NOTE_NAMES[writtenPitchClass]} trompette · ${FRENCH_NOTE_NAMES[concertPitchClass]} / ${INTERNATIONAL_NOTE_NAMES[concertPitchClass]} concert`;
+  const writtenName = FRENCH_NOTE_NAMES[writtenPitchClass];
+  if (!state.showPitchDetails) return `${writtenName} trompette`;
+  return `${writtenName} / ${INTERNATIONAL_NOTE_NAMES[writtenPitchClass]} trompette · ${FRENCH_NOTE_NAMES[concertPitchClass]} / ${INTERNATIONAL_NOTE_NAMES[concertPitchClass]} concert`;
 }
 
 function formatTrumpetKey(concertPitchClass, mode) {
@@ -2016,7 +2035,7 @@ function renderScaleStaff(writtenMidis, activeWrittenMidi) {
       const note = new VF.StaveNote({ keys: [key], duration: "q" });
       if (key.includes("#")) note.addModifier(new VF.Accidental("#"));
 
-      const nameAnnotation = new VF.Annotation(`${midiToFrenchName(midi)} / ${midiToInternationalName(midi)}`);
+      const nameAnnotation = new VF.Annotation(writtenNoteDisplayName(midi));
       nameAnnotation.setFont("Arial", nameAnnotationSize, "bold");
       if (VF.Annotation.VerticalJustify) {
         nameAnnotation.setVerticalJustification(VF.Annotation.VerticalJustify.TOP);
@@ -2056,7 +2075,7 @@ function renderDegreeChips(writtenMidis) {
     chip.type = "button";
     chip.className = "degree-chip";
     chip.dataset.concertMidi = String(concertMidi);
-    chip.innerHTML = `<span>${midiToFrenchName(writtenMidi)}</span><span class="chip-international">${midiToInternationalName(writtenMidi)}</span><span class="chip-concert">${midiToConcertDisplayName(concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
+    chip.innerHTML = `<span>${writtenNoteDisplayName(writtenMidi, concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
     chip.addEventListener("click", () => selectScaleNote(writtenMidi));
     container.appendChild(chip);
   });
@@ -2066,7 +2085,54 @@ function renderScaleReference() {
   const writtenMidis = buildScaleReference(state.scaleRoot, state.scaleType);
   renderScaleStaff(writtenMidis);
   renderDegreeChips(writtenMidis);
+  updatePracticeTitle();
   updateFavoriteButtonState();
+}
+
+function scalePracticeTitle(root = state.scaleRoot, scaleType = state.scaleType) {
+  const definition = SCALE_DEFINITIONS[scaleType] || { label: scaleType };
+  const writtenRoot = (Number(root) + 2) % 12;
+  return `Gamme ${definition.label.toLowerCase()} · ${FRENCH_NOTE_NAMES[writtenRoot]} trompette`;
+}
+
+function updatePracticeTitle(label = null) {
+  if (!el.practiceTitle) return;
+  if (label) {
+    el.practiceTitle.textContent = label;
+  } else if (state.scaleQueue.length) {
+    el.practiceTitle.textContent = `Programme · ${state.scaleQueue.length} gamme${state.scaleQueue.length > 1 ? "s" : ""}`;
+  } else {
+    el.practiceTitle.textContent = scalePracticeTitle();
+  }
+}
+
+function renderScaleQueue() {
+  if (!el.scaleQueueList) return;
+  el.scaleQueueList.innerHTML = "";
+  el.clearScaleQueueBtn.hidden = state.scaleQueue.length === 0;
+  if (!state.scaleQueue.length) {
+    el.scaleQueueList.innerHTML = '<span class="scale-queue-empty">La gamme affichée sera jouée.</span>';
+    updatePracticeTitle();
+    return;
+  }
+  state.scaleQueue.forEach((entry, index) => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "scale-queue-chip";
+    chip.innerHTML = `<span>${index + 1}</span>${scalePracticeTitle(entry.root, entry.scaleType)} <b aria-hidden="true">×</b>`;
+    chip.setAttribute("aria-label", `Retirer ${scalePracticeTitle(entry.root, entry.scaleType)}`);
+    chip.addEventListener("click", () => {
+      state.scaleQueue.splice(index, 1);
+      renderScaleQueue();
+    });
+    el.scaleQueueList.appendChild(chip);
+  });
+  updatePracticeTitle();
+}
+
+function addScaleToQueue(root, scaleType) {
+  state.scaleQueue.push({ root: Number(root), scaleType });
+  renderScaleQueue();
 }
 
 // ---------------------------------------------------------------------------
@@ -2272,7 +2338,7 @@ function buildPitchPalette() {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "degree-chip";
-    chip.innerHTML = `<span>${midiToFrenchName(writtenMidi)}</span><span class="chip-international">${midiToInternationalName(writtenMidi)}</span><span class="chip-concert">${midiToConcertDisplayName(concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
+    chip.innerHTML = `<span>${writtenNoteDisplayName(writtenMidi, concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
     chip.addEventListener("click", () => {
       if (readOnly) {
         locateNoteInScore(concertMidi);
@@ -2708,15 +2774,27 @@ function flattenMeasures(measuresArr) {
 }
 
 function buildScaleLoopEvents() {
-  const writtenMidis = buildScaleReference(state.scaleRoot, state.scaleType);
   const beat = 60 / state.bpm;
-  const sequence = writtenMidis.concat(writtenMidis.slice(0, -1).reverse());
-  const events = sequence.map((midi, i) => ({
-    startTime: i * beat,
-    endTime: (i + 0.9) * beat,
-    midi: midi - 2,
-  }));
-  return { events, totalDuration: sequence.length * beat };
+  const selections = state.scaleQueue.length
+    ? state.scaleQueue
+    : [{ root: state.scaleRoot, scaleType: state.scaleType }];
+  const events = [];
+  let offset = 0;
+  selections.forEach((selection) => {
+    const writtenMidis = buildScaleReference(selection.root, selection.scaleType);
+    const sequence = writtenMidis.concat(writtenMidis.slice(0, -1).reverse());
+    const practiceLabel = scalePracticeTitle(selection.root, selection.scaleType);
+    sequence.forEach((midi, index) => {
+      events.push({
+        startTime: offset + index * beat,
+        endTime: offset + (index + .9) * beat,
+        midi: midi - 2,
+        practiceLabel,
+      });
+    });
+    offset += sequence.length * beat;
+  });
+  return { events, totalDuration: offset };
 }
 
 function getCurrentModeEvents() {
@@ -2725,28 +2803,58 @@ function getCurrentModeEvents() {
   return flattenMeasures(state.measures);
 }
 
-function openKaraoke(eventsData, title = "Partition en cours") {
-  if (document.body.classList.contains("karaoke-transitioning")) return;
-  const events = eventsData.events
-    .filter((event) => Number.isFinite(event.midi))
-    .map((event) => ({
-      startTime: event.startTime,
-      endTime: Math.max(event.endTime, event.startTime + 0.08),
-      midi: event.midi,
-    }));
-  if (!events.length) {
-    setStatus("Ajoute des notes avant d'ouvrir le mode karaoké.", true);
-    setTimeout(() => setStatus(""), 2600);
-    return;
-  }
-  sessionStorage.setItem("trumpetKaraokeSession", JSON.stringify({
-    title,
-    bpm: state.bpm,
-    events,
-    totalDuration: Math.max(eventsData.totalDuration, ...events.map((event) => event.endTime)),
-  }));
-  document.body.classList.add("karaoke-transitioning");
-  window.setTimeout(() => { window.location.href = "karaoke.html"; }, 420);
+let inlineScore = null;
+
+function setPracticeButtonPlaying(playing) {
+  el.openKaraokeBtn.classList.toggle("playing", playing);
+  el.openKaraokeBtn.setAttribute("aria-label", playing ? "Arrêter l’exercice" : "Commencer maintenant");
+  el.practicePlayIcon.textContent = playing ? "■" : "▶";
+  el.practicePlayLabel.textContent = playing ? "Arrêter" : "Commencer maintenant";
+}
+
+function renderInlineScore(events, totalDuration) {
+  el.staff.innerHTML = '<div class="inline-score-paper"><div class="inline-score-clef" aria-hidden="true">𝄞</div><div class="inline-score-viewport"><div class="inline-staff-lines" aria-hidden="true"></div><div class="inline-score-anchor"><span>JOUE</span></div><div class="inline-score-track"></div></div></div>';
+  el.staff.classList.add("inline-score-active");
+  const viewport = el.staff.querySelector(".inline-score-viewport");
+  const track = el.staff.querySelector(".inline-score-track");
+  const pixelsPerSecond = Math.max(126, viewport.clientWidth * .14);
+  const rendered = [];
+  events.forEach((event, index) => { event.inlineIndex = index; });
+  [-1, 0, 1].forEach((cycle) => {
+    events.forEach((event) => {
+      const writtenMidi = event.midi + 2;
+      const note = document.createElement("button");
+      note.type = "button";
+      note.className = "inline-score-note";
+      note.style.left = `${(event.startTime + cycle * totalDuration) * pixelsPerSecond}px`;
+      note.style.top = `${86 - (writtenMidi - 71) * 3.3}px`;
+      note.innerHTML = `<span class="inline-note-stem"></span><span class="inline-note-head"></span><span class="inline-note-duration" style="width:${Math.max(22, (event.endTime - event.startTime) * pixelsPerSecond)}px"></span><span class="inline-note-name">${writtenNoteDisplayName(writtenMidi, event.midi)}</span><span class="inline-note-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
+      note.addEventListener("click", () => {
+        playTone(event.midi);
+        updatePistons(event.midi);
+        setTrumpetCurrentNote(event.midi);
+      });
+      track.appendChild(note);
+      rendered.push({ element: note, event });
+    });
+  });
+  inlineScore = { viewport, track, rendered, pixelsPerSecond };
+  positionInlineScore(0, null);
+}
+
+function positionInlineScore(position, activeEvent) {
+  if (!inlineScore) return;
+  const anchor = inlineScore.viewport.clientWidth * .5;
+  inlineScore.track.style.transform = `translateX(${anchor - position * inlineScore.pixelsPerSecond}px)`;
+  const activeIndex = activeEvent?.inlineIndex ?? -1;
+  inlineScore.rendered.forEach(({ element, event }) => {
+    element.classList.toggle("active", event.inlineIndex === activeIndex);
+  });
+}
+
+function closeInlineScore() {
+  inlineScore = null;
+  el.staff.classList.remove("inline-score-active");
 }
 
 // Routed through a single persistent gain node (rather than baking mute
@@ -2811,6 +2919,7 @@ function startScorePlayback() {
   state.scoreLoopEvents = events;
   state.scoreLoopDuration = totalDuration;
   state.scoreLoopLastKey = null;
+  renderInlineScore(events, totalDuration);
   const loopOrigin = state.audioContext.currentTime + 0.1;
   state.scoreLoopStartTime = loopOrigin;
   let nextLoopStart = loopOrigin;
@@ -2833,6 +2942,7 @@ function startScorePlayback() {
 
   el.playScoreBtn.hidden = true;
   el.stopScoreBtn.hidden = false;
+  setPracticeButtonPlaying(true);
   scoreLoopVisualTick();
 }
 
@@ -2857,8 +2967,10 @@ function stopScorePlayback() {
   state.scheduledOscillators = [];
   el.playScoreBtn.hidden = false;
   el.stopScoreBtn.hidden = true;
+  setPracticeButtonPlaying(false);
 
   if (wasActive) {
+    closeInlineScore();
     updatePistons(null);
     setCurrentNoteLabel("--");
     Array.from(el.degreeChips.children).forEach((c) => c.classList.remove("active"));
@@ -2879,8 +2991,8 @@ function stopScorePlayback() {
 function scoreLoopVisualTick() {
   if (!state.scoreLoopActive) return;
 
-  const elapsed = state.audioContext.currentTime - state.scoreLoopStartTime;
-  const posInLoop = ((elapsed % state.scoreLoopDuration) + state.scoreLoopDuration) % state.scoreLoopDuration;
+  const elapsed = Math.max(0, state.audioContext.currentTime - state.scoreLoopStartTime);
+  const posInLoop = elapsed % state.scoreLoopDuration;
 
   if (state.mode === "improvisation") {
     updateImprovisationHighlight(posInLoop);
@@ -2900,6 +3012,8 @@ function updateImprovisationHighlight(posInLoop) {
     }
   }
 
+  positionInlineScore(posInLoop, active);
+
   const key = active ? `${active.startTime}` : "none";
   if (key === state.scoreLoopLastKey) return;
   state.scoreLoopLastKey = key;
@@ -2908,8 +3022,7 @@ function updateImprovisationHighlight(posInLoop) {
   if (active) setTrumpetCurrentNote(active.midi);
   else setCurrentNoteLabel("--");
 
-  const writtenMidis = buildScaleReference(state.scaleRoot, state.scaleType);
-  renderScaleStaff(writtenMidis, active ? active.midi + 2 : null);
+  if (active?.practiceLabel) updatePracticeTitle(active.practiceLabel);
 
   Array.from(el.degreeChips.children).forEach((chip) => {
     chip.classList.toggle("active", active !== null && Number(chip.dataset.concertMidi) === active.midi);
@@ -3062,21 +3175,6 @@ function renderSavedScoresList() {
       playBtn.textContent = "▶ Rejouer";
       playBtn.addEventListener("click", () => loadSavedScore(entry));
 
-      const karaokeBtn = document.createElement("button");
-      karaokeBtn.type = "button";
-      karaokeBtn.className = "btn";
-      karaokeBtn.textContent = "🎤 Karaoké";
-      karaokeBtn.addEventListener("click", () => {
-        const beat = 60 / entry.bpm;
-        const notes = entry.notes.slice().sort((a, b) => a.time - b.time);
-        const events = notes.map((note, index) => ({
-          startTime: note.time,
-          endTime: notes[index + 1]?.time ?? note.time + beat * 0.9,
-          midi: note.midi,
-        }));
-        openKaraoke({ events, totalDuration: Math.max(entry.duration, ...events.map((event) => event.endTime)) }, entry.name);
-      });
-
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "btn";
@@ -3089,7 +3187,6 @@ function renderSavedScoresList() {
 
       item.appendChild(info);
       item.appendChild(playBtn);
-      item.appendChild(karaokeBtn);
       item.appendChild(deleteBtn);
       el.savedScoresList.appendChild(item);
     });
@@ -3492,14 +3589,38 @@ el.toggleTwelveKeysBtn.addEventListener("click", () => {
 el.exportScorePdfBtn.addEventListener("click", exportCurrentScorePdf);
 el.soundEngineSelect.addEventListener("change", () => {
   state.soundEngine = el.soundEngineSelect.value;
-  setStatus(state.soundEngine === "sample" ? "Son de trompette échantillonné activé." : "Synthé rapide activé.");
+  setStatus("Son numérique instantané activé.");
 });
 
-FRENCH_NOTE_NAMES.forEach((_name, idx) => {
-  const opt = document.createElement("option");
-  opt.value = String(idx);
-  opt.textContent = trumpetPitchClassLabel(idx);
-  el.scaleRootSelect.appendChild(opt);
+function populateScaleRootSelect() {
+  const selected = state.scaleRoot;
+  el.scaleRootSelect.innerHTML = "";
+  FRENCH_NOTE_NAMES.forEach((_name, idx) => {
+    const opt = document.createElement("option");
+    opt.value = String(idx);
+    opt.textContent = trumpetPitchClassLabel(idx);
+    el.scaleRootSelect.appendChild(opt);
+  });
+  el.scaleRootSelect.value = String(selected);
+}
+populateScaleRootSelect();
+
+el.showPitchDetailsCheckbox.addEventListener("change", () => {
+  state.showPitchDetails = el.showPitchDetailsCheckbox.checked;
+  populateScaleRootSelect();
+  renderScaleQueue();
+  buildPitchPalette();
+  if (!state.scoreLoopActive && state.mode === "improvisation") renderScaleReference();
+});
+
+el.addCurrentScaleBtn.addEventListener("click", () => addScaleToQueue(state.scaleRoot, state.scaleType));
+el.addAllBluesKeysBtn.addEventListener("click", () => {
+  state.scaleQueue = Array.from({ length: 12 }, (_, root) => ({ root, scaleType: "blues" }));
+  renderScaleQueue();
+});
+el.clearScaleQueueBtn.addEventListener("click", () => {
+  state.scaleQueue = [];
+  renderScaleQueue();
 });
 
 function populateScaleTypeSelect() {
@@ -3594,7 +3715,10 @@ el.octaveUpBtn.addEventListener("click", () => {
 
 el.playScoreBtn.addEventListener("click", startScorePlayback);
 el.stopScoreBtn.addEventListener("click", stopScorePlayback);
-el.openKaraokeBtn.addEventListener("click", () => openKaraoke(getCurrentModeEvents()));
+el.openKaraokeBtn.addEventListener("click", () => {
+  if (state.scoreLoopActive) stopScorePlayback();
+  else startScorePlayback();
+});
 
 el.metronomeBtn.addEventListener("click", () => {
   if (state.metronomeActive) {
@@ -3613,6 +3737,7 @@ renderSavedScoresList();
 
 el.toggleFavoriteScaleBtn.addEventListener("click", toggleFavoriteScale);
 renderFavoriteScalesList();
+renderScaleQueue();
 
 setFileControlsEnabled(false);
 el.bpmInput.value = state.bpm.toFixed(1);
