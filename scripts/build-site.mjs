@@ -39,7 +39,7 @@ for (const source of paths) {
 const worker = `const ASSETS = ${JSON.stringify(assets)};
 const TYPES = {html:"text/html; charset=utf-8",css:"text/css; charset=utf-8",js:"text/javascript; charset=utf-8",json:"application/json; charset=utf-8",txt:"text/plain; charset=utf-8",png:"image/png",jpg:"image/jpeg",jpeg:"image/jpeg",svg:"image/svg+xml",webp:"image/webp",ico:"image/x-icon",glb:"model/gltf-binary",mp3:"audio/mpeg",ttf:"font/ttf"};
 function decode(value){const raw=atob(value);const bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);return bytes;}
-export default {async fetch(request){const url=new URL(request.url);let path=decodeURIComponent(url.pathname);if(path==="/")path="/index.html";if(!ASSETS[path]&&!path.includes("."))path="/index.html";const asset=ASSETS[path];if(!asset)return new Response("Not found",{status:404});const ext=path.split(".").pop().toLowerCase();return new Response(request.method==="HEAD"?null:decode(asset),{headers:{"content-type":TYPES[ext]||"application/octet-stream","cache-control":ext==="html"?"no-cache":"public, max-age=3600"}});}};
+export default {async fetch(request){const url=new URL(request.url);let path=decodeURIComponent(url.pathname);if(path==="/")path="/hero.html";if(!ASSETS[path]&&!path.includes("."))path="/hero.html";const asset=ASSETS[path];if(!asset)return new Response("Not found",{status:404});const ext=path.split(".").pop().toLowerCase();return new Response(request.method==="HEAD"?null:decode(asset),{headers:{"content-type":TYPES[ext]||"application/octet-stream","cache-control":ext==="html"?"no-cache":"public, max-age=3600"}});}};
 `;
 
 await writeFile(join(server, "index.js"), worker);
