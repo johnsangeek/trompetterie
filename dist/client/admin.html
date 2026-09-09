@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Trompetterie — Éditeur de catalogue</title>
+<link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div id="gate" class="gate">
+    <div class="gate-card">
+      <h1>Éditeur de catalogue</h1>
+      <p>Outil interne — pas destiné aux visiteurs du site.</p>
+      <button type="button" id="gateEnterBtn" class="btn btn-primary">Continuer</button>
+    </div>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <header class="toolbar">
+      <div class="toolbar-group">
+        <strong class="app-title">Éditeur de catalogue</strong>
+        <label class="track-name-field">
+          Nom du morceau
+          <input type="text" id="trackNameInput" placeholder="Artiste — Titre" />
+        </label>
+        <label class="track-id-field">
+          id
+          <input type="text" id="trackIdInput" placeholder="artiste-titre" />
+        </label>
+      </div>
+      <div class="toolbar-group">
+        <button type="button" id="pickAudioBtn" class="btn">Charger un audio</button>
+        <button type="button" id="pickMidiBtn" class="btn">Charger un MIDI</button>
+        <button type="button" id="importJsonBtn" class="btn">Importer JSON</button>
+        <input type="file" id="audioFileInput" accept="audio/*" multiple hidden />
+        <input type="file" id="midiFileInput" accept=".mid,.midi,audio/midi" hidden />
+        <input type="file" id="jsonFileInput" accept="application/json" hidden />
+      </div>
+      <div class="toolbar-group">
+        <button type="button" id="playPauseBtn" class="btn btn-primary" disabled>Lecture</button>
+        <span class="time-readout"><span id="currentTimeLabel">0:00</span> / <span id="durationLabel">0:00</span></span>
+        <label class="bpm-field">
+          BPM
+          <input type="number" id="bpmInput" min="20" max="300" step="0.1" value="120" />
+        </label>
+      </div>
+      <div class="toolbar-group">
+        <button type="button" id="cleanShortBtn" class="btn" title="Retire les notes plus courtes que 60ms">Nettoyer les notes courtes</button>
+        <button type="button" id="exportBtn" class="btn btn-primary" disabled>Exporter le JSON</button>
+      </div>
+    </header>
+
+    <p id="statusLine" class="status-line"></p>
+
+    <div id="rollScroll" class="roll-scroll">
+      <div id="rollInner" class="roll-inner">
+        <div id="rollRuler" class="roll-ruler"></div>
+        <canvas id="rollWaveform" class="roll-waveform"></canvas>
+        <div id="rollGrid" class="roll-grid"></div>
+        <div id="rollNotes" class="roll-notes"></div>
+        <div id="playhead" class="playhead"></div>
+      </div>
+    </div>
+
+    <p class="hint-line">
+      Glisse un fichier audio et/ou un MIDI n'importe où sur la page pour les charger (les deux en même temps si tu veux caler un MIDI sur l'audio d'origine).
+      Clic sur une case vide : ajoute une note. Glisser une note : déplace (temps + hauteur). Glisser le bord droit : change la durée.
+      Double-clic ou touche Suppr sur une note sélectionnée : la supprime. Clic sur la règle ou la forme d'onde : déplace la lecture.
+    </p>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

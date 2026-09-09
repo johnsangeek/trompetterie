@@ -7,6 +7,31 @@ const isStandalonePWA =
   window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
 // ---------------------------------------------------------------------------
+// Inline SVG icons swapped in for emoji in dynamically-set text (the static
+// ones live directly in index.html) - keeps every icon the same weight/style
+// regardless of platform emoji fonts.
+// ---------------------------------------------------------------------------
+
+function svgIcon(inner, { solo = false, fill = "none" } = {}) {
+  return `<svg class="icon${solo ? " icon-solo" : ""}" viewBox="0 0 24 24" fill="${fill}" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+}
+
+const ICONS = {
+  mic: svgIcon('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>'),
+  hand: svgIcon('<path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11M12 11V6a1.5 1.5 0 0 1 3 0v6M15 12V8.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4.3 14a1.4 1.4 0 0 1 2.2-1.7L8 14"/>'),
+  trumpet: svgIcon('<path d="M2 11h4l3-2.2v6.4L6 13H2z"/><path d="M9 9h10a2.5 2.5 0 0 1 0 5H9"/><rect x="11" y="6" width="2" height="3" rx="0.5"/><rect x="14" y="6" width="2" height="3" rx="0.5"/><rect x="17" y="6" width="2" height="3" rx="0.5"/>', { solo: true }),
+  flagFinish: svgIcon('<path d="M6 3v18"/><path d="M6 4h5l1.5 2H18l-2 3 2 3h-6.5L10 10H6z"/>', { solo: true }),
+  check: svgIcon('<path d="M4 12.5l5 5L20 6"/>', { solo: true }),
+  cross: svgIcon('<path d="M5 5l14 14M19 5L5 19"/>', { solo: true }),
+  starOutline: svgIcon('<path d="M12 3.5l2.6 5.6 6 .7-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6-4.4-4.2 6-.7z"/>'),
+  starFilled: svgIcon('<path d="M12 3.5l2.6 5.6 6 .7-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6-4.4-4.2 6-.7z"/>', { fill: "currentColor" }),
+  trophy: svgIcon('<path d="M7 4h10v3a5 5 0 0 1-10 0V4z"/><path d="M7 5H4v1a4 4 0 0 0 4 4M17 5h3v1a4 4 0 0 1-4 4"/><path d="M12 12v3M9 20h6M10 17h4v3h-4z"/>'),
+  sparkles: svgIcon('<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/>'),
+  trash: svgIcon('<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M10 11v6M14 11v6"/>'),
+  metronome: svgIcon('<path d="M7 20h10L14 4h-4L7 20z"/><path d="M12 8l3 9"/>'),
+};
+
+// ---------------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------------
 
@@ -59,6 +84,7 @@ const state = {
   manualNotes: [],      // [{time, midi}] concert pitch, user-placed, time-sorted
   manualMeasures: [],
   manualCaptureMode: false,
+  trackStems: [], // other instruments from a catalog track: [{instrument, notes:[{time,midi,duration}], muted}]
   deleteNoteMode: false, // when true, clicking a staff note removes it instead of previewing it
   scaleOptionsOpen: false, // gamme/tonalité picker, revealed by clicking the treble clef
   moreToolsOpen: false,    // transport/BPM/looper, chord tool, saved scores - tucked away by default
@@ -109,7 +135,9 @@ const el = {
   mainApp: document.getElementById("mainApp"),
   boardTrumpetBtn: document.getElementById("boardTrumpetBtn"),
   backToBoardingLink: document.getElementById("backToBoardingLink"),
+  workspaceWordmark: document.querySelector(".workspace-wordmark"),
   clefToggleBtn: document.getElementById("clefToggleBtn"),
+  closeScaleOptionsBtn: document.getElementById("closeScaleOptionsBtn"),
   moreToolsToggleBtn: document.getElementById("moreToolsToggleBtn"),
   hiddenModeToggle: document.getElementById("hiddenModeToggle"),
   scorePlaybackRow: document.getElementById("scorePlaybackRow"),
@@ -176,6 +204,13 @@ const el = {
   practicePlayIcon: document.getElementById("practicePlayIcon"),
   practicePlayLabel: document.getElementById("practicePlayLabel"),
   practiceTitle: document.getElementById("practiceTitle"),
+  fileAnalyzedBanner: document.getElementById("fileAnalyzedBanner"),
+  fileKeyLabel: document.getElementById("fileKeyLabel"),
+  fileScaleLabel: document.getElementById("fileScaleLabel"),
+  dropzonePrompt: document.getElementById("dropzonePrompt"),
+  dropzoneLoaded: document.getElementById("dropzoneLoaded"),
+  loadedFileName: document.getElementById("loadedFileName"),
+  ejectFileBtn: document.getElementById("ejectFileBtn"),
   showPitchDetailsCheckbox: document.getElementById("showPitchDetailsCheckbox"),
   addCurrentScaleBtn: document.getElementById("addCurrentScaleBtn"),
   addAllBluesKeysBtn: document.getElementById("addAllBluesKeysBtn"),
@@ -185,6 +220,8 @@ const el = {
   soundEngineSelect: document.getElementById("soundEngineSelect"),
   metronomeBtn: document.getElementById("metronomeBtn"),
   muteScoreCheckbox: document.getElementById("muteScoreCheckbox"),
+  stemsPanel: document.getElementById("stemsPanel"),
+  stemsList: document.getElementById("stemsList"),
   saveScoreBtn: document.getElementById("saveScoreBtn"),
   savedScoresList: document.getElementById("savedScoresList"),
   noFileHint: document.getElementById("noFileHint"),
@@ -233,6 +270,24 @@ const el = {
   quizCorrectBtn: document.getElementById("quizCorrectBtn"),
   quizWrongBtn: document.getElementById("quizWrongBtn"),
   quizMicHint: document.getElementById("quizMicHint"),
+  masteryIntro: document.getElementById("masteryIntro"),
+  masteryWithMicBtn: document.getElementById("masteryWithMicBtn"),
+  masteryWithoutMicBtn: document.getElementById("masteryWithoutMicBtn"),
+  masteryArea: document.getElementById("masteryArea"),
+  masteryStageLabel: document.getElementById("masteryStageLabel"),
+  stopMasteryBtn: document.getElementById("stopMasteryBtn"),
+  masteryNoteDots: document.getElementById("masteryNoteDots"),
+  masteryRepDots: document.getElementById("masteryRepDots"),
+  masteryTimerCircle: document.getElementById("masteryTimerCircle"),
+  masteryTimerLabel: document.getElementById("masteryTimerLabel"),
+  masteryStatus: document.getElementById("masteryStatus"),
+  masteryFeedback: document.getElementById("masteryFeedback"),
+  masteryManualButtons: document.getElementById("masteryManualButtons"),
+  masteryCorrectBtn: document.getElementById("masteryCorrectBtn"),
+  masteryWrongBtn: document.getElementById("masteryWrongBtn"),
+  masteryMicHint: document.getElementById("masteryMicHint"),
+  masteryReward: document.getElementById("masteryReward"),
+  masteryRewardTracks: document.getElementById("masteryRewardTracks"),
 };
 
 // Les outils avancés restent disponibles sans encombrer le pupitre principal.
@@ -250,7 +305,6 @@ toolsDrawer.appendChild(toolsDrawerHead);
   el.status,
   el.progressWrap,
   el.transportPanel,
-  el.pianoToolPanel,
   el.savedScoresPanel,
   document.querySelector(".octave-shift-stepper"),
   document.querySelector(".note-scanner"),
@@ -291,10 +345,6 @@ openInstrumentStage();
 function applyStandaloneLayout() {
   if (!isStandalonePWA) return;
   document.body.classList.add("standalone-app");
-
-  el.dropzone.hidden = true;
-  el.progressWrap.hidden = true;
-  el.noFileHint.hidden = true;
 
   el.playBtn.hidden = true;
   el.pauseBtn.hidden = true;
@@ -349,6 +399,7 @@ el.dropzone.addEventListener("drop", (e) => {
 el.dropzone.addEventListener("click", () => el.fileInput.click());
 el.fileInput.addEventListener("change", () => {
   const file = el.fileInput.files && el.fileInput.files[0];
+  el.fileInput.value = "";
   if (file) loadFile(file);
 });
 
@@ -358,6 +409,7 @@ async function loadFile(file) {
   stopScorePlayback();
   stopMetronome();
   if (quizState.active) stopQuiz(false);
+  if (masteryState.active) stopMastery(false);
   state.octaveShift = 0;
   el.octaveShiftLabel.textContent = "Octave normale";
   el.octaveDownBtn.disabled = false;
@@ -383,21 +435,29 @@ async function loadFile(file) {
     el.bpmDisplay.textContent = bpm.toFixed(1);
     el.bpmInput.value = bpm.toFixed(1);
 
+    // Pitch-per-frame extraction is reliable enough for key detection (lots
+    // of samples, averaged) but segmenting/quantizing it into a full
+    // note-by-note score is not - real recordings routinely produce wrong or
+    // spurious notes there. So: extract once, use it for key detection right
+    // away, but only turn it into an actual scrolling score if the player
+    // explicitly asks for it (buildFullTranscriptionFromSegments) - the
+    // default experience is "here's the key, here's a scale to improvise
+    // with", not "here's a note-by-note score that might be wrong".
     setStatus("Analyse des notes...");
     const pitchInput = decimate(channelData, sampleRate, 11025);
     const rawFrames = await extractPitchFrames(pitchInput.data, pitchInput.sampleRate, (frac) => setProgress(frac));
-
-    setStatus("Construction de la partition...");
     const segments = segmentPitchFrames(rawFrames);
-    state.noteEvents = buildNoteEvents(segments, state.duration, state.bpm);
-    state.measures = groupIntoMeasures(state.noteEvents);
+    state.pendingTranscriptionSegments = segments;
 
-    state.detectedKey = detectKey(state.noteEvents);
+    const keyEvents = segments.map((s) => ({ type: "note", midi: s.midi, startTime: s.startTime, endTime: s.endTime }));
+    state.detectedKey = detectKey(keyEvents);
     state.scaleRoot = state.detectedKey.root;
-    state.scaleType = state.detectedKey.mode === "minor" ? "blues" : "majorPentatonic";
+    state.scaleType = state.detectedKey.scaleType;
     el.detectedKeyLabel.textContent = formatTrumpetKey(state.detectedKey.root, state.detectedKey.mode);
+    el.fileKeyLabel.textContent = formatTrumpetKey(state.detectedKey.root, state.detectedKey.mode);
     el.scaleRootSelect.value = String(state.scaleRoot);
     el.scaleTypeSelect.value = state.scaleType;
+    el.fileScaleLabel.textContent = `${SCALE_DEFINITIONS[state.scaleType].label} · ${trumpetPitchClassLabel(state.scaleRoot)}`;
     state.chordMode = "free";
     el.chordModeBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.chordmode === "free"));
     el.scaleTypeLabel.hidden = false;
@@ -406,10 +466,16 @@ async function loadFile(file) {
 
     state.manualNotes = [];
     state.manualCaptureMode = false;
+    state.trackStems = [];
+    renderStemsPanel();
     rebuildManualMeasures();
 
     setProgress(null);
     setStatus("");
+    el.fileAnalyzedBanner.hidden = false;
+    el.dropzonePrompt.hidden = true;
+    el.dropzoneLoaded.hidden = false;
+    el.loadedFileName.textContent = file.name;
 
     el.durationValue.textContent = formatTime(state.duration);
     el.totalTimeLabel.textContent = formatTime(state.duration);
@@ -421,13 +487,58 @@ async function loadFile(file) {
     updateLoopLabels();
 
     setFileControlsEnabled(true);
-    setMode("transcription");
+    setMode("improvisation");
+    state.scaleOptionsOpen = true;
+    el.clefToggleBtn.setAttribute("aria-expanded", "true");
+    el.improvisationControls.hidden = false;
   } catch (err) {
     console.error(err);
     setProgress(null);
     setStatus(`Erreur : ${err.message || err}`, true);
   }
 }
+
+// Drops the currently loaded audio so a different file can be chosen without
+// refreshing the page - undoes what loadFile() set up.
+function ejectLoadedFile() {
+  if (noteScanner.active) stopNoteScanner();
+  stopPlayback();
+  stopScorePlayback();
+  if (state.metronomeActive) stopMetronome();
+  if (quizState.active) stopQuiz(false);
+  if (masteryState.active) stopMastery(false);
+
+  state.audioBuffer = null;
+  state.duration = 0;
+  state.detectedKey = null;
+  state.pendingTranscriptionSegments = null;
+  state.noteEvents = [];
+  state.measures = [];
+  state.manualNotes = [];
+  state.manualCaptureMode = false;
+  state.trackStems = [];
+  renderStemsPanel();
+  rebuildManualMeasures();
+
+  el.fileAnalyzedBanner.hidden = true;
+  el.fileKeyLabel.textContent = "--";
+  el.fileScaleLabel.textContent = "--";
+  el.detectedKeyLabel.textContent = "--";
+  el.durationValue.textContent = "--";
+  el.totalTimeLabel.textContent = "0:00";
+  el.currentTimeLabel.textContent = "0:00";
+  el.seekBar.value = 0;
+  setProgress(null);
+  setStatus("");
+  setFileControlsEnabled(false);
+  el.fileInput.value = "";
+  el.dropzonePrompt.hidden = false;
+  el.dropzoneLoaded.hidden = true;
+}
+el.ejectFileBtn.addEventListener("click", (event) => {
+  event.stopPropagation();
+  ejectLoadedFile();
+});
 
 // ---------------------------------------------------------------------------
 // BPM detection — energy-envelope autocorrelation
@@ -573,6 +684,7 @@ const noteScanner = {
 
 async function startNoteScanner() {
   if (quizState.active) stopQuiz(false);
+  if (masteryState.active) stopMastery(false);
   if (!navigator.mediaDevices?.getUserMedia) {
     el.scannerFeedback.textContent = "Le micro n'est pas disponible dans ce navigateur.";
     return;
@@ -885,6 +997,39 @@ function groupIntoMeasures(events) {
 const MAJOR_PROFILE = [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88];
 const MINOR_PROFILE = [6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17];
 
+// Krumhansl-Kessler only publishes empirical weights for major/minor, so the
+// other five diatonic modes get a simpler hand-built profile instead: tonic
+// weighted highest, then the 5th (or the b5 for locrian, its one defining
+// color tone in place of a plain 5th), then the 3rd, then the rest of the
+// scale tones equally - good enough to tell "this melody centers on D and
+// leans dorian" from "...leans natural minor" apart.
+function buildModeProfile(intervals) {
+  const profile = new Array(12).fill(0);
+  const hasFifth = intervals.includes(7);
+  intervals.forEach((iv) => {
+    let weight = 2.2;
+    if (iv === 0) weight = 6.3;
+    else if (iv === 7) weight = 4.2;
+    else if (!hasFifth && iv === 6) weight = 4.0;
+    else if (iv === 3 || iv === 4) weight = 3.4;
+    profile[iv] = weight;
+  });
+  return profile;
+}
+
+// scaleKey -> [profile, "major" | "minor" family, used for the simple
+// tonalité label] - major/lydian/mixolydian read as a major third, the rest
+// as a minor third.
+const MODE_DETECTION_PROFILES = [
+  ["major", MAJOR_PROFILE, "major"],
+  ["naturalMinor", MINOR_PROFILE, "minor"],
+  ["dorian", buildModeProfile([0, 2, 3, 5, 7, 9, 10]), "minor"],
+  ["phrygian", buildModeProfile([0, 1, 3, 5, 7, 8, 10]), "minor"],
+  ["lydian", buildModeProfile([0, 2, 4, 6, 7, 9, 11]), "major"],
+  ["mixolydian", buildModeProfile([0, 2, 4, 5, 7, 9, 10]), "major"],
+  ["locrian", buildModeProfile([0, 1, 3, 5, 6, 8, 10]), "minor"],
+];
+
 function pearsonCorrelation(a, b) {
   const n = a.length;
   const meanA = a.reduce((s, v) => s + v, 0) / n;
@@ -923,17 +1068,17 @@ function buildPitchClassHistogram(noteEvents) {
 
 function detectKey(noteEvents) {
   const hist = buildPitchClassHistogram(noteEvents);
-  if (!hist.some((v) => v > 0)) return { root: 0, mode: "major" };
+  if (!hist.some((v) => v > 0)) return { root: 0, mode: "major", scaleType: "major" };
 
-  let best = { root: 0, mode: "major", score: -Infinity };
+  let best = { root: 0, mode: "major", scaleType: "major", score: -Infinity };
   for (let root = 0; root < 12; root++) {
-    for (const [mode, profile] of [["major", MAJOR_PROFILE], ["minor", MINOR_PROFILE]]) {
+    for (const [scaleType, profile, family] of MODE_DETECTION_PROFILES) {
       const rotated = rollRight(profile, root);
       const score = pearsonCorrelation(hist, rotated);
-      if (score > best.score) best = { root, mode, score };
+      if (score > best.score) best = { root, mode: family, scaleType, score };
     }
   }
-  return { root: best.root, mode: best.mode };
+  return { root: best.root, mode: best.mode, scaleType: best.scaleType };
 }
 
 // Same Krumhansl-Schmuckler detection as detectKey, but for a flat list of
@@ -969,6 +1114,29 @@ const SCALE_DEFINITIONS = {
   diminishedWholeHalf: { label: "Diminuée (ton-demi-ton)", group: "Jazz / symétriques", intervals: [0, 2, 3, 5, 6, 8, 9, 11] },
   diminishedHalfWhole: { label: "Diminuée (demi-ton-ton)", group: "Jazz / symétriques", intervals: [0, 1, 3, 4, 6, 7, 9, 10] },
   chromatic: { label: "Chromatique", group: "Jazz / symétriques", intervals: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+};
+
+// One color per scale type, purely to tell them apart at a glance (practice
+// title, favorites, queue chips) - no external standard for this, just a
+// distinct, evenly-spread palette grouped loosely by family.
+const SCALE_TYPE_COLORS = {
+  major: "#d8952d",
+  naturalMinor: "#a2673f",
+  majorPentatonic: "#e0b23a",
+  minorPentatonic: "#c17a3d",
+  blues: "#b8542f",
+  dorian: "#3f8f7a",
+  phrygian: "#2f8fa8",
+  lydian: "#4f7fc9",
+  mixolydian: "#5f6fbf",
+  locrian: "#6a5aa8",
+  harmonicMinor: "#8a4fa0",
+  melodicMinor: "#a1478f",
+  bebopDominant: "#c14672",
+  wholeTone: "#3a9e6e",
+  diminishedWholeHalf: "#7a8a3f",
+  diminishedHalfWhole: "#5a8a5a",
+  chromatic: "#6b6f76",
 };
 
 // For a given chord quality: the "inside" scale (safe, matches the chord
@@ -1458,13 +1626,13 @@ async function startQuiz(poolOverride) {
       quizState.micAnalyser = analyser;
       quizState.micBuffer = new Float32Array(analyser.fftSize);
       quizState.micUsable = true;
-      el.quizMicHint.textContent = "🎤 Micro actif — détection automatique.";
+      el.quizMicHint.innerHTML = ICONS.mic + "Micro actif — détection automatique.";
     } catch (e) {
       quizState.micUsable = false;
-      el.quizMicHint.textContent = "🎤 Micro indisponible — confirme toi-même avec les boutons.";
+      el.quizMicHint.innerHTML = ICONS.mic + "Micro indisponible — confirme toi-même avec les boutons.";
     }
   } else {
-    el.quizMicHint.textContent = "🎤 Micro non supporté ici — confirme toi-même avec les boutons.";
+    el.quizMicHint.innerHTML = ICONS.mic + "Micro non supporté ici — confirme toi-même avec les boutons.";
   }
 
   el.quizManualButtons.hidden = false;
@@ -1514,7 +1682,7 @@ function nextQuizRound() {
   el.quizStatus.textContent = "Écoute…";
   el.quizFeedback.textContent = "";
   el.quizFeedback.className = "quiz-feedback";
-  el.quizTimerLabel.textContent = "🎺";
+  el.quizTimerLabel.innerHTML = ICONS.trumpet;
   el.quizTimerCircle.style.stroke = "#ffb020";
   setQuizRing(1);
 
@@ -1585,12 +1753,12 @@ function resolveQuizRound(success) {
 
   if (success) {
     quizState.correct++;
-    el.quizFeedback.textContent = `✓ ${midiToTrumpetWrittenName(target)} !`;
+    el.quizFeedback.innerHTML = `${ICONS.check}${midiToTrumpetWrittenName(target)} !`;
     el.quizFeedback.className = "quiz-feedback correct";
     el.quizTimerCircle.style.stroke = "#4fd1c5";
   } else {
     quizState.missed.push(target);
-    el.quizFeedback.textContent = `✗ C'était ${midiToTrumpetWrittenName(target)}`;
+    el.quizFeedback.innerHTML = `${ICONS.cross}C'était ${midiToTrumpetWrittenName(target)}`;
     el.quizFeedback.className = "quiz-feedback wrong";
     el.quizTimerCircle.style.stroke = "#ef5350";
   }
@@ -1609,7 +1777,7 @@ function finishQuiz() {
   const total = quizState.pool.length;
   el.quizProgress.textContent = "Terminé";
   el.quizStatus.textContent = "";
-  el.quizTimerLabel.textContent = "🏁";
+  el.quizTimerLabel.innerHTML = ICONS.flagFinish;
   setQuizRing(0);
 
   if (quizState.missed.length) {
@@ -1623,6 +1791,390 @@ function finishQuiz() {
 
   stopQuiz(true);
 }
+
+// ---------------------------------------------------------------------------
+// Scale mastery ("code de la route") - a structured, ordered course through
+// the current scale instead of the shuffled one-off interro above: each
+// note must be played correctly 5 times (cumulative, not consecutive - a
+// miss just doesn't count, it doesn't reset progress) before the next note
+// unlocks (stage 1), then the whole scale is played through several times
+// slow then fast (stage 2), then matching catalog tracks are revealed to
+// improvise over (stage 3). Mirrors quizState's mic/timer/ring machinery
+// (same autoCorrelate pitch check, same .quiz-* CSS) so it looks and feels
+// identical to the existing interro - only the progression logic differs.
+// ---------------------------------------------------------------------------
+
+const MASTERY_REQUIRED_REPS = 5;
+const MASTERY_RUNS_REQUIRED = 4; // 2 slow + 2 fast full-scale runs
+const MASTERY_RING_CIRCUMFERENCE = 2 * Math.PI * 44;
+
+// Known key/root for each catalog track (concert pitch class), used to
+// surface "play along" suggestions once a scale is mastered. Extend this as
+// more tracks are added to the catalog.
+const TRACK_CATALOG = [
+  { id: "soda-daoud", name: "Soda — Daoud", root: 5, mode: "minor" }, // F minor
+  { id: "all-blues", name: "All Blues", root: 11, mode: "minor" },
+  { id: "take-the-a-train", name: "Take the A Train", root: 9, mode: "minor" },
+  { id: "four-brothers", name: "Four Brothers", root: 5, mode: "minor" },
+  { id: "stolen-moments", name: "Stolen Moments", root: 0, mode: "major" },
+  { id: "cherokee", name: "Cherokee", root: 10, mode: "major" },
+  { id: "it-don-t-mean-a-thing", name: "It Don't Mean a Thing", root: 7, mode: "minor" },
+  { id: "moanin", name: "Moanin'", root: 3, mode: "major" },
+  { id: "satin-doll", name: "Satin Doll", root: 7, mode: "major" },
+  { id: "misty", name: "Misty", root: 10, mode: "major" },
+  { id: "mack-the-knife", name: "Mack the Knife", root: 9, mode: "minor" },
+  { id: "on-green-dolphin-street", name: "On Green Dolphin Street", root: 10, mode: "major" },
+  { id: "billie-s-bounce", name: "Billie's Bounce", root: 5, mode: "major" },
+  { id: "st-thomas", name: "St. Thomas", root: 1, mode: "major" },
+  { id: "new-york-new-york", name: "New York, New York", root: 3, mode: "major" },
+  { id: "b-y-t", name: "B.Y.T.", root: 7, mode: "minor" },
+  { id: "a-night-in-tunisia", name: "A Night in Tunisia", root: 9, mode: "minor" },
+];
+
+const masteryState = {
+  active: false,
+  withMic: false,
+  stage: 1, // 1 = notes one by one, 2 = full-scale runs, 3 = reward
+  pool: [],
+  index: 0,
+  progress: {},
+  missed: [],
+  currentTarget: null,
+  awaitingAnswer: false,
+  micStream: null,
+  micAnalyser: null,
+  micBuffer: null,
+  micUsable: false,
+  timerStart: 0,
+  timerHandle: null,
+  micPollHandle: null,
+  runIndex: 0,
+  runCount: 0,
+  runTempo: "lente", // 'lente' | 'rapide'
+};
+
+function masteryResponseMs() {
+  if (masteryState.stage === 2) return masteryState.runTempo === "rapide" ? 1800 : 3200;
+  return 5000;
+}
+
+async function startMastery(withMic) {
+  if (noteScanner.active) stopNoteScanner();
+  if (quizState.active) stopQuiz(false);
+  if (masteryState.active) stopMastery(false);
+
+  const writtenMidis = buildScaleReference(state.scaleRoot, state.scaleType);
+  const uniqueConcert = [...new Set(writtenMidis.slice(0, -1).map((m) => m - 2))];
+  if (uniqueConcert.length < 2) return;
+
+  masteryState.active = true;
+  masteryState.withMic = withMic;
+  masteryState.stage = 1;
+  masteryState.pool = uniqueConcert;
+  masteryState.index = 0;
+  masteryState.progress = {};
+  uniqueConcert.forEach((m) => { masteryState.progress[m] = 0; });
+  masteryState.missed = [];
+  masteryState.runIndex = 0;
+  masteryState.runCount = 0;
+  masteryState.runTempo = "lente";
+
+  el.masteryIntro.hidden = true;
+  el.masteryArea.hidden = false;
+  el.masteryReward.hidden = true;
+  el.masteryFeedback.textContent = "";
+  el.masteryFeedback.className = "quiz-feedback";
+
+  if (!state.audioContext) {
+    state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (state.audioContext.state === "suspended") state.audioContext.resume();
+
+  masteryState.micUsable = false;
+  if (withMic && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      masteryState.micStream = stream;
+      const source = state.audioContext.createMediaStreamSource(stream);
+      const analyser = state.audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      source.connect(analyser);
+      masteryState.micAnalyser = analyser;
+      masteryState.micBuffer = new Float32Array(analyser.fftSize);
+      masteryState.micUsable = true;
+      el.masteryMicHint.innerHTML = ICONS.mic + "Micro actif — détection automatique.";
+    } catch (e) {
+      masteryState.micUsable = false;
+      el.masteryMicHint.innerHTML = ICONS.mic + "Micro indisponible — confirme toi-même avec les boutons.";
+    }
+  } else if (withMic) {
+    el.masteryMicHint.innerHTML = ICONS.mic + "Micro non supporté ici — confirme toi-même avec les boutons.";
+  } else {
+    el.masteryMicHint.innerHTML = ICONS.hand + "Mode sans micro — confirme toi-même avec les boutons.";
+  }
+
+  el.masteryManualButtons.hidden = false;
+
+  nextMasteryRound();
+}
+
+function stopMastery(showReward) {
+  masteryState.active = false;
+  masteryState.awaitingAnswer = false;
+  if (masteryState.timerHandle) {
+    cancelAnimationFrame(masteryState.timerHandle);
+    masteryState.timerHandle = null;
+  }
+  if (masteryState.micPollHandle) {
+    clearInterval(masteryState.micPollHandle);
+    masteryState.micPollHandle = null;
+  }
+  if (masteryState.micStream) {
+    masteryState.micStream.getTracks().forEach((t) => t.stop());
+    masteryState.micStream = null;
+  }
+  masteryState.micAnalyser = null;
+
+  if (!showReward) {
+    el.masteryArea.hidden = true;
+    el.masteryReward.hidden = true;
+    el.masteryIntro.hidden = false;
+  }
+}
+
+function renderMasteryNoteDots() {
+  el.masteryNoteDots.innerHTML = "";
+  masteryState.pool.forEach((midi, i) => {
+    const dot = document.createElement("span");
+    dot.className = "mastery-note-dot";
+    if (masteryState.progress[midi] >= MASTERY_REQUIRED_REPS) dot.classList.add("mastered");
+    if (masteryState.stage === 1 && i === masteryState.index) dot.classList.add("current");
+    if (masteryState.stage === 2 && i === masteryState.runIndex) dot.classList.add("current");
+    dot.textContent = String(i + 1);
+    dot.title = midiToTrumpetWrittenName(midi);
+    el.masteryNoteDots.appendChild(dot);
+  });
+}
+
+function renderMasteryRepDots() {
+  el.masteryRepDots.innerHTML = "";
+  if (masteryState.stage !== 1) return;
+  const count = masteryState.currentTarget !== null ? (masteryState.progress[masteryState.currentTarget] || 0) : 0;
+  for (let i = 0; i < MASTERY_REQUIRED_REPS; i++) {
+    const dot = document.createElement("span");
+    dot.className = "mastery-rep-dot" + (i < count ? " filled" : "");
+    el.masteryRepDots.appendChild(dot);
+  }
+}
+
+function updateMasteryStageLabel() {
+  if (masteryState.stage === 1) {
+    el.masteryStageLabel.textContent = `Étape 1 · Note ${masteryState.index + 1}/${masteryState.pool.length}`;
+  } else if (masteryState.stage === 2) {
+    el.masteryStageLabel.textContent = `Étape 2 · Manche ${masteryState.runCount + 1}/${MASTERY_RUNS_REQUIRED} (${masteryState.runTempo})`;
+  }
+}
+
+function nextMasteryRound() {
+  if (!masteryState.active) return;
+
+  if (masteryState.stage === 1) {
+    if (masteryState.index >= masteryState.pool.length) {
+      advanceToMasteryStage2();
+      return;
+    }
+    masteryState.currentTarget = masteryState.pool[masteryState.index];
+  } else if (masteryState.stage === 2) {
+    if (masteryState.runIndex >= masteryState.pool.length) {
+      finishMasteryRun();
+      return;
+    }
+    masteryState.currentTarget = masteryState.pool[masteryState.runIndex];
+  } else {
+    return;
+  }
+
+  updatePistons(masteryState.currentTarget);
+  setTrumpetCurrentNote(masteryState.currentTarget);
+  updateMasteryStageLabel();
+  renderMasteryNoteDots();
+  renderMasteryRepDots();
+  el.masteryStatus.textContent = "Écoute…";
+  el.masteryFeedback.textContent = "";
+  el.masteryFeedback.className = "quiz-feedback";
+  el.masteryTimerLabel.innerHTML = ICONS.trumpet;
+  el.masteryTimerCircle.style.stroke = "#ffb020";
+  setMasteryRing(1);
+
+  playTone(masteryState.currentTarget, 0.6);
+
+  setTimeout(() => {
+    if (!masteryState.active) return;
+    beginMasteryResponseWindow();
+  }, 900);
+}
+
+function setMasteryRing(fraction) {
+  const offset = MASTERY_RING_CIRCUMFERENCE * (1 - Math.max(0, Math.min(1, fraction)));
+  el.masteryTimerCircle.style.strokeDashoffset = String(offset);
+}
+
+function beginMasteryResponseWindow() {
+  masteryState.awaitingAnswer = true;
+  masteryState.timerStart = performance.now();
+  el.masteryStatus.textContent = "À toi de jouer !";
+  const responseMs = masteryResponseMs();
+
+  const tick = () => {
+    if (!masteryState.awaitingAnswer) return;
+    const elapsed = performance.now() - masteryState.timerStart;
+    const remaining = Math.max(0, responseMs - elapsed);
+    setMasteryRing(remaining / responseMs);
+    el.masteryTimerLabel.textContent = String(Math.ceil(remaining / 1000));
+
+    if (remaining <= 0) {
+      resolveMasteryRound(false);
+      return;
+    }
+    masteryState.timerHandle = requestAnimationFrame(tick);
+  };
+  masteryState.timerHandle = requestAnimationFrame(tick);
+
+  if (masteryState.micUsable) {
+    masteryState.micPollHandle = setInterval(checkMicForMasteryTarget, 120);
+  }
+}
+
+function checkMicForMasteryTarget() {
+  if (!masteryState.awaitingAnswer || !masteryState.micAnalyser) return;
+  masteryState.micAnalyser.getFloatTimeDomainData(masteryState.micBuffer);
+  const freq = autoCorrelate(masteryState.micBuffer, state.audioContext.sampleRate);
+  if (freq <= 0) return;
+  const midi = Math.round(69 + 12 * Math.log2(freq / 440));
+  if (midi === masteryState.currentTarget) {
+    resolveMasteryRound(true);
+  }
+}
+
+function resolveMasteryRound(success) {
+  if (!masteryState.awaitingAnswer) return;
+  masteryState.awaitingAnswer = false;
+  if (masteryState.timerHandle) {
+    cancelAnimationFrame(masteryState.timerHandle);
+    masteryState.timerHandle = null;
+  }
+  if (masteryState.micPollHandle) {
+    clearInterval(masteryState.micPollHandle);
+    masteryState.micPollHandle = null;
+  }
+
+  const target = masteryState.currentTarget;
+  updatePistons(target);
+  setTrumpetCurrentNote(target);
+
+  if (success) {
+    el.masteryFeedback.innerHTML = `${ICONS.check}${midiToTrumpetWrittenName(target)} !`;
+    el.masteryFeedback.className = "quiz-feedback correct";
+    el.masteryTimerCircle.style.stroke = "#4fd1c5";
+  } else {
+    el.masteryFeedback.innerHTML = `${ICONS.cross}C'était ${midiToTrumpetWrittenName(target)}`;
+    el.masteryFeedback.className = "quiz-feedback wrong";
+    el.masteryTimerCircle.style.stroke = "#ef5350";
+  }
+  el.masteryStatus.textContent = "";
+  setMasteryRing(0);
+
+  if (masteryState.stage === 1) {
+    if (success) {
+      masteryState.progress[target] = (masteryState.progress[target] || 0) + 1;
+      if (masteryState.progress[target] >= MASTERY_REQUIRED_REPS) {
+        masteryState.index++;
+      }
+    }
+    // A miss doesn't reset progress on this note - it just doesn't count,
+    // and the same note comes back around next round.
+  } else if (masteryState.stage === 2) {
+    if (!success) masteryState.missed.push(target);
+    masteryState.runIndex++; // keep the run moving either way
+  }
+
+  renderMasteryNoteDots();
+  renderMasteryRepDots();
+
+  setTimeout(() => {
+    if (masteryState.active) nextMasteryRound();
+  }, 1000);
+}
+
+function advanceToMasteryStage2() {
+  masteryState.stage = 2;
+  masteryState.runIndex = 0;
+  masteryState.runCount = 0;
+  masteryState.runTempo = "lente";
+  masteryState.missed = [];
+  el.masteryFeedback.innerHTML = ICONS.sparkles + "Toutes les notes maîtrisées ! Enchaîne la gamme entière...";
+  el.masteryFeedback.className = "quiz-feedback correct";
+  updateMasteryStageLabel();
+  renderMasteryNoteDots();
+  setTimeout(() => {
+    if (masteryState.active) nextMasteryRound();
+  }, 1800);
+}
+
+function finishMasteryRun() {
+  masteryState.runCount++;
+  if (masteryState.runCount === Math.floor(MASTERY_RUNS_REQUIRED / 2)) {
+    masteryState.runTempo = "rapide";
+  }
+  if (masteryState.runCount >= MASTERY_RUNS_REQUIRED) {
+    finishMastery();
+    return;
+  }
+  masteryState.runIndex = 0;
+  updateMasteryStageLabel();
+  setTimeout(() => {
+    if (masteryState.active) nextMasteryRound();
+  }, 1200);
+}
+
+function finishMastery() {
+  masteryState.stage = 3;
+  stopMastery(true);
+  el.masteryArea.hidden = true;
+  el.masteryReward.hidden = false;
+  renderMasteryReward();
+}
+
+function renderMasteryReward() {
+  el.masteryRewardTracks.innerHTML = "";
+  const matches = TRACK_CATALOG.filter((t) => t.root === state.scaleRoot);
+  if (!matches.length) {
+    const p = document.createElement("p");
+    p.className = "subtitle";
+    p.textContent = "Pas encore de morceau dans cette tonalité au catalogue — reviens bientôt !";
+    el.masteryRewardTracks.appendChild(p);
+    return;
+  }
+  matches.forEach((t) => {
+    const row = document.createElement("div");
+    row.className = "mastery-reward-track";
+    const label = document.createElement("span");
+    label.textContent = t.name;
+    const link = document.createElement("a");
+    link.className = "btn btn-primary";
+    link.href = `index.html?track=${t.id}`;
+    link.textContent = "Improviser dessus →";
+    row.appendChild(label);
+    row.appendChild(link);
+    el.masteryRewardTracks.appendChild(row);
+  });
+}
+
+el.masteryWithMicBtn.addEventListener("click", () => startMastery(true));
+el.masteryWithoutMicBtn.addEventListener("click", () => startMastery(false));
+el.stopMasteryBtn.addEventListener("click", () => stopMastery(false));
+el.masteryCorrectBtn.addEventListener("click", () => resolveMasteryRound(true));
+el.masteryWrongBtn.addEventListener("click", () => resolveMasteryRound(false));
 
 // Builds one ascending octave (root to octave, written pitch) of the chosen
 // scale, starting near written C4 so it sits comfortably on the staff.
@@ -1715,6 +2267,25 @@ function midiToVexKey(midi) {
 }
 
 const FRENCH_NOTE_NAMES = ["Do", "Do#", "Ré", "Mib", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "Sib", "Si"];
+
+// One color per pitch class (0=Do...11=Si), inspired by the classic
+// Boomwhacker diatonic rainbow (Do=red, Ré=orange, Mi=yellow, Fa=green,
+// Sol=blue, La=indigo, Si=magenta) extended smoothly through the sharps in
+// between, so every note reads consistently wherever it's shown.
+const NOTE_COLORS = [
+  "#a83f38", // Do
+  "#ae5f35", // Do#
+  "#b07f31", // Ré
+  "#af932f", // Ré#
+  "#b8a62d", // Mi
+  "#608a4a", // Fa
+  "#457d5d", // Fa#
+  "#3d7a98", // Sol
+  "#4b6a95", // Sol#
+  "#534a73", // La
+  "#754f7c", // Sib
+  "#a14a80", // Si
+];
 const INTERNATIONAL_NOTE_NAMES = ["C", "C♯", "D", "E♭", "E", "F", "F♯", "G", "A♭", "A", "B♭", "B"];
 
 function midiToFrenchName(midi) {
@@ -2012,7 +2583,11 @@ function renderScaleStaff(writtenMidis, activeWrittenMidi) {
 
   const widestRow = Math.max(...rows.map((r) => r.length));
   const totalWidthLogical = Math.min(availableLogical, widestRow * perNoteWidth + rowMargin);
-  const totalHeightLogical = rows.length * rowHeight + 30;
+  // +60 (not +30): high notes (e.g. Sib5 in a blues scale starting high) need
+  // 2-3 ledger lines above the stave - with too little headroom above the
+  // first row, those notes/ledger-lines were getting clipped by the SVG's
+  // own top edge instead of just extending past the visible stave.
+  const totalHeightLogical = rows.length * rowHeight + 60;
 
   const renderer = new VF.Renderer(el.staff, VF.Renderer.Backends.SVG);
   renderer.resize(totalWidthLogical * scale, totalHeightLogical * scale);
@@ -2024,7 +2599,7 @@ function renderScaleStaff(writtenMidis, activeWrittenMidi) {
   const fingeringSize = isStandalonePWA ? 22 : 18;
 
   rows.forEach((rowMidis, rowIdx) => {
-    const y = 20 + rowIdx * rowHeight;
+    const y = 50 + rowIdx * rowHeight;
     const staveWidth = Math.max(200, rowMidis.length * perNoteWidth + 20);
     const stave = new VF.Stave(10, y, staveWidth);
     if (rowIdx === 0) stave.addClef("treble");
@@ -2043,6 +2618,14 @@ function renderScaleStaff(writtenMidis, activeWrittenMidi) {
       note.addModifier(nameAnnotation);
 
       const isActive = midi === activeWrittenMidi;
+      const noteColor = NOTE_COLORS[((midi % 12) + 12) % 12];
+      // Active (currently playing) note keeps the orange highlight so it
+      // still reads as "this one" at a glance; otherwise the note's own
+      // fixed color (same everywhere it's shown) identifies it.
+      nameAnnotation.setStyle({
+        fillStyle: isActive ? "#e0781f" : noteColor,
+        strokeStyle: isActive ? "#e0781f" : noteColor,
+      });
       note.setStyle({
         fillStyle: isActive ? "#e0781f" : "#1a1a1a",
         strokeStyle: isActive ? "#e0781f" : "#1a1a1a",
@@ -2071,11 +2654,12 @@ function renderDegreeChips(writtenMidis) {
   // the same pitch class as the root but a distinct, playable note.
   writtenMidis.forEach((writtenMidi) => {
     const concertMidi = writtenMidi - 2;
+    const noteColor = NOTE_COLORS[((writtenMidi % 12) + 12) % 12];
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "degree-chip";
     chip.dataset.concertMidi = String(concertMidi);
-    chip.innerHTML = `<span>${writtenNoteDisplayName(writtenMidi, concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
+    chip.innerHTML = `<span style="color:${noteColor}">${writtenNoteDisplayName(writtenMidi, concertMidi)}</span><span class="chip-fingering">${coloredFingeringHTML(writtenMidi)}</span>`;
     chip.addEventListener("click", () => selectScaleNote(writtenMidi));
     container.appendChild(chip);
   });
@@ -2095,15 +2679,77 @@ function scalePracticeTitle(root = state.scaleRoot, scaleType = state.scaleType)
   return `Gamme ${definition.label.toLowerCase()} · ${FRENCH_NOTE_NAMES[writtenRoot]} trompette`;
 }
 
+// Set by cyclePracticeScaleType/Root right before they dispatch a select
+// "change" event, so the next updatePracticeTitle() render (triggered by
+// that change, via renderScaleReference) knows which segment just changed
+// and should get the "cube face turning" entrance animation.
+let practiceTitleCubeAnim = null; // 'type' | 'root' | null
+
 function updatePracticeTitle(label = null) {
   if (!el.practiceTitle) return;
   if (label) {
     el.practiceTitle.textContent = label;
-  } else if (state.scaleQueue.length) {
-    el.practiceTitle.textContent = `Programme · ${state.scaleQueue.length} gamme${state.scaleQueue.length > 1 ? "s" : ""}`;
-  } else {
-    el.practiceTitle.textContent = scalePracticeTitle();
+    practiceTitleCubeAnim = null;
+    return;
   }
+  if (state.scaleQueue.length) {
+    el.practiceTitle.textContent = `Programme · ${state.scaleQueue.length} gamme${state.scaleQueue.length > 1 ? "s" : ""}`;
+    practiceTitleCubeAnim = null;
+    return;
+  }
+
+  const definition = SCALE_DEFINITIONS[state.scaleType] || { label: state.scaleType };
+  const writtenRoot = (state.scaleRoot + 2) % 12;
+
+  el.practiceTitle.innerHTML = "";
+
+  const typeSpan = document.createElement("span");
+  typeSpan.className = "practice-title-segment practice-title-type";
+  typeSpan.textContent = `Gamme ${definition.label.toLowerCase()}`;
+  typeSpan.title = "Clique pour changer de type de gamme";
+  typeSpan.style.color = SCALE_TYPE_COLORS[state.scaleType] || "";
+  typeSpan.addEventListener("click", (event) => {
+    event.stopPropagation();
+    cyclePracticeScaleType();
+  });
+
+  const rootSpan = document.createElement("span");
+  rootSpan.className = "practice-title-segment practice-title-root";
+  rootSpan.textContent = `${FRENCH_NOTE_NAMES[writtenRoot]} trompette`;
+  rootSpan.title = "Clique pour changer de tonalité";
+  rootSpan.style.color = NOTE_COLORS[writtenRoot] || "";
+  rootSpan.addEventListener("click", (event) => {
+    event.stopPropagation();
+    cyclePracticeScaleRoot();
+  });
+
+  if (practiceTitleCubeAnim === "type") typeSpan.classList.add("cube-spin-in");
+  if (practiceTitleCubeAnim === "root") rootSpan.classList.add("cube-spin-in");
+  practiceTitleCubeAnim = null;
+
+  el.practiceTitle.appendChild(typeSpan);
+  el.practiceTitle.appendChild(document.createTextNode(" · "));
+  el.practiceTitle.appendChild(rootSpan);
+}
+
+// Cycle to the next scale type/root by driving the existing <select>
+// elements (dispatching "change") rather than duplicating their side
+// effects (chord-mode handling, score-loop restart...) - only the visual
+// swap animation is new here.
+function cyclePracticeScaleType() {
+  const keys = Object.keys(SCALE_DEFINITIONS);
+  const idx = keys.indexOf(state.scaleType);
+  const nextType = keys[(idx + 1) % keys.length];
+  practiceTitleCubeAnim = "type";
+  el.scaleTypeSelect.value = nextType;
+  el.scaleTypeSelect.dispatchEvent(new Event("change"));
+}
+
+function cyclePracticeScaleRoot() {
+  const nextRoot = (state.scaleRoot + 1) % 12;
+  practiceTitleCubeAnim = "root";
+  el.scaleRootSelect.value = String(nextRoot);
+  el.scaleRootSelect.dispatchEvent(new Event("change"));
 }
 
 function renderScaleQueue() {
@@ -2168,7 +2814,10 @@ function setChordMode(mode) {
   el.chordModeBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.chordmode === mode));
   el.scaleTypeLabel.hidden = mode === "chord";
   el.chordQualityLabel.hidden = mode !== "chord";
-  el.insideOutsideRow.hidden = mode !== "chord";
+  // Dedans/Dehors (jazz) toggle: confusing jargon, dropped from the UI -
+  // always stays "inside" (the safe/consonant substitution) rather than
+  // exposing the choice.
+  el.insideOutsideRow.hidden = true;
 
   if (mode === "chord") {
     applyChordSelection();
@@ -2195,7 +2844,13 @@ function selectScaleNote(writtenMidi) {
     chip.classList.toggle("active", Number(chip.dataset.concertMidi) === concertMidi);
   });
 
-  el.staff.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  // In the immersive workspace layout #staff is already fully visible in its
+  // own fixed panel (with an internal scroll for its karaoke view) - calling
+  // scrollIntoView here would scroll the outer page instead, shoving the
+  // whole panel up under the fixed header. Only needed in the legacy layout.
+  if (!document.body.classList.contains("trumpet-workspace-open")) {
+    el.staff.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2242,7 +2897,7 @@ function toggleFavoriteScale() {
 function updateFavoriteButtonState() {
   const active = isFavoriteScale(state.scaleRoot, state.scaleType);
   el.toggleFavoriteScaleBtn.classList.toggle("active", active);
-  el.toggleFavoriteScaleBtn.textContent = active ? "★ Favori" : "☆ Favori";
+  el.toggleFavoriteScaleBtn.innerHTML = (active ? ICONS.starFilled : ICONS.starOutline) + "Favori";
 }
 
 function favoriteScaleLabel(entry) {
@@ -2257,7 +2912,7 @@ function renderFavoriteScalesList() {
   if (!favorites.length) {
     const empty = document.createElement("span");
     empty.className = "favorite-scales-empty";
-    empty.textContent = "Aucune pour l'instant — clique ☆ Favori pour en ajouter.";
+    empty.innerHTML = `Aucune pour l'instant — clique ${ICONS.starOutline}Favori pour en ajouter.`;
     el.favoriteScalesList.appendChild(empty);
     return;
   }
@@ -2266,7 +2921,7 @@ function renderFavoriteScalesList() {
     const chip = document.createElement("button");
     chip.type = "button";
     chip.className = "favorite-chip";
-    chip.innerHTML = `${favoriteScaleLabel(entry)} <span class="remove-favorite" title="Retirer">✕</span>`;
+    chip.innerHTML = `${favoriteScaleLabel(entry)} <span class="remove-favorite" title="Retirer">${ICONS.cross}</span>`;
 
     chip.addEventListener("click", (e) => {
       if (e.target.classList.contains("remove-favorite")) {
@@ -2447,7 +3102,7 @@ function updateSongKeyPanel() {
 
   const key = detectKeyFromNotes(notes);
   state.songScaleRoot = key.root;
-  state.songScaleType = key.mode === "minor" ? "naturalMinor" : "major";
+  state.songScaleType = key.scaleType;
 
   const modeLabel = key.mode === "minor" ? "mineur" : "majeur";
   el.songKeyLabel.textContent = `${trumpetPitchClassLabel(key.root)} · ${modeLabel}`;
@@ -2499,6 +3154,17 @@ function setOctaveShift(target) {
   }
 }
 
+// Deliberate, explicit opt-in for the note-by-note score - built from the
+// pitch segments already extracted at load time (loadFile), so it's instant
+// here rather than re-running the expensive analysis.
+function buildFullTranscriptionFromSegments() {
+  const segments = state.pendingTranscriptionSegments;
+  if (!segments) return;
+  state.noteEvents = buildNoteEvents(segments, state.duration, state.bpm);
+  state.measures = groupIntoMeasures(state.noteEvents);
+  setMode("transcription");
+}
+
 // ---------------------------------------------------------------------------
 // Mode switching
 // ---------------------------------------------------------------------------
@@ -2506,10 +3172,11 @@ function setOctaveShift(target) {
 function setMode(mode) {
   stopScorePlayback();
   if (quizState.active) stopQuiz(false);
+  if (masteryState.active) stopMastery(false);
   state.mode = mode;
   state.deleteNoteMode = false;
   el.deleteNoteModeBtn.classList.remove("btn-danger-active");
-  el.deleteNoteModeBtn.textContent = "🗑️ Supprimer une note";
+  el.deleteNoteModeBtn.innerHTML = ICONS.trash + "Supprimer une note";
   el.modeBtns.forEach((btn) => btn.classList.toggle("active", btn.dataset.mode === mode));
   el.improvisationControls.hidden = mode !== "improvisation" || !state.scaleOptionsOpen;
   el.manualControls.hidden = mode !== "manual";
@@ -2808,7 +3475,9 @@ let inlineScore = null;
 function setPracticeButtonPlaying(playing) {
   el.openKaraokeBtn.classList.toggle("playing", playing);
   el.openKaraokeBtn.setAttribute("aria-label", playing ? "Arrêter l’exercice" : "Commencer maintenant");
-  el.practicePlayIcon.textContent = playing ? "■" : "▶";
+  el.practicePlayIcon.innerHTML = playing
+    ? svgIcon('<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/>', { solo: true })
+    : svgIcon('<path d="M7 4l12 8-12 8V4z" fill="currentColor"/>', { solo: true });
   el.practicePlayLabel.textContent = playing ? "Arrêter" : "Commencer maintenant";
 }
 
@@ -2903,6 +3572,83 @@ function scheduleTone(concertMidi, when, duration) {
   };
 }
 
+// Softer/quieter than scheduleTone so a catalog track's backing instruments
+// (piano, bass, sax...) sit behind the trumpet line instead of competing
+// with it - same triangle-wave voice would just sound like unison trumpets.
+function scheduleStemTone(concertMidi, when, duration, volumeScale = 1) {
+  const ctx = state.audioContext;
+  const freq = 440 * Math.pow(2, (concertMidi - 69) / 12);
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "sine";
+  osc.frequency.value = freq;
+
+  const peak = 0.14 * volumeScale;
+  const attack = 0.015;
+  const release = Math.min(0.1, duration * 0.3);
+  gain.gain.setValueAtTime(0, when);
+  gain.gain.linearRampToValueAtTime(peak, when + attack);
+  gain.gain.setValueAtTime(peak, Math.max(when + attack, when + duration - release));
+  gain.gain.linearRampToValueAtTime(0.0001, when + duration);
+
+  osc.connect(gain);
+  gain.connect(getScoreMasterGain());
+  osc.start(when);
+  osc.stop(when + duration + 0.02);
+
+  state.scheduledOscillators.push(osc);
+  osc.onended = () => {
+    const i = state.scheduledOscillators.indexOf(osc);
+    if (i >= 0) state.scheduledOscillators.splice(i, 1);
+  };
+}
+
+const STEM_ICON_ON = svgIcon('<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a8.5 8.5 0 0 1 0 12"/>', { solo: true });
+const STEM_ICON_OFF = svgIcon('<path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/>', { solo: true });
+
+function renderStemsPanel() {
+  el.stemsList.innerHTML = "";
+  if (!state.trackStems.length) {
+    el.stemsPanel.hidden = true;
+    return;
+  }
+  el.stemsPanel.hidden = false;
+  state.trackStems.forEach((stem) => {
+    const row = document.createElement("div");
+    row.className = "stem-row" + (stem.muted ? " muted" : "");
+
+    const muteBtn = document.createElement("button");
+    muteBtn.type = "button";
+    muteBtn.className = "stem-mute-btn";
+    muteBtn.title = stem.muted ? "Remettre cet instrument" : "Couper cet instrument";
+    muteBtn.innerHTML = stem.muted ? STEM_ICON_OFF : STEM_ICON_ON;
+    muteBtn.addEventListener("click", () => {
+      stem.muted = !stem.muted;
+      renderStemsPanel();
+    });
+
+    const name = document.createElement("span");
+    name.className = "stem-name";
+    name.textContent = stem.instrument;
+
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.className = "stem-volume";
+    slider.min = "0";
+    slider.max = "100";
+    slider.value = String(Math.round(stem.volume * 100));
+    slider.setAttribute("aria-label", `Volume ${stem.instrument}`);
+    slider.addEventListener("input", () => {
+      stem.volume = Number(slider.value) / 100;
+    });
+
+    row.appendChild(muteBtn);
+    row.appendChild(name);
+    row.appendChild(slider);
+    el.stemsList.appendChild(row);
+  });
+}
+
 const SCORE_LOOKAHEAD_SECONDS = 2;
 
 function startScorePlayback() {
@@ -2929,6 +3675,12 @@ function startScorePlayback() {
     for (const e of events) {
       scheduleTone(e.midi, passStart + e.startTime, e.endTime - e.startTime);
     }
+    for (const stem of state.trackStems) {
+      if (stem.muted) continue;
+      for (const n of stem.notes) {
+        scheduleStemTone(n.midi, passStart + n.time, n.duration, stem.volume);
+      }
+    }
     nextLoopStart += totalDuration;
   }
 
@@ -2944,6 +3696,10 @@ function startScorePlayback() {
   el.stopScoreBtn.hidden = false;
   setPracticeButtonPlaying(true);
   scoreLoopVisualTick();
+
+  // Re-lock the click track onto the new loop timeline if it was already
+  // running, instead of leaving it on the previous (now stale) grid.
+  if (state.metronomeActive) startMetronome();
 }
 
 function stopScorePlayback() {
@@ -3066,13 +3822,25 @@ function startMetronome() {
   stopMetronome();
 
   state.metronomeActive = true;
+  const beatDuration = 60 / state.bpm;
+  const now = state.audioContext.currentTime + 0.1;
+
+  // If a scale/score loop is already playing, lock the click grid onto its
+  // timeline instead of always restarting the count at beat 1 from whenever
+  // the button was pressed - otherwise starting the metronome mid-phrase
+  // puts the accented click on the wrong beat of the measure.
   let beatIndex = 0;
-  let nextClickTime = state.audioContext.currentTime + 0.1;
+  let nextClickTime = now;
+  if (state.scoreLoopActive && state.scoreLoopStartTime != null) {
+    const beatsSinceLoopStart = (now - state.scoreLoopStartTime) / beatDuration;
+    beatIndex = Math.ceil(beatsSinceLoopStart);
+    nextClickTime = state.scoreLoopStartTime + beatIndex * beatDuration;
+  }
 
   function scheduleAhead() {
     while (nextClickTime < state.audioContext.currentTime + METRONOME_LOOKAHEAD_SECONDS) {
-      scheduleClick(nextClickTime, beatIndex % 4 === 0);
-      nextClickTime += 60 / state.bpm;
+      scheduleClick(nextClickTime, ((beatIndex % 4) + 4) % 4 === 0);
+      nextClickTime += beatDuration;
       beatIndex++;
     }
   }
@@ -3083,7 +3851,7 @@ function startMetronome() {
     scheduleAhead();
   }, 100);
 
-  el.metronomeBtn.textContent = "⏹ Stop métronome";
+  el.metronomeBtn.innerHTML = svgIcon('<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/>', { solo: false }) + "Stop métronome";
   el.metronomeBtn.classList.add("active");
 }
 
@@ -3101,7 +3869,7 @@ function stopMetronome() {
     }
   }
   state.metronomeOscillators = [];
-  el.metronomeBtn.textContent = "🎵 Métronome";
+  el.metronomeBtn.innerHTML = ICONS.metronome + "Métronome";
   el.metronomeBtn.classList.remove("active");
 }
 
@@ -3172,13 +3940,14 @@ function renderSavedScoresList() {
       const playBtn = document.createElement("button");
       playBtn.type = "button";
       playBtn.className = "btn btn-primary";
-      playBtn.textContent = "▶ Rejouer";
+      playBtn.innerHTML = svgIcon('<path d="M7 4l12 8-12 8V4z" fill="currentColor"/>') + "Rejouer";
       playBtn.addEventListener("click", () => loadSavedScore(entry));
 
       const deleteBtn = document.createElement("button");
       deleteBtn.type = "button";
       deleteBtn.className = "btn";
-      deleteBtn.textContent = "🗑";
+      deleteBtn.innerHTML = svgIcon('<path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M10 11v6M14 11v6"/>', { solo: true });
+      deleteBtn.setAttribute("aria-label", "Supprimer");
       deleteBtn.addEventListener("click", () => {
         if (!confirm(`Supprimer "${entry.name}" ?`)) return;
         setSavedScores(getSavedScores().filter((s) => s.id !== entry.id));
@@ -3572,9 +4341,9 @@ el.clearManualNotesBtn.addEventListener("click", () => {
 el.deleteNoteModeBtn.addEventListener("click", () => {
   state.deleteNoteMode = !state.deleteNoteMode;
   el.deleteNoteModeBtn.classList.toggle("btn-danger-active", state.deleteNoteMode);
-  el.deleteNoteModeBtn.textContent = state.deleteNoteMode
-    ? "🗑️ Clique une note pour la supprimer (actif)"
-    : "🗑️ Supprimer une note";
+  el.deleteNoteModeBtn.innerHTML = ICONS.trash + (state.deleteNoteMode
+    ? "Clique une note pour la supprimer (actif)"
+    : "Supprimer une note");
 });
 
 el.toggleTwelveKeysBtn.addEventListener("click", () => {
@@ -3788,6 +4557,11 @@ el.backToBoardingLink.addEventListener("click", (event) => {
   event.preventDefault();
   showBoardingSpace();
 });
+if (el.workspaceWordmark) {
+  el.workspaceWordmark.addEventListener("click", () => {
+    if (document.body.classList.contains("trumpet-workspace-open")) showBoardingSpace();
+  });
+}
 
 let workspaceResizeTimer = null;
 window.addEventListener("resize", () => {
@@ -3825,13 +4599,13 @@ function toggleMoreTools() {
   toolsDrawer.hidden = !state.moreToolsOpen;
   document.body.classList.toggle("tools-open", state.moreToolsOpen);
   el.transportPanel.hidden = !state.moreToolsOpen;
-  el.pianoToolPanel.hidden = !state.moreToolsOpen;
   el.savedScoresPanel.hidden = !state.moreToolsOpen;
   el.hiddenModeToggle.hidden = !state.moreToolsOpen;
   el.scorePlaybackRow.hidden = !state.moreToolsOpen;
 }
 
 el.clefToggleBtn.addEventListener("click", toggleScaleOptions);
+el.closeScaleOptionsBtn.addEventListener("click", toggleScaleOptions);
 el.moreToolsToggleBtn.addEventListener("click", toggleMoreTools);
 toolsDrawer.querySelector(".tools-drawer-close").addEventListener("click", toggleMoreTools);
 
@@ -3863,6 +4637,10 @@ async function loadTrackFromQueryParam() {
     el.bpmDisplay.textContent = entry.bpm.toFixed(1);
     el.durationValue.textContent = formatTime(state.duration);
     state.manualMeasures = buildManualMeasuresFor(state.manualNotes, state.bpm, state.duration);
+    state.trackStems = (entry.stems || [])
+      .filter((s) => !s.isLead)
+      .map((s) => ({ instrument: s.instrument, notes: s.notes, muted: false, volume: 0.7 }));
+    renderStemsPanel();
     setMode("manual");
     setStatus(`"${entry.name}" chargé — clique "Jouer la partition en boucle" pour l'écouter.`);
     setTimeout(() => setStatus(""), 5000);

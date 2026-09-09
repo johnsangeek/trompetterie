@@ -45,6 +45,7 @@ const valveAmount = [0, 0, 0];
 const valveTargets = [0, 0, 0];
 const valveTopLocal = [null, null, null];
 let modelBounds = null;
+let pistonCenterX = null;
 let isOpen = !stage.hidden;
 
 function positionValveDots() {
@@ -67,9 +68,15 @@ function frameModel() {
   renderer.setSize(width, height, false);
 
   const aspect = width / height;
-  const modelWidth = modelBounds ? modelBounds.size.x * 1.2 : 10;
+  const targetX = modelBounds && pistonCenterX !== null ? pistonCenterX : (modelBounds ? modelBounds.center.x : 0);
   const modelHeight = modelBounds ? modelBounds.size.y * 1.44 : 4;
-  const viewHeight = Math.max(modelHeight, modelWidth / aspect);
+  const halfWidthNeeded = modelBounds
+    ? Math.max(
+        (modelBounds.center.x + modelBounds.size.x / 2) - targetX,
+        targetX - (modelBounds.center.x - modelBounds.size.x / 2)
+      ) * 1.25
+    : 5;
+  const viewHeight = Math.max(modelHeight, (halfWidthNeeded * 2) / aspect);
   const viewWidth = viewHeight * aspect;
 
   camera.left = -viewWidth / 2;
@@ -80,8 +87,8 @@ function frameModel() {
 
   if (modelBounds) {
     const targetY = modelBounds.center.y + modelBounds.size.y * .08;
-    camera.position.set(modelBounds.center.x, targetY, modelBounds.center.z + 12);
-    camera.lookAt(modelBounds.center.x, targetY, modelBounds.center.z);
+    camera.position.set(targetX, targetY, modelBounds.center.z + 12);
+    camera.lookAt(targetX, targetY, modelBounds.center.z);
   }
   positionValveDots();
 }
@@ -112,6 +119,7 @@ new GLTFLoader().load(
     }
 
     gltf.scene.updateMatrixWorld(true);
+    const pistonWorldXs = [];
     valveNodes.forEach((node, index) => {
       if (!node) return;
       const pistonBox = new THREE.Box3().setFromObject(node);
@@ -120,8 +128,16 @@ new GLTFLoader().load(
         pistonBox.max.y,
         (pistonBox.min.z + pistonBox.max.z) / 2
       );
+      pistonWorldXs.push(topWorld.x);
       valveTopLocal[index] = node.worldToLocal(topWorld);
     });
+    // The bell flares out much further on one side of the bounding box than
+    // the leadpipe does on the other, so framing on the raw bbox center
+    // visually shoves the trumpet - and clips the valve-3 dot - off to one
+    // side. Frame on the pistons' own midpoint instead.
+    if (pistonWorldXs.length) {
+      pistonCenterX = pistonWorldXs.reduce((sum, x) => sum + x, 0) / pistonWorldXs.length;
+    }
 
     frameModel();
     statusLabel.textContent = "Prêt";
