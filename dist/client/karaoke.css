@@ -25,6 +25,14 @@ button, select { font: inherit; }
     linear-gradient(180deg, #f6f2e9 0%, #ebe5d8 58%, #ddd5c4 100%);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .karaoke-stage { animation: karaoke-enter .48s cubic-bezier(.22,.8,.3,1) both; }
+  @keyframes karaoke-enter {
+    from { opacity: 0; transform: scale(1.008); }
+    to { opacity: 1; transform: scale(1); }
+  }
+}
+
 .karaoke-trumpet { position: absolute; inset: 33% 0 8%; width: 100%; height: 59%; }
 .stage-vignette { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 150px rgba(90, 74, 43, .16); }
 
@@ -68,9 +76,9 @@ button, select { font: inherit; }
 .active-fingering { min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center; gap: 4px; color: #27200f; font-weight: 900; }
 .active-fingering .karaoke-fingering-dot { width: 32px; height: 32px; }
 
-.valve-status { position: absolute; z-index: 7; left: calc(50% - 82px); top: 45.5%; transform: translateX(-50%); display: flex; gap: 22px; pointer-events: none; }
-.valve-dot { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 2px solid rgba(255,255,255,.82); color: #18201d; font-size: .9rem; font-weight: 900; opacity: .82; box-shadow: 0 6px 16px rgba(61,48,24,.2); transition: transform .08s ease, opacity .08s ease, box-shadow .08s ease; }
-.valve-dot.pressed { color: #18201d; opacity: 1; transform: translateY(7px) scale(1.08); }
+.valve-status { position: absolute; z-index: 7; inset: 0; pointer-events: none; }
+.valve-dot { position: absolute; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 2px solid rgba(255,255,255,.82); color: #18201d; font-size: .9rem; font-weight: 900; opacity: .82; box-shadow: 0 6px 16px rgba(61,48,24,.2); transform: translate(-50%, -50%); transition: transform .08s ease, opacity .08s ease, box-shadow .08s ease; }
+.valve-dot.pressed { color: #18201d; opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
 .valve-1 { background: var(--red); }
 .valve-2 { background: var(--teal); }
 .valve-3 { background: var(--amber); }
@@ -103,7 +111,6 @@ button, select { font: inherit; }
   .progress { order: -1; flex-basis: 100%; }
   #restartBtn { display: none; }
   .speed-control { margin-left: auto; }
-  .valve-status { left: calc(50% - 50px); top: 47%; gap: 13px; }
   .valve-dot { width: 32px; height: 32px; }
   .infinite-mode { display: none; }
 }

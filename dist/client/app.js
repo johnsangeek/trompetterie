@@ -246,7 +246,7 @@ toolsDrawer.appendChild(toolsDrawerHead);
   document.querySelector(".note-scanner"),
 ].filter(Boolean).forEach((node) => toolsDrawer.appendChild(node));
 el.mainApp.appendChild(toolsDrawer);
-[el.songNotesHeader, el.songKeyPanel].filter(Boolean).forEach((node) => el.improvisationControls.appendChild(node));
+[el.degreeChips, el.songNotesHeader, el.songKeyPanel].filter(Boolean).forEach((node) => el.improvisationControls.appendChild(node));
 
 // The 3D trumpet is now an always-visible inline panel (not an on-demand
 // fullscreen modal), so it's activated once at startup and never closed.
@@ -2726,6 +2726,7 @@ function getCurrentModeEvents() {
 }
 
 function openKaraoke(eventsData, title = "Partition en cours") {
+  if (document.body.classList.contains("karaoke-transitioning")) return;
   const events = eventsData.events
     .filter((event) => Number.isFinite(event.midi))
     .map((event) => ({
@@ -2744,7 +2745,8 @@ function openKaraoke(eventsData, title = "Partition en cours") {
     events,
     totalDuration: Math.max(eventsData.totalDuration, ...events.map((event) => event.endTime)),
   }));
-  window.location.href = "karaoke.html";
+  document.body.classList.add("karaoke-transitioning");
+  window.setTimeout(() => { window.location.href = "karaoke.html"; }, 420);
 }
 
 // Routed through a single persistent gain node (rather than baking mute

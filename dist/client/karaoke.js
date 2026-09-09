@@ -229,7 +229,22 @@ const valveNodes = [null, null, null];
 const valveHomeY = [0, 0, 0];
 const valveAmounts = [0, 0, 0];
 const valveTargets = [0, 0, 0];
+const valveTopLocal = [null, null, null];
 let bounds = null;
+
+function positionValveDots() {
+  if (!bounds || !canvas.clientWidth || !canvas.clientHeight) return;
+  scene.updateMatrixWorld(true);
+  camera.updateMatrixWorld(true);
+  valveNodes.forEach((node, index) => {
+    const localPoint = valveTopLocal[index];
+    const dot = valveDots[index];
+    if (!node || !localPoint || !dot) return;
+    const projected = localPoint.clone().applyMatrix4(node.matrixWorld).project(camera);
+    dot.style.left = `${canvas.offsetLeft + (projected.x * .5 + .5) * canvas.clientWidth}px`;
+    dot.style.top = `${canvas.offsetTop + (-projected.y * .5 + .5) * canvas.clientHeight - 18}px`;
+  });
+}
 
 function frameTrumpet() {
   const width = Math.max(1, canvas.clientWidth);
@@ -243,6 +258,7 @@ function frameTrumpet() {
   camera.left = -viewWidth / 2; camera.right = viewWidth / 2; camera.top = viewHeight / 2; camera.bottom = -viewHeight / 2;
   camera.updateProjectionMatrix();
   if (bounds) { camera.position.set(bounds.center.x, bounds.center.y, bounds.center.z + 12); camera.lookAt(bounds.center); }
+  positionValveDots();
 }
 
 new GLTFLoader().load("./assets/trumpet/trumpet.glb", (gltf) => {
@@ -257,6 +273,13 @@ new GLTFLoader().load("./assets/trumpet/trumpet.glb", (gltf) => {
     valveHomeY[index] = node.position.y;
     node.traverse((child) => { if (child.isMesh && child.material) { child.material = child.material.clone(); child.material.emissive = new THREE.Color(0); } });
   }
+  gltf.scene.updateMatrixWorld(true);
+  valveNodes.forEach((node, index) => {
+    if (!node) return;
+    const pistonBox = new THREE.Box3().setFromObject(node);
+    const topWorld = new THREE.Vector3((pistonBox.min.x + pistonBox.max.x) / 2, pistonBox.max.y, (pistonBox.min.z + pistonBox.max.z) / 2);
+    valveTopLocal[index] = node.worldToLocal(topWorld);
+  });
   frameTrumpet();
 });
 
@@ -271,6 +294,7 @@ function render() {
     node.position.y = valveHomeY[index] - valveAmounts[index] * .26;
     node.traverse((child) => { if (child.isMesh && child.material?.emissive) child.material.emissive.copy(child.material.color).multiplyScalar(valveAmounts[index] * .5); });
   }
+  positionValveDots();
   renderer.render(scene, camera);
 }
 

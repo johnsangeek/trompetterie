@@ -43,8 +43,23 @@ const valveNodes = [null, null, null];
 const valveHomeY = [0, 0, 0];
 const valveAmount = [0, 0, 0];
 const valveTargets = [0, 0, 0];
+const valveTopLocal = [null, null, null];
 let modelBounds = null;
 let isOpen = !stage.hidden;
+
+function positionValveDots() {
+  if (!modelBounds || !stage.clientWidth || !stage.clientHeight) return;
+  instrumentRoot.updateMatrixWorld(true);
+  camera.updateMatrixWorld(true);
+  valveNodes.forEach((node, index) => {
+    const localPoint = valveTopLocal[index];
+    const dot = valveDots[index];
+    if (!node || !localPoint || !dot) return;
+    const projected = localPoint.clone().applyMatrix4(node.matrixWorld).project(camera);
+    dot.style.left = `${(projected.x * .5 + .5) * stage.clientWidth}px`;
+    dot.style.top = `${(-projected.y * .5 + .5) * stage.clientHeight - 18}px`;
+  });
+}
 
 function frameModel() {
   const width = Math.max(1, stage.clientWidth);
@@ -64,9 +79,11 @@ function frameModel() {
   camera.updateProjectionMatrix();
 
   if (modelBounds) {
-    camera.position.set(modelBounds.center.x, modelBounds.center.y + 0.03, modelBounds.center.z + 12);
-    camera.lookAt(modelBounds.center);
+    const targetY = modelBounds.center.y + modelBounds.size.y * .08;
+    camera.position.set(modelBounds.center.x, targetY, modelBounds.center.z + 12);
+    camera.lookAt(modelBounds.center.x, targetY, modelBounds.center.z);
   }
+  positionValveDots();
 }
 
 new GLTFLoader().load(
@@ -94,6 +111,18 @@ new GLTFLoader().load(
       });
     }
 
+    gltf.scene.updateMatrixWorld(true);
+    valveNodes.forEach((node, index) => {
+      if (!node) return;
+      const pistonBox = new THREE.Box3().setFromObject(node);
+      const topWorld = new THREE.Vector3(
+        (pistonBox.min.x + pistonBox.max.x) / 2,
+        pistonBox.max.y,
+        (pistonBox.min.z + pistonBox.max.z) / 2
+      );
+      valveTopLocal[index] = node.worldToLocal(topWorld);
+    });
+
     frameModel();
     statusLabel.textContent = "Prêt";
     statusLabel.classList.add("ready");
@@ -120,6 +149,7 @@ function animate() {
       child.material.emissive.copy(child.material.color).multiplyScalar(valveAmount[index] * 0.5);
     });
   }
+  positionValveDots();
   if (isOpen) renderer.render(scene, camera);
 }
 animate();
