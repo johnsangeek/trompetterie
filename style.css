@@ -7,6 +7,12 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Verandah Reverie";
+  src: url("assets/fonts/VerandahReverie.otf") format("opentype");
+  font-display: swap;
+}
+
 :root {
   --bg: #ece6d8;
   --panel: #f4efe3;
@@ -31,6 +37,18 @@
 }
 
 * { box-sizing: border-box; }
+
+/* Global safety net: several classes below set their own `display` (flex,
+   grid...) at the same specificity as the browser's built-in [hidden] rule,
+   which - being an author-stylesheet rule - wins over it regardless of
+   source order. That silently defeated `el.hidden = true` in several places
+   this session (instrument stage controls, mode toggle, song panels...).
+   One global override here, ahead of everything else that could set
+   display, closes the whole bug class instead of patching it one class at
+   a time. */
+[hidden] {
+  display: none !important;
+}
 
 body {
   margin: 0;
@@ -265,6 +283,82 @@ body.standalone-app .mini-nav {
   background: rgba(255, 176, 32, 0.06);
 }
 
+.dropzone-loaded {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.84rem;
+}
+
+.dropzone-loaded .icon {
+  color: var(--accent);
+  margin-right: 0;
+  flex: none;
+}
+
+.dropzone-loaded-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.dropzone-eject-btn {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text-dim);
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.dropzone-eject-btn:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.dropzone-eject-btn .icon {
+  width: 0.85em;
+  height: 0.85em;
+}
+
+/* Shown after a file is analyzed: by default we only detect key/tempo and
+   suggest a scale to improvise with (reliable) - the full note-by-note
+   transcription (less reliable on real recordings) stays a deliberate,
+   separate opt-in via this banner's button rather than the automatic
+   default. */
+.file-analyzed-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  background: rgba(var(--accent-rgb), 0.08);
+  font-size: 0.86rem;
+}
+
+.file-analyzed-banner strong {
+  color: var(--accent);
+}
+
+.file-analyzed-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .status {
   text-align: center;
   color: var(--text-dim);
@@ -446,6 +540,21 @@ body.standalone-app .mini-nav {
   padding: 4px;
 }
 
+/* Inline SVG icons swapped in for emoji throughout the app - sized and
+   aligned to sit inline with button/label text regardless of font. */
+.icon {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.4em;
+  vertical-align: -0.15em;
+  flex: none;
+}
+
+.icon-solo {
+  margin-right: 0;
+}
+
 .btn {
   background: rgba(255, 255, 255, 0.45);
   border: 1px solid var(--border);
@@ -605,11 +714,29 @@ input:disabled {
 
 .improvisation-controls,
 .manual-controls {
+  position: relative;
   background: rgba(var(--ink-rgb), 0.03);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 12px 14px;
   margin-bottom: 14px;
+}
+
+.close-panel-btn {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 4px;
+}
+
+.close-panel-btn:hover {
+  color: var(--danger);
 }
 
 .improvisation-controls .subtitle,
@@ -814,6 +941,14 @@ input:disabled {
   gap: 12px;
   flex-wrap: wrap;
   color: var(--text-dim);
+}
+
+/* Both set display:flex above, which (same specificity, author stylesheet)
+   beats the [hidden] UA rule regardless of source order - so these were
+   never actually hiding via el.hidden = true. */
+.song-key-panel[hidden],
+.song-notes-header[hidden] {
+  display: none !important;
 }
 
 .btn-small {
@@ -2050,4 +2185,82 @@ body.standalone-app .valve-number {
   color: var(--text-dim);
   font-size: 0.78rem;
   margin-top: 14px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Scale mastery ("code de la route") - reuses .quiz-* classes above for   */
+/* the ring/status/feedback/manual-buttons so it looks identical to the    */
+/* existing interro, just with its own progression logic and progress UI. */
+/* ---------------------------------------------------------------------- */
+
+.mastery-mic-choice {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.mastery-note-dots,
+.mastery-rep-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.mastery-note-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  background: rgba(var(--ink-rgb), 0.03);
+}
+
+.mastery-note-dot.mastered {
+  background: var(--accent-2);
+  border-color: var(--accent-2);
+  color: #0c2420;
+}
+
+.mastery-note-dot.current {
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 900;
+}
+
+.mastery-rep-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: rgba(var(--ink-rgb), 0.05);
+}
+
+.mastery-rep-dot.filled {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.mastery-reward-tracks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.mastery-reward-track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(var(--ink-rgb), 0.03);
 }
