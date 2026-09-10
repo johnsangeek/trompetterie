@@ -31,6 +31,11 @@ body{min-height:100dvh;background:radial-gradient(circle at 50% 0%,#fffdf6 0,#f3
 .ts-fact strong{display:block;font-size:19px}
 .ts-fact span{display:block;margin-top:6px;color:var(--muted);font-size:11px}
 
+.ts-gear-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:18px 0}
+.ts-gear-card{padding:18px;border:1px solid var(--rule);border-radius:16px;background:rgba(255,253,246,.7)}
+.ts-gear-card>strong{display:block;margin-bottom:8px;font-size:15px}
+.ts-gear-card p{margin:0;color:#3c3f38;font-size:13px;line-height:1.55}
+
 .ts-valve-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
 .ts-valve-card{display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 10px;border:1px solid var(--rule);border-radius:18px;background:rgba(255,253,246,.7);text-align:center}
 .ts-valve-dot{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;color:#fff;font-weight:900;font-size:16px}
@@ -100,4 +105,5 @@ body{min-height:100dvh;background:radial-gradient(circle at 50% 0%,#fffdf6 0,#f3
   .ts-panel h2{font-size:26px}
   .ts-harmonic-note{min-width:64px}
   .ts-note-picker{grid-template-columns:repeat(4,1fr)}
+  .ts-gear-grid{grid-template-columns:1fr}
 }
