@@ -1,7 +1,7 @@
 :root{--drawer-width:390px;--shell-paper:#f3efe5;--shell-ink:#171a17;--shell-gold:#d99517;--shell-rule:#d7cebc}
-.music-clef-handle{position:fixed;z-index:52;left:0;top:auto;bottom:104px;display:flex;align-items:center;justify-content:center;width:82px;height:52px;border:1px solid var(--shell-rule);border-left:0;border-radius:0 28px 28px 0;background:rgba(249,246,238,.97);color:var(--shell-ink);cursor:pointer;box-shadow:8px 12px 34px rgba(48,40,24,.1);transition:left .48s cubic-bezier(.22,1,.36,1),background .2s,transform .2s}
+.music-clef-handle{position:fixed;z-index:50;left:0;top:auto;bottom:104px;display:flex;align-items:center;justify-content:center;width:110px;height:56px;padding-left:18px;border:1px solid var(--shell-rule);border-left:0;border-radius:0 30px 30px 0;background:rgba(249,246,238,.99);color:var(--shell-ink);cursor:pointer;box-shadow:8px 12px 34px rgba(48,40,24,.1);transition:left .48s cubic-bezier(.22,1,.36,1),background .2s,transform .2s}
 .music-clef-handle:hover{background:#fffaf0;transform:translateX(3px)}.music-clef-handle .menu-handle-label{font:500 17px/1 Miracle,Georgia,serif;letter-spacing:.015em}
-body.drawer-open .music-clef-handle{left:var(--drawer-width);background:#fffaf0}
+body.drawer-open .music-clef-handle{left:calc(var(--drawer-width) - 30px);background:#fffaf0}
 .drawer-veil{position:fixed;z-index:49;inset:0;background:rgba(30,27,20,.18);backdrop-filter:blur(2px);opacity:0;transition:opacity .3s}.drawer-veil.visible{opacity:1}.drawer-veil[hidden]{display:none}
 .music-drawer{position:fixed;z-index:51;inset:0 auto 0 0;width:var(--drawer-width);display:flex;flex-direction:column;overflow-y:auto;padding:30px 30px 24px;background:#f8f4ea;color:var(--shell-ink);border-right:1px solid var(--shell-rule);box-shadow:30px 0 80px rgba(43,35,20,.16);transform:translateX(-102%);visibility:hidden;transition:transform .48s cubic-bezier(.22,1,.36,1),visibility 0s linear .48s}
 body.drawer-open .music-drawer{transform:translateX(0);visibility:visible;transition-delay:0s}
@@ -20,4 +20,4 @@ body[data-view-mode="partition"] .score-strip-clef{left:18px}
 body[data-view-mode="instrument"] .stage-copy,body[data-view-mode="instrument"] .highway-shell{opacity:0;pointer-events:none}
 body[data-view-mode="instrument"] .hero-instrument{display:block}
 body[data-view-mode="instrument"] .score-strip{width:min(1040px,72vw)}
-@media(max-width:700px){:root{--drawer-width:min(88vw,370px)}.music-clef-handle{width:72px;height:48px;bottom:86px}.music-drawer{padding:24px 22px 20px}.mode-options{grid-template-columns:1fr}.mode-options label span{display:flex;align-items:center;justify-content:space-between}.mode-options small{margin:0}.drawer-source{min-height:150px}}
+@media(max-width:700px){:root{--drawer-width:min(88vw,370px)}.music-clef-handle{width:96px;height:50px;padding-left:16px;bottom:86px}body.drawer-open .music-clef-handle{left:calc(var(--drawer-width) - 26px)}.music-drawer{padding:24px 22px 20px}.mode-options{grid-template-columns:1fr}.mode-options label span{display:flex;align-items:center;justify-content:space-between}.mode-options small{margin:0}.drawer-source{min-height:150px}}
