@@ -15,7 +15,6 @@ const els = {
 const ctx2d = els.canvas.getContext("2d");
 const scoreCtx = els.scoreCanvas.getContext("2d");
 const NOTE_FR = ["Do", "Do♯", "Ré", "Mi♭", "Mi", "Fa", "Fa♯", "Sol", "La♭", "La", "Si♭", "Si"];
-const FINGERINGS = [[],[1,2,3],[1,3],[2,3],[1,2],[1],[2],[],[2,3],[1,2],[1],[2]];
 const COLORS = {1:"#ff655d",2:"#4fd0c1",3:"#f1be43"};
 
 let audioCtx = null;
@@ -48,7 +47,7 @@ const SCALE_LABELS={blues:"Blues",major:"Majeure",minor:"Mineure naturelle",pent
 
 function displayMidi(note){ return note + (importedSong && transposeImported ? 2 : 0); }
 function noteName(note){ const midi=displayMidi(note); return `${NOTE_FR[(midi%12+12)%12]}${Math.floor(midi/12)-1}`; }
-function fingering(note){ return FINGERINGS[(displayMidi(note)%12+12)%12]; }
+function fingering(note){ return window.TrumpetFingerings.primary(displayMidi(note)); }
 function noteOctave(note){ return Math.floor(displayMidi(note)/12)-1; }
 function registerName(note){
   const octave=noteOctave(note);

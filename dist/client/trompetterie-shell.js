@@ -7,7 +7,6 @@
   const noteLabels=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"];
   const scaleLabels={blues:"Blues",major:"Majeure",minor:"Mineure naturelle",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure"};
   const scaleIntervals={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]};
-  const fingerings=[[],[1,2,3],[1,3],[2,3],[1,2],[1],[2],[],[2,3],[1,2],[1],[2]];
   let previewAudio=null;
   const comfortableOctave=rootValue=>rootValue>=7?3:4;
   const scaleBase=(rootValue,octaveValue)=>12*((octaveValue==="auto"?comfortableOctave(rootValue):Number(octaveValue))+1)+rootValue;
@@ -29,7 +28,7 @@
     if(!preview){preview=document.createElement("div");preview.className="drawer-scale-preview";preview.innerHTML='<div class="scale-preview-heading"><strong>Aperçu de la gamme</strong><small>Clique une note pour l’écouter</small></div><div class="mini-staff"><span class="mini-clef" aria-hidden="true">𝄞</span><div class="mini-staff-lines"></div><div class="mini-scale-notes"></div></div>';panel.appendChild(preview)}
     const rootValue=Number(root.value),base=scaleBase(rootValue,octave?.value||"auto"),intervals=scaleIntervals[scale.value]||scaleIntervals.blues,notes=preview.querySelector(".mini-scale-notes");notes.style.setProperty("--scale-count",String(intervals.length));notes.innerHTML="";
     intervals.forEach(interval=>{
-      const midi=base+interval,button=document.createElement("button"),name=`${noteLabels[midi%12]}${Math.floor(midi/12)-1}`,values=fingerings[midi%12];
+      const midi=base+interval,button=document.createElement("button"),name=`${noteLabels[midi%12]}${Math.floor(midi/12)-1}`,values=window.TrumpetFingerings.primary(midi);
       button.type="button";button.className="mini-note";button.style.setProperty("--note-y",`${49-staffStep(compactMidi(midi))*2.15}px`);button.setAttribute("aria-label",`${name}, ${values.length?`pistons ${values.join(" et ")}`:"pistons libres"}`);
       button.innerHTML=`<span class="mini-note-head" aria-hidden="true"></span><strong>${name}</strong><span class="mini-fingering">${(values.length?values:[0]).map(value=>`<i class="finger-${value}">${value}</i>`).join("")}</span>`;
       button.addEventListener("click",()=>{previewNote(midi);notes.querySelectorAll(".mini-note").forEach(note=>note.classList.remove("sounding"));button.classList.add("sounding");setTimeout(()=>button.classList.remove("sounding"),430)});notes.appendChild(button);

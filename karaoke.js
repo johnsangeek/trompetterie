@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "./vendor/three/addons/loaders/GLTFLoader.js";
 
-const FINGERINGS = { 0: [], 1: [1, 2, 3], 2: [1, 3], 3: [2, 3], 4: [1, 2], 5: [1], 6: [2], 7: [], 8: [2, 3], 9: [1, 2], 10: [1], 11: [2] };
 const NOTE_NAMES = ["Do", "Do♯", "Ré", "Mib", "Mi", "Fa", "Fa♯", "Sol", "Sol♯", "La", "Sib", "Si"];
 const fallback = {
   title: "Gamme blues · Démonstration",
@@ -81,7 +80,7 @@ function writtenName(concertMidi) {
 
 function fingeringValues(concertMidi) {
   const writtenMidi = concertMidi + 2;
-  return FINGERINGS[((writtenMidi - 60) % 12 + 12) % 12];
+  return window.TrumpetFingerings.primary(writtenMidi);
 }
 
 function fingeringDotsHTML(concertMidi) {
