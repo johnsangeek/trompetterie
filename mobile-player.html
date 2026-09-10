@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#f4f0e7" />
+  <title>Trompetterie — Jouer</title>
+  <link rel="stylesheet" href="mobile.css?v=82" />
+</head>
+<body class="mobile-player" data-mode="hero" data-view-mode="hero">
+  <main class="mp-app">
+    <header class="mp-header"><a class="mp-back" href="mobile.html" aria-label="Retour">←</a><div class="mp-brand"><small>MODE MOBILE</small><strong>Trompetterie</strong></div><button class="mp-menu" id="mpMenu" aria-label="Changer de mode">•••</button></header>
+    <section class="mp-context"><span class="mp-context-icon">TH</span><div><small>À JOUER</small><strong id="mpTitle">Gamme Blues · Ré</strong></div><label class="mp-bpm"><input id="mpBpm" type="range" min="30" max="200" value="92" aria-label="BPM"><output id="mpBpmOut">92</output></label></section>
+    <section class="mp-stage">
+      <div class="mp-count" id="mpCount">PRÊT</div>
+      <article class="mp-note-card"><div><small>MAINTENANT</small><strong id="mpNote">—</strong></div><div class="mp-fingers" id="mpFingers"><i class="off">0</i></div></article>
+      <div class="mp-view mp-hero"><canvas id="mpHighway" aria-label="Notes Hero"></canvas></div>
+      <div class="mp-view mp-instrument"><div class="hero-instrument" id="heroInstrument" aria-hidden="true"><canvas id="heroTrumpetCanvas" aria-label="Trompette 3D"></canvas><span class="instrument-status" id="heroInstrumentStatus">Chargement…</span><div class="instrument-valve-dots"><span data-instrument-valve="1">1</span><span data-instrument-valve="2">2</span><span data-instrument-valve="3">3</span></div></div></div>
+      <div class="mp-view mp-partition"><span class="mp-score-clef" aria-hidden="true">𝄞</span><canvas id="mpScore" aria-label="Partition défilante"></canvas></div>
+    </section>
+    <footer class="mp-controls"><div class="mp-progress"><i id="mpProgress"></i></div><div class="mp-control-row"><button class="mp-play" id="mpPlay" aria-label="Lecture">▶</button><div class="mp-mode-switch" id="mpModes"><button class="active" data-mode="hero">Héros</button><button data-mode="instrument">3D</button><button data-mode="partition">Partition</button></div><button class="mp-metro active" id="mpMetro" aria-label="Métronome">♩</button></div></footer>
+  </main>
+  <aside class="mp-drawer" id="mpDrawer"><header><h2>Mode de jeu</h2><button class="mp-drawer-close" id="mpDrawerClose">×</button></header><div class="mp-mode-switch"><button data-mode="hero">Héros</button><button data-mode="instrument">Instrument 3D</button><button data-mode="partition">Partition</button></div></aside>
+  <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
+  <script src="mobile-player.js?v=82"></script>
+  <script type="module" src="hero-instrument.js?v=82"></script>
+</body>
+</html>
