@@ -10,7 +10,7 @@
   <link rel="icon" href="icons/favicon-32.png?v=84" sizes="32x32" type="image/png" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=84" />
   <link rel="stylesheet" href="hero.css?v=90" />
-  <link rel="stylesheet" href="trompetterie-shell.css?v=91" />
+  <link rel="stylesheet" href="trompetterie-shell.css?v=92" />
 </head>
 <body>
   <button class="music-clef-handle" id="musicClefHandle" type="button" aria-controls="musicDrawer" aria-expanded="false" aria-label="Ouvrir le menu musical">
@@ -44,10 +44,11 @@
         </select>
       </label>
       <label>Tessiture
-        <select id="drawerOctave">
+        <select id="drawerOctave" aria-describedby="drawerOctaveHint">
           <option value="auto" selected>Confort — automatique</option><option value="3">Octave 3 — grave (Fa♯ à Si)</option>
           <option value="4">Octave 4 — médium</option><option value="5">Octave 5 — aigu</option>
         </select>
+        <small class="octave-hint" id="drawerOctaveHint" role="note"></small>
       </label>
     </section>
 
@@ -208,7 +209,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
   <script src="hero.js?v=90"></script>
-  <script src="trompetterie-shell.js?v=90"></script>
+  <script src="trompetterie-shell.js?v=92"></script>
   <script type="module" src="hero-instrument.js?v=81"></script>
 </body>
 </html>

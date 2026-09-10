@@ -4,7 +4,7 @@
   const names=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"],intervals={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]},labels={blues:"Blues",major:"Majeure",minor:"Mineure",pentatonic:"Penta. majeure",minorPentatonic:"Penta. mineure"},fingers=[[],[1,2,3],[1,3],[2,3],[1,2],[1],[2],[],[2,3],[1,2],[1],[2]];
   let source="scale",mode="hero",audio=null;
   const comfortableOctave=rootValue=>rootValue>=7?3:4,scaleBase=()=>12*((octave.value==="auto"?comfortableOctave(Number(root.value)):Number(octave.value))+1)+Number(root.value);
-  function validateOctave(){const low=octave.querySelector('option[value="3"]');low.disabled=Number(root.value)<6;if(low.disabled&&octave.value==="3")octave.value="auto";}
+  function validateOctave(){const low=octave.querySelector('option[value="3"]'),rootValue=Number(root.value);low.disabled=rootValue<6;if(low.disabled&&octave.value==="3")octave.value="auto";$("#mOctaveHint").textContent=low.disabled?`${names[rootValue]}3 est sous la tessiture standard. La trompette commence à Fa♯3.`:"";}
   function staffStep(midi){const diatonic=[0,0,1,1,2,3,3,4,4,5,5,6];return (Math.floor(midi/12)-5)*7+diatonic[midi%12]}
   function compactMidi(midi){while(midi>74)midi-=12;while(midi<55)midi+=12;return midi}
   function tone(midi){audio||=new(window.AudioContext||window.webkitAudioContext)();audio.resume();const n=audio.currentTime,o=audio.createOscillator(),g=audio.createGain();o.type="triangle";o.frequency.value=440*2**((midi-69)/12);g.gain.setValueAtTime(.001,n);g.gain.exponentialRampToValueAtTime(.18,n+.015);g.gain.exponentialRampToValueAtTime(.001,n+.45);o.connect(g).connect(audio.destination);o.start(n);o.stop(n+.46)}

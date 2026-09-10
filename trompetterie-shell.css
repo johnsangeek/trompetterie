@@ -21,3 +21,4 @@ body[data-view-mode="instrument"] .stage-copy,body[data-view-mode="instrument"] 
 body[data-view-mode="instrument"] .hero-instrument{display:block}
 body[data-view-mode="instrument"] .score-strip{width:min(1040px,72vw)}
 @media(max-width:700px){:root{--drawer-width:min(88vw,370px)}.music-clef-handle{width:96px;height:50px;padding-left:16px;bottom:86px}body.drawer-open .music-clef-handle{left:calc(var(--drawer-width) - 26px)}.music-drawer{padding:24px 22px 20px}.mode-options{grid-template-columns:1fr}.mode-options label span{display:flex;align-items:center;justify-content:space-between}.mode-options small{margin:0}.drawer-source{min-height:150px}}
+.drawer-source .octave-hint{display:block;margin:9px 0 0;padding:9px 11px;border-left:2px solid var(--shell-gold);background:rgba(217,149,23,.08);color:#756c5d;font:500 10px/1.45 "Segoe UI",sans-serif}.drawer-source .octave-hint:empty{display:none}.drawer-source select option:disabled{color:#a7a59e}

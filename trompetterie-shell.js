@@ -13,7 +13,7 @@
   const scaleBase=(rootValue,octaveValue)=>12*((octaveValue==="auto"?comfortableOctave(rootValue):Number(octaveValue))+1)+rootValue;
   const staffStep=midi=>{const diatonic=[0,0,1,1,2,3,3,4,4,5,5,6];return(Math.floor(midi/12)-5)*7+diatonic[midi%12]};
   const compactMidi=midi=>{while(midi>74)midi-=12;while(midi<55)midi+=12;return midi};
-  function validateOctave(){const low=octave?.querySelector('option[value="3"]');if(!low)return;low.disabled=Number(root.value)<6;if(low.disabled&&octave.value==="3")octave.value="auto";}
+  function validateOctave(){const low=octave?.querySelector('option[value="3"]'),hint=$("#drawerOctaveHint");if(!low)return;const rootValue=Number(root.value);low.disabled=rootValue<6;if(low.disabled&&octave.value==="3")octave.value="auto";if(hint)hint.textContent=low.disabled?`${noteLabels[rootValue]}3 est sous la tessiture standard. La trompette commence à Fa♯3.`:"";}
 
   function previewNote(midi){
     previewAudio ||= new (window.AudioContext||window.webkitAudioContext)();
