@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Trumpet School — Trompetterie</title>
+  <link rel="stylesheet" href="trumpet-school.css?v=1" />
+  <link rel="manifest" href="manifest.json?v=84" />
+  <meta name="theme-color" content="#f3efe5" />
+  <link rel="icon" href="icons/favicon-32.png?v=84" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=84" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Trompetterie" />
+</head>
+<body>
+  <header class="ts-topbar">
+    <a class="ts-back" href="index.html" aria-label="Retour à l'accueil"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></a>
+    <div class="ts-brand"><small>TROMPETTERIE</small><strong>Trumpet School</strong></div>
+    <span class="ts-topbar-spacer" aria-hidden="true"></span>
+  </header>
+
+  <nav class="ts-tabs" role="tablist" aria-label="Chapitres">
+    <button type="button" class="active" data-tab="trumpet" role="tab" aria-selected="true">La trompette</button>
+    <button type="button" data-tab="valves" role="tab" aria-selected="false">Les pistons</button>
+    <button type="button" data-tab="harmonics" role="tab" aria-selected="false">Harmoniques</button>
+    <button type="button" data-tab="drill" role="tab" aria-selected="false">Exercice</button>
+    <button type="button" data-tab="quiz" role="tab" aria-selected="false">Quiz</button>
+  </nav>
+
+  <main class="ts-main">
+
+    <section class="ts-panel active" data-panel="trumpet">
+      <h2>C'est quoi, une trompette&nbsp;?</h2>
+      <p>La trompette est un instrument de la famille des cuivres&nbsp;: le son naît des lèvres du musicien qui vibrent dans l'embouchure, puis ce vibrato est amplifié et coloré par un long tube de laiton enroulé, qui s'évase en pavillon à la sortie.</p>
+      <p>Le tube seul ne peut produire que certaines notes précises&nbsp;: les <strong>harmoniques naturelles</strong> (on en reparle plus loin). Pour jouer toutes les notes de la gamme chromatique entre ces harmoniques, la trompette utilise <strong>3 pistons</strong> qui rallongent le tube à volonté.</p>
+      <p>La trompette la plus courante est en <strong>Sib</strong>&nbsp;: c'est un instrument <em>transpositeur</em>. Quand le trompettiste lit et joue un Do, la note qui sort réellement est un Sib (un ton plus bas). C'est pour ça que dans Trompetterie, toutes les notes sont nommées en <strong>notes écrites pour trompette</strong> — exactement comme sur une vraie partition de trompette.</p>
+      <div class="ts-fact-row">
+        <div class="ts-fact"><strong>3</strong><span>pistons</span></div>
+        <div class="ts-fact"><strong>Sib</strong><span>instrument transpositeur</span></div>
+        <div class="ts-fact"><strong>Fa♯3 → Do6</strong><span>tessiture standard écrite</span></div>
+      </div>
+    </section>
+
+    <section class="ts-panel" data-panel="valves">
+      <h2>Les pistons</h2>
+      <p>Chaque piston, enfoncé seul ou en combinaison, ajoute une longueur de tube précise et fait donc <strong>baisser la note</strong> d'un nombre fixe de demi-tons. Les pistons se combinent en les additionnant&nbsp;:</p>
+      <div class="ts-valve-grid">
+        <div class="ts-valve-card"><span class="ts-valve-dot v1">1</span><strong>Piston 1</strong><small>−2 demi-tons (1 ton)</small></div>
+        <div class="ts-valve-card"><span class="ts-valve-dot v2">2</span><strong>Piston 2</strong><small>−1 demi-ton</small></div>
+        <div class="ts-valve-card"><span class="ts-valve-dot v3">3</span><strong>Piston 3</strong><small>−3 demi-tons (1 ton et demi)</small></div>
+      </div>
+      <table class="ts-combo-table">
+        <thead><tr><th>Combinaison</th><th>Baisse la note de</th></tr></thead>
+        <tbody>
+          <tr><td>Ouvert (aucun piston)</td><td>0</td></tr>
+          <tr><td><span class="ts-mini-dot v2">2</span></td><td>1 demi-ton</td></tr>
+          <tr><td><span class="ts-mini-dot v1">1</span></td><td>1 ton</td></tr>
+          <tr><td><span class="ts-mini-dot v1">1</span><span class="ts-mini-dot v2">2</span></td><td>1 ton et demi</td></tr>
+          <tr><td><span class="ts-mini-dot v2">2</span><span class="ts-mini-dot v3">3</span></td><td>2 tons</td></tr>
+          <tr><td><span class="ts-mini-dot v1">1</span><span class="ts-mini-dot v3">3</span></td><td>2 tons et demi</td></tr>
+          <tr><td><span class="ts-mini-dot v1">1</span><span class="ts-mini-dot v2">2</span><span class="ts-mini-dot v3">3</span></td><td>3 tons</td></tr>
+        </tbody>
+      </table>
+      <p class="ts-note">Pour chaque note, on choisit la combinaison qui redescend juste ce qu'il faut depuis l'harmonique ouverte la plus proche au-dessus. C'est pour ça que le doigté d'une même note change parfois selon l'octave (par exemple Ré4 se joue 1+3, mais Ré5 se joue avec le seul piston 1&nbsp;: c'est l'harmonique au-dessus qui change).</p>
+    </section>
+
+    <section class="ts-panel" data-panel="harmonics">
+      <h2>Les harmoniques naturelles</h2>
+      <p>Sans toucher un seul piston, une trompette peut déjà jouer plusieurs notes différentes&nbsp;: en soufflant plus ou moins vite et en resserrant plus ou moins les lèvres, on change de <strong>note ouverte</strong> — on parle d'harmonique, ou de partiel. Ces notes ouvertes forment la <strong>série harmonique naturelle</strong> du tube.</p>
+      <p>En pratique, une trompette Sib utilise 5 harmoniques ouvertes entre le bas et le haut du registre courant&nbsp;:</p>
+      <div class="ts-harmonic-row" id="harmonicRow"></div>
+      <p class="ts-note">Passer d'une harmonique à l'autre sans piston, seulement avec l'air et les lèvres, s'appelle un <strong>lip slur</strong> (liaison des lèvres). C'est l'exercice de base de tout trompettiste pour développer la justesse et la solidité de l'embouchure — c'est justement ce qu'on pratique dans l'onglet suivant.</p>
+    </section>
+
+    <section class="ts-panel" data-panel="drill">
+      <h2>Exercice&nbsp;: l'échelle harmonique</h2>
+      <p>Choisis ton niveau, puis descends ou monte la série d'harmoniques ouvertes, sans piston — seulement l'air et les lèvres. Écoute chaque note avant d'essayer de la reproduire à la trompette.</p>
+      <div class="ts-level-picker" id="drillLevels" role="radiogroup" aria-label="Niveau">
+        <button type="button" class="active" data-level="2">Débutant <small>Do → Sol</small></button>
+        <button type="button" data-level="3">Intermédiaire <small>Do → Do aigu</small></button>
+        <button type="button" data-level="4">Avancé <small>Do → Mi aigu</small></button>
+        <button type="button" data-level="5">Expert <small>Do → Sol aigu</small></button>
+      </div>
+      <div class="ts-drill-stage">
+        <div class="ts-drill-now"><small>NOTE</small><strong id="drillNote">—</strong></div>
+        <div class="ts-drill-ladder" id="drillLadder"></div>
+      </div>
+      <div class="ts-drill-controls">
+        <button type="button" class="ts-drill-btn down" id="drillDown">↓ Descendre depuis l'aigu</button>
+        <button type="button" class="ts-drill-btn up" id="drillUp">↑ Monter depuis le Do grave</button>
+        <button type="button" class="ts-drill-btn stop" id="drillStop">Arrêter</button>
+      </div>
+      <p class="ts-note">Au-delà de ces harmoniques, des trompettistes avancés descendent encore plus bas (les « pedal tones ») ou montent plus haut (le suraigu) — mais ça demande des années de travail de l'embouchure, ce n'est pas couvert ici.</p>
+    </section>
+
+    <section class="ts-panel" data-panel="quiz">
+      <h2>Quiz</h2>
+      <div id="quizBody"></div>
+    </section>
+
+  </main>
+
+  <script src="trumpet-fingering.js?v=93"></script>
+  <script src="trumpet-school.js?v=1"></script>
+</body>
+</html>
