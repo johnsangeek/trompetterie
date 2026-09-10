@@ -109,6 +109,19 @@
         <button type="button" class="ts-drill-btn stop" id="drillStop">Arrêter</button>
       </div>
       <p class="ts-note">Au-delà de ces harmoniques, des trompettistes avancés descendent encore plus bas (les « pedal tones ») ou montent plus haut (le suraigu) — mais ça demande des années de travail de l'embouchure, ce n'est pas couvert ici.</p>
+
+      <h3>Exercice&nbsp;: une note dans toutes ses octaves</h3>
+      <p>Choisis une note, et travaille-la du plus grave au plus aigu possible sur la trompette (dans la tessiture standard, Fa♯3 → Do6) — puis dans l'autre sens. Au-delà de cette tessiture, la note existe en théorie mais devient peu exploitable pour la plupart des trompettistes.</p>
+      <div class="ts-note-picker" id="notePicker"></div>
+      <div class="ts-drill-stage">
+        <div class="ts-drill-now"><small>NOTE</small><strong id="noteOctaveNow">—</strong></div>
+        <div class="ts-drill-ladder" id="noteOctaveLadder"></div>
+      </div>
+      <div class="ts-drill-controls">
+        <button type="button" class="ts-drill-btn down" id="noteOctaveDown">↓ Descendre depuis l'aigu</button>
+        <button type="button" class="ts-drill-btn up" id="noteOctaveUp">↑ Monter depuis le grave</button>
+        <button type="button" class="ts-drill-btn stop" id="noteOctaveStop">Arrêter</button>
+      </div>
     </section>
 
     <section class="ts-panel" data-panel="quiz">

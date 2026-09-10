@@ -1,7 +1,7 @@
 "use strict";
 (()=>{
   const $=s=>document.querySelector(s),body=document.body,highway=$("#mpHighway"),score=$("#mpScore"),hctx=highway.getContext("2d"),sctx=score.getContext("2d"),params=new URLSearchParams(location.search);
-  const names=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"],scales={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]},scaleNames={blues:"Blues",major:"Majeure",minor:"Mineure",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure"};
+  const names=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"],scales={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]},scaleNames={blues:"Blues",major:"Majeure",minor:"Mineure",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure",allOctaves:"Toutes les octaves"};
   const colors={low:["#1683cc","#064d87"],mid:["#69d8f7","#27a9d7"],high:["#fff087","#efc724"],very:["#ffb45f","#ed653b"],extreme:["#f6b6ff","#c75bdf"]};
   let song={melody:[],all:[],endBeat:1,bpm:92},audio=null,playing=false,pausedBeat=0,startTime=0,timer=0,nodes=[],scheduled=-1,scheduledSet=new Set(),metroBeat=-1,mode=params.get("mode")||"hero";
   const bpm=()=>Number($("#mpBpm").value),spb=()=>60/bpm(),beat=()=>playing?(audio.currentTime-startTime)/spb():pausedBeat,noteName=m=>`${names[m%12]}${Math.floor(m/12)-1}`;
@@ -21,7 +21,21 @@
   function ensureAudio(){audio||=new(window.AudioContext||window.webkitAudioContext)();audio.resume()}
   function synth(midi,when,duration=.3,volume=.13){const o=audio.createOscillator(),g=audio.createGain();o.type="triangle";o.frequency.value=440*2**((midi-69)/12);g.gain.setValueAtTime(.001,when);g.gain.exponentialRampToValueAtTime(volume,when+.012);g.gain.exponentialRampToValueAtTime(.001,when+Math.max(.08,duration));o.connect(g).connect(audio.destination);o.start(when);o.stop(when+duration+.03);nodes.push(o)}
   function click(when,accent){const o=audio.createOscillator(),g=audio.createGain();o.type="square";o.frequency.value=accent?1250:900;g.gain.setValueAtTime(.035,when);g.gain.exponentialRampToValueAtTime(.001,when+.045);o.connect(g).connect(audio.destination);o.start(when);o.stop(when+.05);nodes.push(o)}
-  function loadScale(){const root=Number(params.get("root")||2),key=params.get("scale")||"blues",requested=params.get("octave")||"auto",startOctave=requested==="auto"?(root>=7?3:4):Number(requested),base=12*(startOctave+1)+root,seq=[...scales[key],...scales[key].slice(0,-1).reverse()];const melody=seq.map((n,i)=>({beat:i,note:base+n,duration:.82,guide:true}));song={melody,all:melody,endBeat:seq.length,bpm:92};$("#mpTitle").textContent=`Gamme ${scaleNames[key]} · ${names[root]}${startOctave}`}
+  function loadScale(){
+    const root=Number(params.get("root")||2),key=params.get("scale")||"blues";
+    let melody,title;
+    if(key==="allOctaves"){
+      const notes=[];for(let midi=54;midi<=84;midi++)if(midi%12===root)notes.push(midi);
+      const seq=[...notes,...notes.slice(0,-1).reverse()];
+      melody=seq.map((n,i)=>({beat:i,note:n,duration:.82,guide:true}));
+      title=`${names[root]} trompette · toutes les octaves`;
+    }else{
+      const requested=params.get("octave")||"auto",startOctave=requested==="auto"?(root>=7?3:4):Number(requested),base=12*(startOctave+1)+root,seq=[...scales[key],...scales[key].slice(0,-1).reverse()];
+      melody=seq.map((n,i)=>({beat:i,note:base+n,duration:.82,guide:true}));
+      title=`Gamme ${scaleNames[key]} · ${names[root]}${startOctave}`;
+    }
+    song={melody,all:melody,endBeat:melody.length,bpm:92};$("#mpTitle").textContent=title;
+  }
   async function loadTrack(id){if(!id||id==="demo"){const seq=[64,67,69,67,64,62,60,62,64,67,69,71,69,67,64,62];const melody=seq.map((n,i)=>({beat:i,note:n,duration:.82,guide:true}));song={melody,all:melody,endBeat:seq.length,bpm:92};$("#mpTitle").textContent="Premiers pas";return}const data=await fetch(`tracks/${encodeURIComponent(id)}.json`).then(r=>r.json()),rate=(Number(data.bpm)||120)/60,lead=data.stems?.find(s=>s.isLead),source=lead?.notes?.length?lead.notes:data.notes||[],melody=source.map((n,i)=>({beat:n.time*rate,note:n.midi,duration:Math.max(.1,(n.duration||.45)*rate),guide:true}));song={melody,all:melody,endBeat:Math.max(data.duration*rate,...melody.map(n=>n.beat+n.duration)),bpm:Number(data.bpm)||120};$("#mpTitle").textContent=data.name||id;$("#mpBpm").value=String(song.bpm);$("#mpBpmOut").textContent=String(Math.round(song.bpm))}
   function color(note){const oct=Math.floor(note/12)-1;return oct<=3?colors.low:oct===4?colors.mid:oct===5?colors.high:oct===6?colors.very:colors.extreme}
   function resize(){for(const c of[highway,score]){const r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);c.getContext("2d").setTransform(d,0,0,d,0,0)}draw()}

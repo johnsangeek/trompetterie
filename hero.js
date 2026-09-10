@@ -43,7 +43,7 @@ const demoBacking=chordRoots.flatMap((root,bar)=>[0,4,7].map(interval=>({beat:ba
 const demoSong={melody:demoMelody,all:[...demoMelody,...demoBacking].sort((a,b)=>a.beat-b.beat),stems:[demoStem],endBeat:32,ppq:480,sourceBpm:92};
 let song=demoSong;
 const SCALE_INTERVALS={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]};
-const SCALE_LABELS={blues:"Blues",major:"Majeure",minor:"Mineure naturelle",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure"};
+const SCALE_LABELS={blues:"Blues",major:"Majeure",minor:"Mineure naturelle",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure",allOctaves:"Toutes les octaves"};
 
 function displayMidi(note){ return note + (importedSong && transposeImported ? 2 : 0); }
 function noteName(note){ const midi=displayMidi(note); return `${NOTE_FR[(midi%12+12)%12]}${Math.floor(midi/12)-1}`; }
@@ -335,13 +335,22 @@ async function loadCatalogTrack(id,autoPlay=false){
 }
 
 function loadScaleExercise(root,scaleKey,octave="auto"){
-  const startOctave=octave==="auto"?(root>=7?3:4):Number(octave);
-  if(playing)pause();const base=12*(startOctave+1)+root,up=SCALE_INTERVALS[scaleKey]||SCALE_INTERVALS.blues,sequence=[...up,...up.slice(0,-1).reverse()];
-  const melody=sequence.map((interval,beat)=>({beat,note:base+interval,duration:.82,track:1,channel:0,velocity:.88}));
-  const tonic=[0,4,7].map(interval=>({beat:0,note:base-12+interval,duration:sequence.length-.15,track:2,channel:1,velocity:.2}));
+  if(playing)pause();
+  let base,melody,startOctave=null;
+  if(scaleKey==="allOctaves"){
+    const notes=[];for(let midi=54;midi<=84;midi++)if(midi%12===root)notes.push(midi);
+    const sequence=[...notes,...notes.slice(0,-1).reverse()];
+    base=notes[0];melody=sequence.map((note,beat)=>({beat,note,duration:.82,track:1,channel:0,velocity:.88}));
+  }else{
+    startOctave=octave==="auto"?(root>=7?3:4):Number(octave);base=12*(startOctave+1)+root;
+    const up=SCALE_INTERVALS[scaleKey]||SCALE_INTERVALS.blues,sequence=[...up,...up.slice(0,-1).reverse()];
+    melody=sequence.map((interval,beat)=>({beat,note:base+interval,duration:.82,track:1,channel:0,velocity:.88}));
+  }
+  const tonic=[0,4,7].map(interval=>({beat:0,note:base-12+interval,duration:melody.length-.15,track:2,channel:1,velocity:.2}));
   melody.forEach(note=>note.isGuide=true);const scaleStem={instrument:"Accord de référence",muted:false,volume:.45};tonic.forEach(note=>note.stem=scaleStem);
-  song={melody,all:[...melody,...tonic].sort((a,b)=>a.beat-b.beat),stems:[scaleStem],endBeat:sequence.length,ppq:480,sourceBpm:bpm()};importedSong=false;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;
-  els.title.textContent=`Gamme ${SCALE_LABELS[scaleKey]} · ${NOTE_FR[root]}${startOctave} trompette`;renderMixer();updateUI(0);resizeCanvas();
+  song={melody,all:[...melody,...tonic].sort((a,b)=>a.beat-b.beat),stems:[scaleStem],endBeat:melody.length,ppq:480,sourceBpm:bpm()};importedSong=false;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;
+  els.title.textContent=scaleKey==="allOctaves"?`${NOTE_FR[root]} trompette · toutes les octaves`:`Gamme ${SCALE_LABELS[scaleKey]} · ${NOTE_FR[root]}${startOctave} trompette`;
+  renderMixer();updateUI(0);resizeCanvas();
 }
 function setLearningMode(mode){
   currentViewMode=mode;document.body.dataset.viewMode=mode;const suffix=document.querySelector(".brand i");if(suffix)suffix.textContent=mode==="partition"?"Partition":mode==="instrument"?"Instrument":"Hero";

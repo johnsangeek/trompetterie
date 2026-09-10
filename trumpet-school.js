@@ -112,6 +112,42 @@
   $("#drillUp").addEventListener("click",()=>playSequence(ladderNotes()));
   $("#drillStop").addEventListener("click",stopDrill);
 
+  // Une note dans toutes ses octaves
+  const notePicker=$("#notePicker"),noteOctaveNow=$("#noteOctaveNow"),noteOctaveLadder=$("#noteOctaveLadder");
+  let notePitchClass=2;
+  NAMES.forEach((label,i)=>{
+    const btn=document.createElement("button");btn.type="button";btn.textContent=label;btn.className=i===notePitchClass?"active":"";
+    btn.addEventListener("click",()=>{notePitchClass=i;$$("#notePicker button").forEach(b=>b.classList.toggle("active",b===btn));renderNoteLadder()});
+    notePicker.appendChild(btn);
+  });
+  function noteOctaveMidis(){const out=[];for(let midi=54;midi<=84;midi++)if(midi%12===notePitchClass)out.push(midi);return out}
+  let noteOctaveTimer=null;
+  function renderNoteLadder(activeIndex=-1){
+    noteOctaveLadder.innerHTML="";
+    noteOctaveMidis().forEach((midi,i)=>{
+      const span=document.createElement("span");span.textContent=noteName(midi);span.className=i===activeIndex?"on":"";
+      noteOctaveLadder.appendChild(span);
+    });
+  }
+  renderNoteLadder();
+  function stopNoteOctave(){clearTimeout(noteOctaveTimer);noteOctaveTimer=null;noteOctaveNow.textContent="—";renderNoteLadder()}
+  function playNoteOctaveSequence(sequence){
+    ensureAudio();stopNoteOctave();
+    const all=noteOctaveMidis();let i=0;
+    const step=()=>{
+      if(i>=sequence.length){noteOctaveNow.textContent="—";renderNoteLadder();return}
+      const midi=sequence[i];
+      noteOctaveNow.textContent=noteName(midi);
+      renderNoteLadder(all.indexOf(midi));
+      tone(midi,audio.currentTime,.85);
+      i++;noteOctaveTimer=setTimeout(step,950);
+    };
+    step();
+  }
+  $("#noteOctaveDown").addEventListener("click",()=>playNoteOctaveSequence([...noteOctaveMidis()].reverse()));
+  $("#noteOctaveUp").addEventListener("click",()=>playNoteOctaveSequence(noteOctaveMidis()));
+  $("#noteOctaveStop").addEventListener("click",stopNoteOctave);
+
   // Quiz
   const QUESTIONS=[
     {q:"Combien de pistons a une trompette standard ?",options:["2","3","4"],correct:1},
