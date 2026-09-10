@@ -20,6 +20,7 @@ body{min-height:100dvh;background:radial-gradient(circle at 50% 0%,#fffdf6 0,#f3
 .ts-panel.active{display:block}
 @keyframes tsFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .ts-panel h2{margin:10px 0 16px;font:500 32px/1.1 Miracle,Georgia,serif}
+.ts-panel h3{margin:30px 0 12px;font:500 22px/1.2 Miracle,Georgia,serif;color:var(--ink)}
 .ts-panel p{margin:0 0 16px;color:#3c3f38;font-size:15px;line-height:1.65}
 .ts-panel p strong{color:var(--ink)}
 .ts-note{padding:14px 16px;border-left:3px solid var(--gold);border-radius:0 12px 12px 0;background:rgba(217,149,23,.08);color:#6b6455;font-size:13px;line-height:1.55}
