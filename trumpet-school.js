@@ -40,6 +40,42 @@
     harmonicRow.appendChild(card);
   });
 
+  // Toutes les notes (full chromatic reference, F#3 to C6)
+  const chromGrid=$("#chromGrid");
+  const ALL_NOTES=[];
+  for(let midi=54;midi<=84;midi++)ALL_NOTES.push(midi);
+  const chromCards=new Map();
+  ALL_NOTES.forEach(midi=>{
+    const vals=window.TrumpetFingerings.primary(midi);
+    const card=document.createElement("button");
+    card.type="button";card.className="ts-harmonic-note ts-chrom-card";
+    card.innerHTML=`<strong>${noteName(midi)}</strong><small>${vals.length?vals.join("+"):"ouvert"}</small>`;
+    card.addEventListener("click",()=>{
+      ensureAudio();tone(midi,audio.currentTime,.7);
+      card.classList.add("sounding");setTimeout(()=>card.classList.remove("sounding"),700);
+    });
+    chromCards.set(midi,card);
+    chromGrid.appendChild(card);
+  });
+  let chromTimer=null;
+  function stopChrom(){clearTimeout(chromTimer);chromTimer=null;chromCards.forEach(c=>c.classList.remove("sounding"))}
+  function playChromSequence(sequence){
+    ensureAudio();stopChrom();
+    let i=0;
+    const step=()=>{
+      chromCards.forEach(c=>c.classList.remove("sounding"));
+      if(i>=sequence.length)return;
+      const midi=sequence[i],card=chromCards.get(midi);
+      card.classList.add("sounding");card.scrollIntoView({block:"nearest",behavior:"smooth"});
+      tone(midi,audio.currentTime,.42);
+      i++;chromTimer=setTimeout(step,460);
+    };
+    step();
+  }
+  $("#chromUp").addEventListener("click",()=>playChromSequence(ALL_NOTES));
+  $("#chromDown").addEventListener("click",()=>playChromSequence([...ALL_NOTES].reverse()));
+  $("#chromStop").addEventListener("click",stopChrom);
+
   // Harmonic-ladder drill
   const drillLadder=$("#drillLadder"),drillNote=$("#drillNote");
   let drillLevel=2,drillTimer=null;

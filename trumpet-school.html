@@ -23,6 +23,7 @@
     <button type="button" class="active" data-tab="trumpet" role="tab" aria-selected="true">La trompette</button>
     <button type="button" data-tab="valves" role="tab" aria-selected="false">Les pistons</button>
     <button type="button" data-tab="harmonics" role="tab" aria-selected="false">Harmoniques</button>
+    <button type="button" data-tab="notes" role="tab" aria-selected="false">Toutes les notes</button>
     <button type="button" data-tab="drill" role="tab" aria-selected="false">Exercice</button>
     <button type="button" data-tab="quiz" role="tab" aria-selected="false">Quiz</button>
   </nav>
@@ -70,6 +71,17 @@
       <p>En pratique, une trompette Sib utilise 5 harmoniques ouvertes entre le bas et le haut du registre courant&nbsp;:</p>
       <div class="ts-harmonic-row" id="harmonicRow"></div>
       <p class="ts-note">Passer d'une harmonique à l'autre sans piston, seulement avec l'air et les lèvres, s'appelle un <strong>lip slur</strong> (liaison des lèvres). C'est l'exercice de base de tout trompettiste pour développer la justesse et la solidité de l'embouchure — c'est justement ce qu'on pratique dans l'onglet suivant.</p>
+    </section>
+
+    <section class="ts-panel" data-panel="notes">
+      <h2>Toutes les notes</h2>
+      <p>Voici toutes les notes de la trompette, du Fa♯3 grave au Do6 aigu, avec leur doigté. Clique une note pour l'entendre, ou lance la gamme chromatique complète.</p>
+      <div class="ts-chrom-controls">
+        <button type="button" class="ts-drill-btn up" id="chromUp">↑ Jouer du grave à l'aigu</button>
+        <button type="button" class="ts-drill-btn down" id="chromDown">↓ Jouer de l'aigu au grave</button>
+        <button type="button" class="ts-drill-btn stop" id="chromStop">Arrêter</button>
+      </div>
+      <div class="ts-chrom-grid" id="chromGrid"></div>
     </section>
 
     <section class="ts-panel" data-panel="drill">
