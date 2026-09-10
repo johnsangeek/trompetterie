@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "trumpet-trainer-v83";
+const CACHE_NAME = "trumpet-trainer-v84";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -49,6 +49,7 @@ const CORE_ASSETS = [
   "./icons/icon-512.png",
   "./icons/icon-maskable-512.png",
   "./icons/apple-touch-icon.png",
+  "./icons/favicon-32.png",
   "./covers/soda-daoud.jpg",
   "./covers/soda-daoud-thumb.jpg",
   "./tracks/soda-daoud.json",

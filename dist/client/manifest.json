@@ -1,6 +1,6 @@
 {
-  "name": "Trompette Trainer",
-  "short_name": "Trompette",
+  "name": "Trompetterie",
+  "short_name": "Trompetterie",
   "description": "Boucle, partition, doigtés et improvisation pour l'entraînement à la trompette",
   "start_url": "./index.html",
   "scope": "./",
