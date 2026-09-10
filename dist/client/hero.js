@@ -24,6 +24,7 @@ let transportStart = 0;
 let pausedBeat = 0;
 let scheduler = null;
 let scheduledThrough = -1;
+let scheduledSet = new Set();
 let scheduledMetro = -1;
 let activeNodes = [];
 let transposeImported = true;
@@ -69,6 +70,19 @@ function formatTime(seconds){ seconds=Math.max(0,Math.round(seconds)); return `$
 function bpm(){ return Number(els.bpm.value); }
 function secondsPerBeat(){ return 60/bpm(); }
 function totalSeconds(){ return song.endBeat*secondsPerBeat(); }
+function loopOn(){ return els.loop.checked; }
+function windowed(list,now,back,ahead){
+  if(!loopOn()||!(song.endBeat>0))return list.filter(n=>n.beat>=now-back&&n.beat<=now+ahead);
+  const period=song.endBeat,c0=Math.max(0,Math.floor((now-back)/period)),c1=Math.floor((now+ahead)/period),out=[];
+  for(let c=c0;c<=c1;c++)for(const n of list){const b=n.beat+c*period;if(b>=now-back&&b<=now+ahead)out.push({...n,beat:b})}
+  return out;
+}
+function activeAt(list,now){
+  if(!loopOn()||!(song.endBeat>0))return list.find(n=>n.beat<=now+.055&&n.beat+n.duration>now);
+  const period=song.endBeat,c=Math.floor(now/period);
+  for(let dc=0;dc>=-1;dc--){const cc=c+dc;if(cc<0)continue;for(const n of list){const b=n.beat+cc*period;if(b<=now+.055&&b+n.duration>now)return{...n,beat:b}}}
+  return null;
+}
 
 function resizeCanvas(){
   const rect=els.canvas.getBoundingClientRect(),scoreRect=els.scoreCanvas.getBoundingClientRect(); const dpr=Math.min(devicePixelRatio||1,2);
@@ -83,7 +97,7 @@ function draw(){
   const w=els.canvas.clientWidth,h=els.canvas.clientHeight; ctx2d.clearRect(0,0,w,h);
   const beat=currentBeat(), hitY=h*.68, topY=12, travel=hitY-topY, ahead=7;
   const laneLeft=w*.14,laneWidth=w*.72,laneStep=laneWidth/3;
-  const visible=song.melody.filter(n=>n.beat>=beat-.45&&n.beat<=beat+ahead+.5);
+  const visible=windowed(song.melody,beat,.45,ahead+.5);
   for(const n of visible){
     const y=hitY-((n.beat-beat)/ahead)*travel;
     const barH=Math.min(124,Math.max(20,n.duration*43));
@@ -124,7 +138,7 @@ function drawScore(beat){
   for(let i=0;i<5;i++){const y=staffTop+i*lineGap;scoreCtx.beginPath();scoreCtx.moveTo(0,y);scoreCtx.lineTo(w,y);scoreCtx.stroke();}
   scoreCtx.save();scoreCtx.strokeStyle="#e1a31d";scoreCtx.lineWidth=3;scoreCtx.shadowColor="#e7ae29";scoreCtx.shadowBlur=13;scoreCtx.beginPath();scoreCtx.moveTo(playX,top);scoreCtx.lineTo(playX,bottom);scoreCtx.stroke();scoreCtx.restore();
   const beatSpacing=Math.max(40,Math.min(76,w/16));
-  const scoreNotes=song.melody.filter(n=>n.beat>=beat-5.8&&n.beat<=beat+10);
+  const scoreNotes=windowed(song.melody,beat,5.8,10);
   let previousOctaveShift=0;
   for(const n of scoreNotes){
     const x=playX+(n.beat-beat)*beatSpacing,midi=displayMidi(n.note),fitted=fitPitchToCompactStaff(midi),rawY=staffTop+lineGap*3.9-(fitted.midi-60)*2.4,y=Math.max(top+10,Math.min(h-25,rawY));
@@ -134,14 +148,14 @@ function drawScore(beat){
     scoreCtx.strokeStyle="#252a25";scoreCtx.lineWidth=1.4;scoreCtx.beginPath();scoreCtx.moveTo(x+5,y);scoreCtx.lineTo(x+5,y-24);scoreCtx.stroke();
     if(fitted.octaves&&fitted.octaves!==previousOctaveShift){scoreCtx.fillStyle="#9a6b12";scoreCtx.font="800 8px Segoe UI";scoreCtx.textAlign="left";scoreCtx.fillText(octaveMark(fitted.octaves),x+9,y+4)}
     scoreCtx.fillStyle="rgba(37,42,37,.86)";scoreCtx.font="700 10px Segoe UI";scoreCtx.textAlign="center";scoreCtx.fillText(noteName(n.note),x,bottom-1);
-    drawFingeringBadges(x+5,y-24,fingering(n.note));
+    const badgeStemTop=Math.max(top+18,y-24);drawFingeringBadges(x+5,badgeStemTop,fingering(n.note));
     scoreCtx.restore();
     previousOctaveShift=fitted.octaves;
   }
 }
 function fitPitchToCompactStaff(midi){
   let fitted=midi,octaves=0;
-  while(fitted>79){fitted-=12;octaves++}
+  while(fitted>74){fitted-=12;octaves++}
   while(fitted<55){fitted+=12;octaves--}
   return{midi:fitted,octaves};
 }
@@ -191,21 +205,33 @@ function click(when,accent){
 
 function scheduleAudio(){
   if(!playing)return; const now=audioCtx.currentTime, beatNow=currentBeat(), horizon=beatNow+.3/secondsPerBeat();
-  song.all.forEach((n,index)=>{
-    if(index<=scheduledThrough||n.beat<horizon-.7)return;
-    if(n.beat<=horizon){const when=transportStart+n.beat*secondsPerBeat();if(when>=now-.03&&!n.stem?.muted)synthNote(n,Math.max(now,when),n.duration*secondsPerBeat(),Boolean(n.isGuide));scheduledThrough=index;}
-  });
+  if(loopOn()&&song.endBeat>0){
+    const period=song.endBeat,cLo=Math.max(0,Math.floor((horizon-.7)/period)),cHi=Math.floor(horizon/period);
+    for(let c=cLo;c<=cHi;c++){
+      song.all.forEach((n,index)=>{
+        const key=`${c}:${index}`;if(scheduledSet.has(key))return;
+        const shifted=n.beat+c*period;
+        if(shifted<horizon-.7)return;
+        if(shifted<=horizon){const when=transportStart+shifted*secondsPerBeat();if(when>=now-.03&&!n.stem?.muted)synthNote(n,Math.max(now,when),n.duration*secondsPerBeat(),Boolean(n.isGuide));scheduledSet.add(key);}
+      });
+    }
+  }else{
+    song.all.forEach((n,index)=>{
+      if(index<=scheduledThrough||n.beat<horizon-.7)return;
+      if(n.beat<=horizon){const when=transportStart+n.beat*secondsPerBeat();if(when>=now-.03&&!n.stem?.muted)synthNote(n,Math.max(now,when),n.duration*secondsPerBeat(),Boolean(n.isGuide));scheduledThrough=index;}
+    });
+  }
   if(els.metro.checked){
     let tick=Math.max(scheduledMetro+1,Math.ceil(beatNow-.001));
     while(tick<=horizon){click(transportStart+tick*secondsPerBeat(),tick%4===0);scheduledMetro=tick;tick++;}
   }
   updateUI(beatNow);
-  if(beatNow>=song.endBeat){ if(els.loop.checked)restart(true); else pause(true); }
+  if(!loopOn()&&beatNow>=song.endBeat) pause(true);
 }
 
 function play(withCountIn=pausedBeat===0){
   ensureAudio();if(pausedBeat>=song.endBeat)pausedBeat=0;if(withCountIn&&pausedBeat===0)pausedBeat=-COUNT_IN_SECONDS/secondsPerBeat();transportStart=audioCtx.currentTime-pausedBeat*secondsPerBeat();
-  scheduledThrough=song.all.findLastIndex?.(n=>n.beat<pausedBeat-.02)??-1;scheduledMetro=Math.floor(pausedBeat)-1;
+  scheduledThrough=song.all.findLastIndex?.(n=>n.beat<pausedBeat-.02)??-1;scheduledSet=new Set();scheduledMetro=Math.floor(pausedBeat)-1;
   playing=true;els.play.classList.add("playing");els.playState.textContent=pausedBeat<0?`DÉPART ${COUNT_IN_SECONDS}`:"EN LECTURE";scheduler=setInterval(scheduleAudio,25);scheduleAudio();draw();
 }
 function pause(finished=false){
@@ -216,12 +242,14 @@ function restart(autoPlay=false){
 }
 
 function updateUI(beat){
-  const progress=Math.min(1,Math.max(0,beat/song.endBeat));els.progressFill.style.width=`${progress*100}%`;els.progressThumb.style.left=`${progress*100}%`;els.progress.setAttribute("aria-valuenow",String(Math.round(progress*100)));
-  els.currentTime.textContent=formatTime(beat*secondsPerBeat());els.totalTime.textContent=formatTime(totalSeconds());els.measure.textContent=`MESURE ${Math.floor(Math.max(0,beat)/4)+1}`;
+  const period=song.endBeat,displayBeat=loopOn()&&period>0?beat-Math.floor(Math.max(0,beat)/period)*period:beat;
+  const progress=Math.min(1,Math.max(0,displayBeat/period));els.progressFill.style.width=`${progress*100}%`;els.progressThumb.style.left=`${progress*100}%`;els.progress.setAttribute("aria-valuenow",String(Math.round(progress*100)));
+  els.currentTime.textContent=formatTime(displayBeat*secondsPerBeat());els.totalTime.textContent=formatTime(totalSeconds());els.measure.textContent=`MESURE ${Math.floor(Math.max(0,displayBeat)/4)+1}`;
   if(beat<0){const count=Math.max(1,Math.ceil(-beat*secondsPerBeat()));els.playState.textContent=`DÉPART ${count}`;els.current.textContent="—";els.register.textContent=`La musique commence dans ${count} s`;els.shell.dataset.energy="off";els.shell.dataset.open="false";setValves([]);return}
   if(playing)els.playState.textContent="EN LECTURE";
-  const active=(!playing&&beat<=.0001)?null:song.melody.find(n=>n.beat<=beat+.055&&n.beat+n.duration>beat);
-  const next=song.melody.find(n=>n.beat>beat+.055);
+  const active=(!playing&&beat<=.0001)?null:activeAt(song.melody,beat);
+  let next=song.melody.find(n=>n.beat>beat+.055);
+  if(!next&&loopOn()&&song.melody.length)next=song.melody[0];
   els.next.textContent=next?noteName(next.note):"Fin";
   if(!active){els.current.textContent="—";els.register.textContent=playing?"Écoute le tempo":"Prépare-toi";els.shell.dataset.energy="off";els.shell.dataset.open="false";setValves([]);return;}
   els.current.textContent=noteName(active.note);els.register.textContent=registerName(active.note);
@@ -307,13 +335,14 @@ async function loadCatalogTrack(id,autoPlay=false){
   }catch(error){els.playState.textContent="PRÊT";toast(error.message||"Impossible de charger ce morceau.",true);return false}
 }
 
-function loadScaleExercise(root,scaleKey){
-  if(playing)pause();const base=(60+root>71?48:60)+root,up=SCALE_INTERVALS[scaleKey]||SCALE_INTERVALS.blues,sequence=[...up,...up.slice(0,-1).reverse()];
+function loadScaleExercise(root,scaleKey,octave="auto"){
+  const startOctave=octave==="auto"?(root>=7?3:4):Number(octave);
+  if(playing)pause();const base=12*(startOctave+1)+root,up=SCALE_INTERVALS[scaleKey]||SCALE_INTERVALS.blues,sequence=[...up,...up.slice(0,-1).reverse()];
   const melody=sequence.map((interval,beat)=>({beat,note:base+interval,duration:.82,track:1,channel:0,velocity:.88}));
   const tonic=[0,4,7].map(interval=>({beat:0,note:base-12+interval,duration:sequence.length-.15,track:2,channel:1,velocity:.2}));
   melody.forEach(note=>note.isGuide=true);const scaleStem={instrument:"Accord de référence",muted:false,volume:.45};tonic.forEach(note=>note.stem=scaleStem);
   song={melody,all:[...melody,...tonic].sort((a,b)=>a.beat-b.beat),stems:[scaleStem],endBeat:sequence.length,ppq:480,sourceBpm:bpm()};importedSong=false;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;
-  els.title.textContent=`Gamme ${SCALE_LABELS[scaleKey]} · ${NOTE_FR[root]} trompette`;renderMixer();updateUI(0);resizeCanvas();
+  els.title.textContent=`Gamme ${SCALE_LABELS[scaleKey]} · ${NOTE_FR[root]}${startOctave} trompette`;renderMixer();updateUI(0);resizeCanvas();
 }
 function setLearningMode(mode){
   currentViewMode=mode;document.body.dataset.viewMode=mode;const suffix=document.querySelector(".brand i");if(suffix)suffix.textContent=mode==="partition"?"Partition":mode==="instrument"?"Instrument":"Hero";
@@ -321,7 +350,7 @@ function setLearningMode(mode){
 }
 window.addEventListener("trompetterie:play",async event=>{
   const choice=event.detail;if(!setLearningMode(choice.mode))return;
-  ensureAudio();if(choice.source==="scale"){loadScaleExercise(choice.root,choice.scale);play(true);}
+  ensureAudio();if(choice.source==="scale"){loadScaleExercise(choice.root,choice.scale,choice.octave);play(true);}
   else if(choice.music==="demo"){if(playing)pause();song=demoSong;importedSong=false;pausedBeat=0;els.title.textContent="Premiers pas — démo originale";renderMixer();restart(false);play(true);}
   else await loadCatalogTrack(choice.music,true);
 });
@@ -337,8 +366,8 @@ $("#fullscreenBtn").addEventListener("click",()=>document.fullscreenElement?docu
 for(const event of ["dragenter","dragover"]){window.addEventListener(event,e=>{e.preventDefault();els.overlay.hidden=false})}window.addEventListener("dragleave",e=>{if(!e.relatedTarget)els.overlay.hidden=true});window.addEventListener("drop",e=>{e.preventDefault();els.overlay.hidden=true;const file=[...e.dataTransfer.files].find(f=>/\.midi?$/i.test(f.name));file?importMidi(file):toast("Dépose un fichier .mid ou .midi",true)});
 window.addEventListener("resize",resizeCanvas);els.bpmOut.textContent=els.bpm.value;renderMixer();updateUI(0);resizeCanvas();
 (()=>{
-  const params=new URLSearchParams(location.search),mode=params.get("mode"),track=params.get("track"),root=params.get("root"),scale=params.get("scale");
+  const params=new URLSearchParams(location.search),mode=params.get("mode"),track=params.get("track"),root=params.get("root"),scale=params.get("scale"),octave=params.get("octave")||"auto";
   if(track){window.dispatchEvent(new CustomEvent("trompetterie:play",{detail:{source:"music",mode:mode||"hero",music:track}}));}
-  else if(root!==null&&scale){window.dispatchEvent(new CustomEvent("trompetterie:play",{detail:{source:"scale",mode:mode||"hero",root:Number(root),scale}}));}
+  else if(root!==null&&scale){window.dispatchEvent(new CustomEvent("trompetterie:play",{detail:{source:"scale",mode:mode||"hero",root:Number(root),scale,octave}}));}
   else if(mode){setLearningMode(mode);}
 })();

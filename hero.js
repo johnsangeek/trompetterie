@@ -148,14 +148,14 @@ function drawScore(beat){
     scoreCtx.strokeStyle="#252a25";scoreCtx.lineWidth=1.4;scoreCtx.beginPath();scoreCtx.moveTo(x+5,y);scoreCtx.lineTo(x+5,y-24);scoreCtx.stroke();
     if(fitted.octaves&&fitted.octaves!==previousOctaveShift){scoreCtx.fillStyle="#9a6b12";scoreCtx.font="800 8px Segoe UI";scoreCtx.textAlign="left";scoreCtx.fillText(octaveMark(fitted.octaves),x+9,y+4)}
     scoreCtx.fillStyle="rgba(37,42,37,.86)";scoreCtx.font="700 10px Segoe UI";scoreCtx.textAlign="center";scoreCtx.fillText(noteName(n.note),x,bottom-1);
-    drawFingeringBadges(x+5,y-24,fingering(n.note));
+    const badgeStemTop=Math.max(top+18,y-24);drawFingeringBadges(x+5,badgeStemTop,fingering(n.note));
     scoreCtx.restore();
     previousOctaveShift=fitted.octaves;
   }
 }
 function fitPitchToCompactStaff(midi){
   let fitted=midi,octaves=0;
-  while(fitted>79){fitted-=12;octaves++}
+  while(fitted>74){fitted-=12;octaves++}
   while(fitted<55){fitted+=12;octaves--}
   return{midi:fitted,octaves};
 }
@@ -335,13 +335,14 @@ async function loadCatalogTrack(id,autoPlay=false){
   }catch(error){els.playState.textContent="PRÊT";toast(error.message||"Impossible de charger ce morceau.",true);return false}
 }
 
-function loadScaleExercise(root,scaleKey){
-  if(playing)pause();const base=(60+root>71?48:60)+root,up=SCALE_INTERVALS[scaleKey]||SCALE_INTERVALS.blues,sequence=[...up,...up.slice(0,-1).reverse()];
+function loadScaleExercise(root,scaleKey,octave="auto"){
+  const startOctave=octave==="auto"?(root>=7?3:4):Number(octave);
+  if(playing)pause();const base=12*(startOctave+1)+root,up=SCALE_INTERVALS[scaleKey]||SCALE_INTERVALS.blues,sequence=[...up,...up.slice(0,-1).reverse()];
   const melody=sequence.map((interval,beat)=>({beat,note:base+interval,duration:.82,track:1,channel:0,velocity:.88}));
   const tonic=[0,4,7].map(interval=>({beat:0,note:base-12+interval,duration:sequence.length-.15,track:2,channel:1,velocity:.2}));
   melody.forEach(note=>note.isGuide=true);const scaleStem={instrument:"Accord de référence",muted:false,volume:.45};tonic.forEach(note=>note.stem=scaleStem);
   song={melody,all:[...melody,...tonic].sort((a,b)=>a.beat-b.beat),stems:[scaleStem],endBeat:sequence.length,ppq:480,sourceBpm:bpm()};importedSong=false;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;
-  els.title.textContent=`Gamme ${SCALE_LABELS[scaleKey]} · ${NOTE_FR[root]} trompette`;renderMixer();updateUI(0);resizeCanvas();
+  els.title.textContent=`Gamme ${SCALE_LABELS[scaleKey]} · ${NOTE_FR[root]}${startOctave} trompette`;renderMixer();updateUI(0);resizeCanvas();
 }
 function setLearningMode(mode){
   currentViewMode=mode;document.body.dataset.viewMode=mode;const suffix=document.querySelector(".brand i");if(suffix)suffix.textContent=mode==="partition"?"Partition":mode==="instrument"?"Instrument":"Hero";
@@ -349,7 +350,7 @@ function setLearningMode(mode){
 }
 window.addEventListener("trompetterie:play",async event=>{
   const choice=event.detail;if(!setLearningMode(choice.mode))return;
-  ensureAudio();if(choice.source==="scale"){loadScaleExercise(choice.root,choice.scale);play(true);}
+  ensureAudio();if(choice.source==="scale"){loadScaleExercise(choice.root,choice.scale,choice.octave);play(true);}
   else if(choice.music==="demo"){if(playing)pause();song=demoSong;importedSong=false;pausedBeat=0;els.title.textContent="Premiers pas — démo originale";renderMixer();restart(false);play(true);}
   else await loadCatalogTrack(choice.music,true);
 });
@@ -365,8 +366,8 @@ $("#fullscreenBtn").addEventListener("click",()=>document.fullscreenElement?docu
 for(const event of ["dragenter","dragover"]){window.addEventListener(event,e=>{e.preventDefault();els.overlay.hidden=false})}window.addEventListener("dragleave",e=>{if(!e.relatedTarget)els.overlay.hidden=true});window.addEventListener("drop",e=>{e.preventDefault();els.overlay.hidden=true;const file=[...e.dataTransfer.files].find(f=>/\.midi?$/i.test(f.name));file?importMidi(file):toast("Dépose un fichier .mid ou .midi",true)});
 window.addEventListener("resize",resizeCanvas);els.bpmOut.textContent=els.bpm.value;renderMixer();updateUI(0);resizeCanvas();
 (()=>{
-  const params=new URLSearchParams(location.search),mode=params.get("mode"),track=params.get("track"),root=params.get("root"),scale=params.get("scale");
+  const params=new URLSearchParams(location.search),mode=params.get("mode"),track=params.get("track"),root=params.get("root"),scale=params.get("scale"),octave=params.get("octave")||"auto";
   if(track){window.dispatchEvent(new CustomEvent("trompetterie:play",{detail:{source:"music",mode:mode||"hero",music:track}}));}
-  else if(root!==null&&scale){window.dispatchEvent(new CustomEvent("trompetterie:play",{detail:{source:"scale",mode:mode||"hero",root:Number(root),scale}}));}
+  else if(root!==null&&scale){window.dispatchEvent(new CustomEvent("trompetterie:play",{detail:{source:"scale",mode:mode||"hero",root:Number(root),scale,octave}}));}
   else if(mode){setLearningMode(mode);}
 })();

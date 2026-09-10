@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <script>if(matchMedia("(max-width:760px)").matches&&!new URLSearchParams(location.search).has("desktop"))location.replace("mobile.html");</script>
   <title>Trompetterie</title>
-  <link rel="stylesheet" href="trompetterie-shell.css?v=81" />
+  <link rel="stylesheet" href="trompetterie-shell.css?v=90" />
   <link rel="stylesheet" href="home.css?v=81" />
   <link rel="manifest" href="manifest.json?v=84" />
   <meta name="theme-color" content="#f3efe5" />
@@ -45,6 +45,12 @@
         <select id="drawerScale">
           <option value="blues" selected>Blues</option><option value="major">Majeure</option><option value="minor">Mineure naturelle</option>
           <option value="pentatonic">Pentatonique majeure</option><option value="minorPentatonic">Pentatonique mineure</option>
+        </select>
+      </label>
+      <label>Tessiture
+        <select id="drawerOctave">
+          <option value="auto" selected>Confort — automatique</option><option value="3">Octave 3 — grave (Fa♯ à Si)</option>
+          <option value="4">Octave 4 — médium</option><option value="5">Octave 5 — aigu</option>
         </select>
       </label>
     </section>
@@ -96,7 +102,7 @@
     <p class="home-subtitle">Ouvre le menu, choisis ta gamme ou ton morceau, puis lance-toi.</p>
   </main>
 
-  <script src="trompetterie-shell.js?v=81"></script>
-  <script src="home.js?v=81"></script>
+  <script src="trompetterie-shell.js?v=90"></script>
+  <script src="home.js?v=90"></script>
 </body>
 </html>

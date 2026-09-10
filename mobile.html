@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <meta name="apple-mobile-web-app-title" content="Trompetterie" />
-  <link rel="stylesheet" href="mobile.css?v=83" />
+  <link rel="stylesheet" href="mobile.css?v=90" />
 </head>
 <body class="mobile-home">
   <main class="m-home-shell">
@@ -20,6 +20,7 @@
       <div class="m-tabs" role="tablist"><button class="active" data-tab="scale">Gammes</button><button data-tab="music">Morceaux</button></div>
       <div class="m-panel active" data-panel="scale">
         <div class="m-select-row"><label>Note<select id="mRoot"><option value="0">Do</option><option value="1">Do♯</option><option value="2" selected>Ré</option><option value="3">Mi♭</option><option value="4">Mi</option><option value="5">Fa</option><option value="6">Fa♯</option><option value="7">Sol</option><option value="8">La♭</option><option value="9">La</option><option value="10">Si♭</option><option value="11">Si</option></select></label><label>Gamme<select id="mScale"><option value="blues">Blues</option><option value="major">Majeure</option><option value="minor">Mineure</option><option value="pentatonic">Penta. majeure</option><option value="minorPentatonic">Penta. mineure</option></select></label></div>
+        <label class="m-field m-register-field">Tessiture<select id="mOctave"><option value="auto" selected>Confort — automatique</option><option value="3">Octave 3 — grave (Fa♯ à Si)</option><option value="4">Octave 4 — médium</option><option value="5">Octave 5 — aigu</option></select></label>
         <div class="m-scale-preview" id="mScalePreview" aria-label="Aperçu interactif de la gamme"></div>
       </div>
       <div class="m-panel" data-panel="music" hidden>
@@ -29,6 +30,6 @@
     <section class="m-mode-section"><div class="m-section-title"><small>MODE D’APPRENTISSAGE</small><span id="mModeHint">Réflexes visuels</span></div><div class="m-mode-grid"><button class="active" data-mode="hero"><b>Héros</b><span>Réflexes</span></button><button data-mode="instrument"><b>Instrument</b><span>Trompette 3D</span></button><button data-mode="partition"><b>Partition</b><span>Lecture pure</span></button></div></section>
   </main>
   <footer class="m-launch"><div><small>PRÊT À JOUER</small><strong id="mSummary">Ré · Blues · Héros</strong></div><button id="mLaunch" type="button" aria-label="Jouer"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></button></footer>
-  <script src="mobile.js?v=83"></script>
+  <script src="mobile.js?v=90"></script>
 </body>
 </html>

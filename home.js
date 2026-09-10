@@ -9,6 +9,7 @@
     } else if (d.source === "scale") {
       params.set("root", d.root ?? 2);
       params.set("scale", d.scale || "blues");
+      params.set("octave", d.octave || "auto");
     }
     location.href = `hero.html?${params.toString()}`;
   });
