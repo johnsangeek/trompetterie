@@ -54,6 +54,33 @@
     translateGrid.appendChild(card);
   });
 
+  // Casse-tête FR -> EN
+  const EN_CANON=["C","C#","D","EB","E","F","F#","G","AB","A","BB","B"];
+  const puzzleGrid=$("#puzzleGrid"),puzzleScore=$("#puzzleScore");
+  function normalizeAnswer(s){return s.trim().toUpperCase().replace(/♭/g,"B").replace(/♯/g,"#")}
+  function shuffledIndices(){const a=[0,1,2,3,4,5,6,7,8,9,10,11];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+  function renderPuzzle(){
+    puzzleGrid.innerHTML="";puzzleScore.textContent="";
+    shuffledIndices().forEach(i=>{
+      const cell=document.createElement("div");cell.className="ts-puzzle-cell";cell.dataset.index=String(i);
+      cell.innerHTML=`<strong>${NAMES[i]}</strong><input type="text" maxlength="3" autocomplete="off" aria-label="Nom anglais de ${NAMES[i]}">`;
+      cell.querySelector("input").addEventListener("keydown",e=>{if(e.key==="Enter")checkPuzzle()});
+      puzzleGrid.appendChild(cell);
+    });
+  }
+  function checkPuzzle(){
+    let correct=0;const cells=$$("#puzzleGrid .ts-puzzle-cell");
+    cells.forEach(cell=>{
+      const i=Number(cell.dataset.index),input=cell.querySelector("input"),ok=normalizeAnswer(input.value)===EN_CANON[i];
+      cell.classList.toggle("correct",ok&&input.value.trim()!=="");cell.classList.toggle("wrong",!ok&&input.value.trim()!=="");
+      if(ok&&input.value.trim()!=="")correct++;
+    });
+    puzzleScore.textContent=`${correct} / ${cells.length} correctes`;
+  }
+  renderPuzzle();
+  $("#puzzleCheck").addEventListener("click",checkPuzzle);
+  $("#puzzleReset").addEventListener("click",renderPuzzle);
+
   // Toutes les notes (full chromatic reference, F#3 to C6)
   const chromGrid=$("#chromGrid");
   const ALL_NOTES=[];
