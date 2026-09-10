@@ -29,6 +29,7 @@ let activeNodes = [];
 let transposeImported = true;
 let importedSong = false;
 let currentViewMode = "hero";
+const COUNT_IN_SECONDS = 5;
 
 const demoMelody = [
   [0,64,1],[1,67,.75],[2,69,.75],[3,67,1],[4,64,1],[5,62,1],[6,60,1],[7,62,1],
@@ -76,7 +77,7 @@ function resizeCanvas(){
   els.scoreCanvas.width=Math.round(scoreRect.width*dpr);els.scoreCanvas.height=Math.round(scoreRect.height*dpr);scoreCtx.setTransform(dpr,0,0,dpr,0,0);drawScore(currentBeat());
 }
 
-function currentBeat(){ return playing ? Math.max(0,(audioCtx.currentTime-transportStart)/secondsPerBeat()) : pausedBeat; }
+function currentBeat(){ return playing ? (audioCtx.currentTime-transportStart)/secondsPerBeat() : pausedBeat; }
 
 function draw(){
   const w=els.canvas.clientWidth,h=els.canvas.clientHeight; ctx2d.clearRect(0,0,w,h);
@@ -122,10 +123,11 @@ function drawScore(beat){
   scoreCtx.strokeStyle=staffInk;scoreCtx.lineWidth=1;
   for(let i=0;i<5;i++){const y=staffTop+i*lineGap;scoreCtx.beginPath();scoreCtx.moveTo(0,y);scoreCtx.lineTo(w,y);scoreCtx.stroke();}
   scoreCtx.save();scoreCtx.strokeStyle="#e1a31d";scoreCtx.lineWidth=3;scoreCtx.shadowColor="#e7ae29";scoreCtx.shadowBlur=13;scoreCtx.beginPath();scoreCtx.moveTo(playX,top);scoreCtx.lineTo(playX,bottom);scoreCtx.stroke();scoreCtx.restore();
-  const scoreNotes=song.melody.filter(n=>n.beat>=beat-5.8&&n.beat<=beat+5.8);
+  const beatSpacing=Math.max(40,Math.min(76,w/16));
+  const scoreNotes=song.melody.filter(n=>n.beat>=beat-5.8&&n.beat<=beat+10);
   let previousOctaveShift=0;
   for(const n of scoreNotes){
-    const x=playX+(n.beat-beat)*76,midi=displayMidi(n.note),fitted=fitPitchToCompactStaff(midi),rawY=staffTop+lineGap*3.9-(fitted.midi-60)*2.4,y=Math.max(top+10,Math.min(h-25,rawY));
+    const x=playX+(n.beat-beat)*beatSpacing,midi=displayMidi(n.note),fitted=fitPitchToCompactStaff(midi),rawY=staffTop+lineGap*3.9-(fitted.midi-60)*2.4,y=Math.max(top+10,Math.min(h-25,rawY));
     const edgeFade=Math.max(0,Math.min(1,(x-4)/90,(w-4-x)/90));if(edgeFade<=0)continue;scoreCtx.save();scoreCtx.globalAlpha=edgeFade;
     scoreCtx.strokeStyle=staffInk;scoreCtx.lineWidth=1;drawLedgerLines(x,y,staffTop,staffBottom,lineGap);
     scoreCtx.save();scoreCtx.translate(x,y);scoreCtx.rotate(-.22);scoreCtx.scale(1.45,.9);scoreCtx.beginPath();scoreCtx.arc(0,0,5.2,0,Math.PI*2);scoreCtx.fillStyle=n.beat<=beat+.04&&n.beat+n.duration>beat?"#d99a13":"#252a25";scoreCtx.shadowColor=n.beat<=beat+.04&&n.beat+n.duration>beat?"#e7ae29":"transparent";scoreCtx.shadowBlur=12;scoreCtx.fill();scoreCtx.restore();
@@ -201,21 +203,23 @@ function scheduleAudio(){
   if(beatNow>=song.endBeat){ if(els.loop.checked)restart(true); else pause(true); }
 }
 
-function play(){
-  ensureAudio();if(pausedBeat>=song.endBeat)pausedBeat=0;transportStart=audioCtx.currentTime-pausedBeat*secondsPerBeat();
+function play(withCountIn=pausedBeat===0){
+  ensureAudio();if(pausedBeat>=song.endBeat)pausedBeat=0;if(withCountIn&&pausedBeat===0)pausedBeat=-COUNT_IN_SECONDS/secondsPerBeat();transportStart=audioCtx.currentTime-pausedBeat*secondsPerBeat();
   scheduledThrough=song.all.findLastIndex?.(n=>n.beat<pausedBeat-.02)??-1;scheduledMetro=Math.floor(pausedBeat)-1;
-  playing=true;els.play.classList.add("playing");els.playState.textContent="EN LECTURE";scheduler=setInterval(scheduleAudio,25);scheduleAudio();draw();
+  playing=true;els.play.classList.add("playing");els.playState.textContent=pausedBeat<0?`DÉPART ${COUNT_IN_SECONDS}`:"EN LECTURE";scheduler=setInterval(scheduleAudio,25);scheduleAudio();draw();
 }
 function pause(finished=false){
   if(!audioCtx)return;pausedBeat=finished?song.endBeat:currentBeat();playing=false;clearInterval(scheduler);stopNodes();els.play.classList.remove("playing");els.playState.textContent=finished?"TERMINÉ":"EN PAUSE";updateUI(pausedBeat);draw();
 }
 function restart(autoPlay=false){
-  if(playing)pause();pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;updateUI(0);draw();if(autoPlay)setTimeout(play,130);
+  if(playing)pause();pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;updateUI(0);draw();if(autoPlay)setTimeout(()=>play(false),130);
 }
 
 function updateUI(beat){
   const progress=Math.min(1,Math.max(0,beat/song.endBeat));els.progressFill.style.width=`${progress*100}%`;els.progressThumb.style.left=`${progress*100}%`;els.progress.setAttribute("aria-valuenow",String(Math.round(progress*100)));
-  els.currentTime.textContent=formatTime(beat*secondsPerBeat());els.totalTime.textContent=formatTime(totalSeconds());els.measure.textContent=`MESURE ${Math.floor(beat/4)+1}`;
+  els.currentTime.textContent=formatTime(beat*secondsPerBeat());els.totalTime.textContent=formatTime(totalSeconds());els.measure.textContent=`MESURE ${Math.floor(Math.max(0,beat)/4)+1}`;
+  if(beat<0){const count=Math.max(1,Math.ceil(-beat*secondsPerBeat()));els.playState.textContent=`DÉPART ${count}`;els.current.textContent="—";els.register.textContent=`La musique commence dans ${count} s`;els.shell.dataset.energy="off";els.shell.dataset.open="false";setValves([]);return}
+  if(playing)els.playState.textContent="EN LECTURE";
   const active=(!playing&&beat<=.0001)?null:song.melody.find(n=>n.beat<=beat+.055&&n.beat+n.duration>beat);
   const next=song.melody.find(n=>n.beat>beat+.055);
   els.next.textContent=next?noteName(next.note):"Fin";
@@ -299,7 +303,7 @@ async function loadCatalogTrack(id,autoPlay=false){
     const entry=await response.json(),loaded=catalogEntryToSong(entry);if(!loaded.melody.length)throw new Error("Aucune piste trompette exploitable");
     song=loaded;importedSong=true;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;els.title.textContent=entry.name||id;
     els.bpm.value=Math.min(200,Math.max(30,loaded.sourceBpm));els.bpmOut.textContent=els.bpm.value;renderMixer();updateUI(0);resizeCanvas();
-    toast(`${loaded.melody.length} notes de trompette · ${loaded.stems.length} pistes d’accompagnement`);if(autoPlay)play();return true;
+    toast(`${loaded.melody.length} notes de trompette · ${loaded.stems.length} pistes d’accompagnement`);if(autoPlay)play(true);return true;
   }catch(error){els.playState.textContent="PRÊT";toast(error.message||"Impossible de charger ce morceau.",true);return false}
 }
 
@@ -317,8 +321,8 @@ function setLearningMode(mode){
 }
 window.addEventListener("trompetterie:play",async event=>{
   const choice=event.detail;if(!setLearningMode(choice.mode))return;
-  ensureAudio();if(choice.source==="scale"){loadScaleExercise(choice.root,choice.scale);play();}
-  else if(choice.music==="demo"){if(playing)pause();song=demoSong;importedSong=false;pausedBeat=0;els.title.textContent="Premiers pas — démo originale";renderMixer();restart(false);play();}
+  ensureAudio();if(choice.source==="scale"){loadScaleExercise(choice.root,choice.scale);play(true);}
+  else if(choice.music==="demo"){if(playing)pause();song=demoSong;importedSong=false;pausedBeat=0;els.title.textContent="Premiers pas — démo originale";renderMixer();restart(false);play(true);}
   else await loadCatalogTrack(choice.music,true);
 });
 

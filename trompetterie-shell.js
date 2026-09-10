@@ -6,12 +6,36 @@
   const root=$("#drawerRoot"),scale=$("#drawerScale"),music=$("#drawerMusic"),summary=$("#drawerSummary");
   const noteLabels=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"];
   const scaleLabels={blues:"Blues",major:"Majeure",minor:"Mineure naturelle",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure"};
+  const scaleIntervals={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]};
+  const fingerings=[[],[1,2,3],[1,3],[2,3],[1,2],[1],[2],[],[2,3],[1,2],[1],[2]];
+  let previewAudio=null;
+
+  function previewNote(midi){
+    previewAudio ||= new (window.AudioContext||window.webkitAudioContext)();
+    if(previewAudio.state==="suspended")previewAudio.resume();
+    const now=previewAudio.currentTime,osc=previewAudio.createOscillator(),gain=previewAudio.createGain();
+    osc.type="triangle";osc.frequency.value=440*Math.pow(2,(midi-69)/12);
+    gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.17,now+.018);gain.gain.exponentialRampToValueAtTime(.0001,now+.48);
+    osc.connect(gain).connect(previewAudio.destination);osc.start(now);osc.stop(now+.5);
+  }
+  function renderScalePreview(){
+    const panel=document.querySelector('[data-source-panel="scale"]');if(!panel||!root||!scale)return;
+    let preview=panel.querySelector(".drawer-scale-preview");
+    if(!preview){preview=document.createElement("div");preview.className="drawer-scale-preview";preview.innerHTML='<div class="scale-preview-heading"><strong>Aperçu de la gamme</strong><small>Clique une note pour l’écouter</small></div><div class="mini-staff"><span class="mini-clef" aria-hidden="true">𝄞</span><div class="mini-staff-lines"></div><div class="mini-scale-notes"></div></div>';panel.appendChild(preview)}
+    const rootValue=Number(root.value),base=(60+rootValue>71?48:60)+rootValue,intervals=scaleIntervals[scale.value]||scaleIntervals.blues,notes=preview.querySelector(".mini-scale-notes");notes.style.setProperty("--scale-count",String(intervals.length));notes.innerHTML="";
+    intervals.forEach(interval=>{
+      const midi=base+interval,button=document.createElement("button"),name=`${noteLabels[midi%12]}${Math.floor(midi/12)-1}`,values=fingerings[midi%12];
+      button.type="button";button.className="mini-note";button.style.setProperty("--note-y",`${49-interval*2.15}px`);button.setAttribute("aria-label",`${name}, ${values.length?`pistons ${values.join(" et ")}`:"pistons libres"}`);
+      button.innerHTML=`<span class="mini-note-head" aria-hidden="true"></span><strong>${name}</strong><span class="mini-fingering">${(values.length?values:[0]).map(value=>`<i class="finger-${value}">${value}</i>`).join("")}</span>`;
+      button.addEventListener("click",()=>{previewNote(midi);notes.querySelectorAll(".mini-note").forEach(note=>note.classList.remove("sounding"));button.classList.add("sounding");setTimeout(()=>button.classList.remove("sounding"),430)});notes.appendChild(button);
+    });
+  }
 
   function openDrawer(){document.body.classList.add("drawer-open");drawer.setAttribute("aria-hidden","false");handle.setAttribute("aria-expanded","true");veil.hidden=false;requestAnimationFrame(()=>veil.classList.add("visible"));}
   function closeDrawer(){document.body.classList.remove("drawer-open");drawer.setAttribute("aria-hidden","true");handle.setAttribute("aria-expanded","false");veil.classList.remove("visible");setTimeout(()=>{if(!document.body.classList.contains("drawer-open"))veil.hidden=true},320);handle.focus();}
   function selectedMode(){return document.querySelector('input[name="drawerMode"]:checked')?.value||"hero"}
   function selectedSource(){return document.querySelector("[data-source-tab].active")?.dataset.sourceTab||"scale"}
-  function updateSummary(){const mode={hero:"Héros",instrument:"Instrument",partition:"Partition"}[selectedMode()];const songName=music?.selectedOptions?.[0]?.textContent||"Premiers pas";summary.textContent=selectedSource()==="scale"?`${noteLabels[Number(root.value)]} trompette · ${scaleLabels[scale.value]} · ${mode}`:`${songName} · ${mode}`;}
+  function updateSummary(){const mode={hero:"Héros",instrument:"Instrument",partition:"Partition"}[selectedMode()];const songName=music?.selectedOptions?.[0]?.textContent||"Premiers pas";summary.textContent=selectedSource()==="scale"?`${noteLabels[Number(root.value)]} trompette · ${scaleLabels[scale.value]} · ${mode}`:`${songName} · ${mode}`;renderScalePreview();}
 
   handle.addEventListener("click",()=>document.body.classList.contains("drawer-open")?closeDrawer():openDrawer());close.addEventListener("click",closeDrawer);veil.addEventListener("click",closeDrawer);
   document.addEventListener("keydown",event=>{if(event.key==="Escape"&&document.body.classList.contains("drawer-open"))closeDrawer()});
