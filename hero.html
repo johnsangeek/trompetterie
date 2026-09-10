@@ -4,12 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Trompetterie Hero — Apprendre un morceau</title>
-  <link rel="stylesheet" href="hero.css" />
-  <link rel="stylesheet" href="trompetterie-shell.css" />
+  <link rel="stylesheet" href="hero.css?v=80" />
+  <link rel="stylesheet" href="trompetterie-shell.css?v=80" />
 </head>
 <body>
   <button class="music-clef-handle" id="musicClefHandle" type="button" aria-controls="musicDrawer" aria-expanded="false" aria-label="Ouvrir le menu musical">
-    <span aria-hidden="true">𝄞</span><small>MENU</small>
+    <span class="menu-handle-label">Menu</span>
   </button>
   <div class="drawer-veil" id="drawerVeil" hidden></div>
   <aside class="music-drawer" id="musicDrawer" aria-hidden="true" aria-label="Menu musical Trompetterie">
@@ -83,7 +83,7 @@
 
   <main class="hero-app">
     <header class="topbar">
-      <a class="back-link" href="hero.html" aria-label="Trompetterie">Trompetterie</a>
+      <a class="back-link" href="index.html" aria-label="Retour à l'accueil Trompetterie">Trompetterie</a>
       <div class="brand">
         <span class="brand-kicker">MODE MORCEAU</span>
         <strong>Trompetterie <i>Hero</i></strong>
@@ -177,6 +177,7 @@
       </aside>
 
       <div class="score-strip" aria-label="Partition défilante">
+        <span class="score-strip-clef" aria-hidden="true">𝄞</span>
         <canvas id="scoreCanvas"></canvas>
       </div>
     </section>
@@ -195,8 +196,8 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script type="importmap">{"imports":{"three":"./vendor/three/three.module.min.js"}}</script>
-  <script src="hero.js"></script>
-  <script src="trompetterie-shell.js"></script>
-  <script type="module" src="hero-instrument.js"></script>
+  <script src="hero.js?v=80"></script>
+  <script src="trompetterie-shell.js?v=80"></script>
+  <script type="module" src="hero-instrument.js?v=80"></script>
 </body>
 </html>

@@ -3,514 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Trompette Trainer — Boucle, partition &amp; doigtés</title>
-  <link rel="preload" href="assets/fonts/MiracleHistory.ttf" as="font" type="font/ttf" crossorigin />
-  <link rel="preload" href="assets/fonts/VerandahReverie.otf" as="font" type="font/otf" crossorigin />
-  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="trumpet-shell.css" />
-
+  <title>Trompetterie</title>
+  <link rel="stylesheet" href="trompetterie-shell.css?v=80" />
+  <link rel="stylesheet" href="home.css?v=80" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#ece6d8" />
+  <meta name="theme-color" content="#f3efe5" />
   <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Trompette" />
+  <meta name="apple-mobile-web-app-title" content="Trompetterie" />
   <meta name="mobile-web-app-capable" content="yes" />
 </head>
 <body>
-  <div class="glow-blob glow-1"></div>
-  <div class="glow-blob glow-2"></div>
-
-  <div id="boardingSpace" class="boarding-space">
-    <div class="boarding-content">
-      <span class="boarding-eyebrow">Trompetterie.lol</span>
-      <h1 class="wordmark boarding-wordmark">Trompetterie</h1>
-      <p class="boarding-subtitle">Boarding space — choisis ton espace de travail.</p>
-      <div class="boarding-cards">
-        <button type="button" class="boarding-card" id="boardTrumpetBtn">
-          <span class="boarding-card-icon"><svg class="icon icon-solo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 11h4l3-2.2v6.4L6 13H2z"/><path d="M9 9h10a2.5 2.5 0 0 1 0 5H9"/><rect x="11" y="6" width="2" height="3" rx="0.5"/><rect x="14" y="6" width="2" height="3" rx="0.5"/><rect x="17" y="6" width="2" height="3" rx="0.5"/></svg></span>
-          <span class="boarding-card-title">Trompette</span>
-          <span class="boarding-card-desc">Partition, doigtés, gammes, trompette 3D</span>
-        </button>
-        <a class="boarding-card" id="boardPianoBtn" href="chords.html">
-          <span class="boarding-card-icon"><svg class="icon icon-solo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="1.5"/><path d="M7 6v7M11 6v7M15 6v7M19 6v7"/><rect x="5.6" y="6" width="1.8" height="6" fill="currentColor" stroke="none"/><rect x="9.6" y="6" width="1.8" height="6" fill="currentColor" stroke="none"/><rect x="13.6" y="6" width="1.8" height="6" fill="currentColor" stroke="none"/></svg></span>
-          <span class="boarding-card-title">Piano</span>
-          <span class="boarding-card-desc">Résolveur d'accords, progressions</span>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <div class="app" id="mainApp" hidden>
-    <header>
-        <div id="miniNav" class="mini-nav">
-          <a href="#" id="backToBoardingLink">← Boarding space</a>
-          <a href="home.html">Accueil</a>
-          <a href="training.html">Training</a>
-          <a href="chords.html">Chords Resolver</a>
-      </div>
-      <div class="workspace-wordmark" aria-label="Trompetterie">Trompetterie</div>
-      <div class="title-row">
-        <div>
-          <h1>Trompette Trainer</h1>
-          <p class="subtitle">Ton pupitre de travail : partition, notes et doigtés au même endroit.</p>
-        </div>
-        <div class="header-actions">
-          <button type="button" id="openInstrumentViewBtn" class="btn instrument-view-launch">Vue instrument</button>
-          <span class="desktop-badge">Mode studio</span>
-        </div>
-      </div>
+  <button class="music-clef-handle" id="musicClefHandle" type="button" aria-controls="musicDrawer" aria-expanded="false" aria-label="Ouvrir le menu musical">
+    <span class="menu-handle-label">Menu</span>
+  </button>
+  <div class="drawer-veil" id="drawerVeil" hidden></div>
+  <aside class="music-drawer" id="musicDrawer" aria-hidden="true" aria-label="Menu musical Trompetterie">
+    <header class="drawer-header">
+      <div><span>TROMPETTERIE</span><strong>Que veux-tu jouer ?</strong></div>
+      <button id="drawerClose" type="button" aria-label="Fermer le menu">×</button>
     </header>
 
-    <section id="dropzone" class="dropzone">
-      <p id="dropzonePrompt"><strong>Importer un morceau</strong><span>Glisse un fichier audio ici ou clique pour le choisir</span></p>
-      <div id="dropzoneLoaded" class="dropzone-loaded" hidden>
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="18" r="3"/><path d="M10 18V5l9-2v13"/><circle cx="16" cy="16" r="3"/></svg>
-        <span id="loadedFileName" class="dropzone-loaded-name">--</span>
-        <button type="button" id="ejectFileBtn" class="dropzone-eject-btn" title="Retirer ce morceau pour en choisir un autre" aria-label="Retirer ce morceau"><svg class="icon icon-solo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
+    <div class="source-tabs" role="tablist" aria-label="Type de contenu">
+      <button type="button" class="active" data-source-tab="scale" role="tab" aria-selected="true">Gammes</button>
+      <button type="button" data-source-tab="music" role="tab" aria-selected="false">Musiques</button>
+    </div>
+
+    <section class="drawer-source active" data-source-panel="scale">
+      <label>Note de départ
+        <select id="drawerRoot">
+          <option value="0">Do trompette</option><option value="1">Do♯ trompette</option><option value="2" selected>Ré trompette</option>
+          <option value="3">Mi♭ trompette</option><option value="4">Mi trompette</option><option value="5">Fa trompette</option>
+          <option value="6">Fa♯ trompette</option><option value="7">Sol trompette</option><option value="8">La♭ trompette</option>
+          <option value="9">La trompette</option><option value="10">Si♭ trompette</option><option value="11">Si trompette</option>
+        </select>
+      </label>
+      <label>Gamme
+        <select id="drawerScale">
+          <option value="blues" selected>Blues</option><option value="major">Majeure</option><option value="minor">Mineure naturelle</option>
+          <option value="pentatonic">Pentatonique majeure</option><option value="minorPentatonic">Pentatonique mineure</option>
+        </select>
+      </label>
+    </section>
+
+    <section class="drawer-source" data-source-panel="music" hidden>
+      <label>Morceau
+        <select id="drawerMusic">
+          <option value="demo">Premiers pas — démo</option>
+          <option value="a-night-in-tunisia">A Night in Tunisia</option>
+          <option value="all-blues">All Blues</option>
+          <option value="b-y-t">B.Y.T.</option>
+          <option value="billie-s-bounce">Billie's Bounce</option>
+          <option value="cherokee">Cherokee</option>
+          <option value="four-brothers">Four Brothers</option>
+          <option value="it-don-t-mean-a-thing">It Don't Mean a Thing</option>
+          <option value="mack-the-knife">Mack the Knife</option>
+          <option value="misty">Misty</option>
+          <option value="moanin">Moanin'</option>
+          <option value="new-york-new-york">New York, New York</option>
+          <option value="on-green-dolphin-street">On Green Dolphin Street</option>
+          <option value="satin-doll">Satin Doll</option>
+          <option value="soda-daoud">Soda — Daoud</option>
+          <option value="st-thomas">St. Thomas</option>
+          <option value="stolen-moments">Stolen Moments</option>
+          <option value="take-the-a-train">Take the A Train</option>
+        </select>
+      </label>
+      <button class="drawer-import" id="drawerImportMidi" type="button"><span>＋</span><strong>Importer un MIDI</strong><small>Notes exactes et accompagnement</small></button>
+    </section>
+
+    <section class="mode-picker">
+      <span class="drawer-section-title">Mode d'apprentissage</span>
+      <div class="mode-options">
+        <label><input type="radio" name="drawerMode" value="hero" checked /><span><strong>Héros</strong><small>Réflexes</small></span></label>
+        <label><input type="radio" name="drawerMode" value="instrument" /><span><strong>Instrument</strong><small>Trompette 3D</small></span></label>
+        <label><input type="radio" name="drawerMode" value="partition" /><span><strong>Partition</strong><small>Lecture pure</small></span></label>
       </div>
-      <input type="file" id="fileInput" accept="audio/*" hidden />
     </section>
 
-    <div id="fileAnalyzedBanner" class="file-analyzed-banner" hidden>
-      <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="13" width="4" height="6" rx="1.5"/><rect x="17" y="13" width="4" height="6" rx="1.5"/></svg>Tonalité détectée : <strong id="fileKeyLabel">--</strong> — Gamme proposée : <strong id="fileScaleLabel">--</strong></span>
-    </div>
+    <footer class="drawer-footer">
+      <p id="drawerSummary">Ré trompette · Blues · Héros</p>
+      <button id="drawerPlay" type="button"><span>▶</span> Jouer</button>
+    </footer>
+  </aside>
 
-    <p id="status" class="status" hidden></p>
+  <main class="home-stage">
+    <span class="home-eyebrow">Trompetterie.lol</span>
+    <h1 class="home-title">Trompetterie</h1>
+    <p class="home-subtitle">Ouvre le menu, choisis ta gamme ou ton morceau, puis lance-toi.</p>
+  </main>
 
-    <div id="progressWrap" class="progress-wrap" hidden>
-      <div id="progressBar" class="progress-bar"></div>
-    </div>
-
-    <section id="workspace" class="workspace">
-
-      <section class="panel transport-panel" id="transportPanel" hidden>
-        <div class="stats">
-          <div class="stat">
-            <span class="stat-value" id="bpmDisplay">--</span>
-            <span class="stat-label">BPM détecté</span>
-          </div>
-          <div class="stat editable-stat">
-            <input type="number" id="bpmInput" min="20" max="300" step="0.1" />
-            <span class="stat-label">BPM (ajustable)</span>
-          </div>
-          <div class="stat">
-            <span class="stat-value" id="durationValue">--</span>
-            <span class="stat-label">durée</span>
-          </div>
-        </div>
-
-        <div class="transport-controls">
-          <button type="button" id="playBtn" class="btn btn-primary" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l12 8-12 8V4z" fill="currentColor"/></svg>Lecture</button>
-          <button type="button" id="pauseBtn" class="btn" hidden><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="4" height="16" rx="1" fill="currentColor"/><rect x="14" y="4" width="4" height="16" rx="1" fill="currentColor"/></svg>Pause</button>
-          <button type="button" id="stopBtn" class="btn" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>Stop</button>
-          <button type="button" id="metronomeBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 20h10L14 4h-4L7 20z"/><path d="M12 8l3 9"/></svg>Métronome</button>
-          <span class="time-display"><span id="currentTimeLabel">0:00</span> / <span id="totalTimeLabel">0:00</span></span>
-        </div>
-
-        <p id="noFileHint" class="no-file-hint">Charge un fichier audio ci-dessus pour activer la lecture, le looper et la transcription. Le métronome et la bibliothèque de gammes marchent déjà, sans rien charger.</p>
-
-        <input type="range" id="seekBar" class="seek-bar" min="0" max="1000" value="0" disabled />
-
-        <div class="loop-controls">
-          <h3>Looper quantifié</h3>
-          <div class="loop-row">
-            <button type="button" id="setLoopABtn" class="btn" disabled>Poser A ici</button>
-            <span id="loopALabel" class="loop-label">A: --</span>
-            <button type="button" id="setLoopBBtn" class="btn" disabled>Poser B ici</button>
-            <span id="loopBLabel" class="loop-label">B: --</span>
-          </div>
-          <div class="loop-row">
-            <label class="checkbox-label">
-              <input type="checkbox" id="loopEnabledCheckbox" disabled />
-              Boucle active
-            </label>
-            <label>
-              Grille de calage
-              <select id="snapGridSelect">
-                <option value="1">Noire (1 temps)</option>
-                <option value="0.5" selected>Croche (1/2 temps)</option>
-                <option value="0.25">Double-croche (1/4 temps)</option>
-                <option value="2">Blanche (2 temps)</option>
-                <option value="4">Ronde (4 temps)</option>
-              </select>
-            </label>
-            <button type="button" id="clearLoopBtn" class="btn" disabled>Effacer la boucle</button>
-          </div>
-        </div>
-
-        <div id="stemsPanel" class="stems-panel" hidden>
-          <strong>Instruments du morceau</strong>
-          <small>Coupe/remets un instrument, ou ajuste son volume.</small>
-          <div id="stemsList" class="stems-list"></div>
-        </div>
-      </section>
-
-      <section class="panel notation-panel">
-        <div class="panel-header">
-          <button type="button" id="clefToggleBtn" class="clef-toggle-btn" aria-expanded="false" title="Gammes et tonalité">𝄞</button>
-          <span id="currentNoteLabel" class="current-note-label">--</span>
-          <button type="button" id="moreToolsToggleBtn" class="more-tools-toggle-btn" aria-expanded="false" title="Plus d'outils"><svg class="icon icon-solo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2.2M12 18.8V21M21 12h-2.2M5.2 12H3M18.4 5.6l-1.6 1.6M7.2 16.8l-1.6 1.6M18.4 18.4l-1.6-1.6M7.2 7.2 5.6 5.6"/></svg></button>
-        </div>
-
-        <div class="practice-launch">
-          <button type="button" id="openKaraokeBtn" class="practice-launch-button" aria-label="Commencer maintenant">
-            <span class="practice-play-disc" aria-hidden="true"><span id="practicePlayIcon"><svg class="icon icon-solo" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4l12 8-12 8V4z" fill="currentColor"/></svg></span></span>
-            <span id="practicePlayLabel" class="practice-play-label">Commencer maintenant</span>
-          </button>
-        </div>
-
-        <div id="hiddenModeToggle" class="mode-toggle" hidden>
-          <button type="button" class="mode-btn" data-mode="transcription" disabled>Transcription</button>
-          <button type="button" class="mode-btn active" data-mode="improvisation">Gammes</button>
-          <button type="button" class="mode-btn" data-mode="manual" disabled>Partition libre</button>
-        </div>
-
-        <div class="score-playback-row" id="scorePlaybackRow" hidden>
-          <button type="button" id="playScoreBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h13a3 3 0 0 1 3 3v1"/><path d="M17 4l3 3-3 3"/><path d="M20 17H7a3 3 0 0 1-3-3v-1"/><path d="M7 20l-3-3 3-3"/></svg>Écouter en boucle</button>
-          <button type="button" id="stopScoreBtn" class="btn" hidden><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>Stop partition</button>
-          <button type="button" id="exportScorePdfBtn" class="btn">Exporter PDF</button>
-          <label class="sound-engine-label">Son
-            <select id="soundEngineSelect">
-              <option value="synth" selected>Son numérique instantané</option>
-            </select>
-          </label>
-          <label class="checkbox-label">
-            <input type="checkbox" id="muteScoreCheckbox" />
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 9l4 6M21 9l-4 6"/></svg>Couper le son des notes
-          </label>
-          <span class="score-playback-hint">Utilise le BPM ci-dessus — change-le pour ralentir/accélérer la boucle.</span>
-        </div>
-
-        <div id="transcriptionTools" class="transcription-tools" hidden>
-          <div class="transcription-tools-copy">
-            <span class="instrument-tag trumpet-tag">Trompette</span>
-            <div><strong>Partition détectée</strong><small>Retire les fausses notes courtes, puis passe en édition si nécessaire.</small></div>
-          </div>
-          <div class="transcription-tools-actions">
-            <button type="button" id="cleanTranscriptionBtn" class="btn">Nettoyer les notes parasites</button>
-            <button type="button" id="editTranscriptionBtn" class="btn btn-primary">Modifier la partition</button>
-          </div>
-          <p id="transcriptionFeedback" class="transcription-feedback" role="status" aria-live="polite"></p>
-        </div>
-
-        <div id="improvisationControls" class="improvisation-controls" hidden>
-          <button type="button" id="closeScaleOptionsBtn" class="close-panel-btn" aria-label="Fermer"><svg class="icon icon-solo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
-          <p class="subtitle">Bibliothèque de gammes : choisis n'importe quelle note et n'importe quelle gamme pour l'étudier, avec les doigtés. Charge un fichier audio pour que la clé soit détectée automatiquement et coller à ce que tu entends.</p>
-          <div class="improv-row">
-            <span class="key-display">Tonalité détectée : <strong id="detectedKeyLabel">--</strong></span>
-          </div>
-
-          <div class="improv-row" hidden>
-            <div class="mode-toggle chord-mode-toggle">
-              <button type="button" class="sub-toggle-btn active" data-chordmode="free">Gamme libre</button>
-              <button type="button" class="sub-toggle-btn" data-chordmode="chord">À partir d'un accord</button>
-            </div>
-          </div>
-
-          <div class="improv-row">
-            <label>
-              Tonalité pour la trompette
-              <select id="scaleRootSelect"></select>
-            </label>
-            <label id="scaleTypeLabel">
-              Gamme
-              <select id="scaleTypeSelect"></select>
-            </label>
-            <label id="chordQualityLabel" hidden>
-              Accord
-              <select id="chordQualitySelect"></select>
-            </label>
-            <button type="button" id="toggleFavoriteScaleBtn" class="btn" title="Ajouter aux favoris"><svg id="toggleFavoriteScaleIcon" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.6 6 .7-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6-4.4-4.2 6-.7z"/></svg>Favori</button>
-          </div>
-
-          <label class="pitch-details-option">
-            <input type="checkbox" id="showPitchDetailsCheckbox" />
-            Afficher aussi les noms internationaux et le son concert
-          </label>
-
-          <section class="scale-sequence-builder" aria-label="Gammes à enchaîner">
-            <div class="scale-sequence-heading">
-              <strong>Programme de gammes</strong>
-              <small>Choisis plusieurs exercices, puis lance la lecture.</small>
-            </div>
-            <div class="scale-sequence-actions">
-              <button type="button" id="addCurrentScaleBtn" class="btn">+ Ajouter cette gamme</button>
-              <button type="button" id="addAllBluesKeysBtn" class="btn">Blues · 12 tonalités</button>
-              <button type="button" id="clearScaleQueueBtn" class="btn" hidden>Effacer</button>
-            </div>
-            <div id="scaleQueueList" class="scale-queue-list" aria-live="polite"></div>
-          </section>
-
-          <div class="improv-row" id="insideOutsideRow" hidden>
-            <div class="mode-toggle">
-              <button type="button" id="insideScaleBtn" class="sub-toggle-btn active">Dedans</button>
-              <button type="button" id="outsideScaleBtn" class="sub-toggle-btn">Dehors (jazz)</button>
-            </div>
-            <span class="key-display" id="chordScaleExplain"></span>
-          </div>
-
-          <section class="scale-sequence-builder favorites-builder" aria-label="Gammes favorites">
-            <div class="scale-sequence-heading">
-              <strong><svg class="icon" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.6 6 .7-4.4 4.2 1.1 6-5.3-3-5.3 3 1.1-6-4.4-4.2 6-.7z"/></svg>Mes gammes</strong>
-              <small>Tes favorites, en accès rapide.</small>
-            </div>
-            <div id="favoriteScalesList" class="favorite-scales-list"></div>
-          </section>
-
-          <details class="advanced-tools">
-            <summary>
-              <span>Entraînement trompette</span>
-              <small>Interro de notes au micro</small>
-            </summary>
-
-          <div class="quiz-panel">
-            <div class="piano-roll-header">
-              <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4L2 9l10 5 10-5-10-5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>Interro</h3>
-              <button type="button" id="startQuizBtn" class="btn btn-primary">Démarrer l'interro</button>
-            </div>
-            <p class="subtitle">
-              Une note de la gamme actuelle est jouée — reproduis-la sur ta trompette. Détection
-              automatique au micro si tu l'autorises, sinon confirme toi-même au clic.
-            </p>
-
-            <div id="quizArea" class="quiz-area" hidden>
-              <div class="quiz-top-row">
-                <span class="quiz-score">Score : <strong id="quizScore">0/0</strong></span>
-                <span class="quiz-progress" id="quizProgress"></span>
-                <button type="button" id="stopQuizBtn" class="btn">Arrêter</button>
-              </div>
-
-              <div class="quiz-stage">
-                <div class="quiz-timer-ring">
-                  <svg viewBox="0 0 100 100" width="140" height="140">
-                    <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" />
-                    <circle id="quizTimerCircle" cx="50" cy="50" r="44" fill="none" stroke="#ffb020" stroke-width="8"
-                      stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"
-                      transform="rotate(-90 50 50)" />
-                  </svg>
-                  <div class="quiz-timer-label" id="quizTimerLabel"><svg class="icon icon-solo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 11h4l3-2.2v6.4L6 13H2z"/><path d="M9 9h10a2.5 2.5 0 0 1 0 5H9"/><rect x="11" y="6" width="2" height="3" rx="0.5"/><rect x="14" y="6" width="2" height="3" rx="0.5"/><rect x="17" y="6" width="2" height="3" rx="0.5"/></svg></div>
-                </div>
-                <div class="quiz-status" id="quizStatus">Prépare-toi…</div>
-                <div class="quiz-feedback" id="quizFeedback"></div>
-              </div>
-
-              <div class="quiz-manual-buttons" id="quizManualButtons" hidden>
-                <button type="button" id="quizCorrectBtn" class="btn btn-primary"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6"/></svg>Je l'ai jouée</button>
-                <button type="button" id="quizWrongBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>Raté</button>
-              </div>
-
-              <p class="quiz-mic-hint" id="quizMicHint"></p>
-            </div>
-          </div>
-          </details>
-
-          <details class="advanced-tools">
-            <summary>
-              <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4L2 9l10 5 10-5-10-5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>Code de la route</span>
-              <small>Apprendre cette gamme, étape par étape</small>
-            </summary>
-
-          <div class="quiz-panel">
-            <div id="masteryIntro" class="mastery-intro">
-              <p class="subtitle">Apprends chaque note de la gamme une par une (5 réussites pour valider), puis enchaîne la gamme entière lentement et rapidement. À la fin, débloque des morceaux dans cette tonalité.</p>
-              <div class="mastery-mic-choice">
-                <button type="button" id="masteryWithMicBtn" class="btn btn-primary"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>Avec micro</button>
-                <button type="button" id="masteryWithoutMicBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V11M12 11V6a1.5 1.5 0 0 1 3 0v6M15 12V8.5a1.5 1.5 0 0 1 3 0V14a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L4.3 14a1.4 1.4 0 0 1 2.2-1.7L8 14"/></svg>Sans micro (je confirme moi-même)</button>
-              </div>
-            </div>
-
-            <div id="masteryArea" class="quiz-area" hidden>
-              <div class="quiz-top-row">
-                <span class="quiz-progress" id="masteryStageLabel">Étape 1 · Notes</span>
-                <button type="button" id="stopMasteryBtn" class="btn">Arrêter</button>
-              </div>
-
-              <div id="masteryNoteDots" class="mastery-note-dots" aria-label="Notes de la gamme"></div>
-              <div id="masteryRepDots" class="mastery-rep-dots" aria-label="Réussites sur cette note"></div>
-
-              <div class="quiz-stage">
-                <div class="quiz-timer-ring">
-                  <svg viewBox="0 0 100 100" width="140" height="140">
-                    <circle cx="50" cy="50" r="44" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8" />
-                    <circle id="masteryTimerCircle" cx="50" cy="50" r="44" fill="none" stroke="#ffb020" stroke-width="8"
-                      stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"
-                      transform="rotate(-90 50 50)" />
-                  </svg>
-                  <div class="quiz-timer-label" id="masteryTimerLabel"><svg class="icon icon-solo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 11h4l3-2.2v6.4L6 13H2z"/><path d="M9 9h10a2.5 2.5 0 0 1 0 5H9"/><rect x="11" y="6" width="2" height="3" rx="0.5"/><rect x="14" y="6" width="2" height="3" rx="0.5"/><rect x="17" y="6" width="2" height="3" rx="0.5"/></svg></div>
-                </div>
-                <div class="quiz-status" id="masteryStatus">Prépare-toi…</div>
-                <div class="quiz-feedback" id="masteryFeedback"></div>
-              </div>
-
-              <div class="quiz-manual-buttons" id="masteryManualButtons" hidden>
-                <button type="button" id="masteryCorrectBtn" class="btn btn-primary"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5L20 6"/></svg>Je l'ai jouée</button>
-                <button type="button" id="masteryWrongBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg>Raté</button>
-              </div>
-
-              <p class="quiz-mic-hint" id="masteryMicHint"></p>
-            </div>
-
-            <div id="masteryReward" class="mastery-reward" hidden>
-              <p class="subtitle"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4h10v3a5 5 0 0 1-10 0V4z"/><path d="M7 5H4v1a4 4 0 0 0 4 4M17 5h3v1a4 4 0 0 1-4 4"/><path d="M12 12v3M9 20h6M10 17h4v3h-4z"/></svg>Gamme maîtrisée ! Morceaux dans cette tonalité pour improviser :</p>
-              <div id="masteryRewardTracks" class="mastery-reward-tracks"></div>
-            </div>
-          </div>
-          </details>
-        </div>
-
-        <div id="manualControls" class="manual-controls" hidden>
-          <p class="subtitle">Clique une note pour la sélectionner. Suppr l'efface, ↑/↓ la monte ou la descend d'un demi-ton. La palette ajoute une note au temps courant.</p>
-          <div class="improv-row">
-            <button type="button" id="undoManualNoteBtn" class="btn">↶ Annuler la dernière note</button>
-            <button type="button" id="clearManualNotesBtn" class="btn">Effacer tout</button>
-            <button type="button" id="deleteNoteModeBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><path d="M10 11v6M14 11v6"/></svg>Supprimer une note</button>
-            <button type="button" id="toggleTwelveKeysBtn" class="btn">12 tonalités</button>
-          </div>
-          <div id="twelveKeysPanel" class="twelve-keys-panel" hidden>
-            <div><strong>Transpose la phrase</strong><small>Choisis la nouvelle tonalité : le rythme et les doigtés suivent.</small></div>
-            <div id="twelveKeysGrid" class="twelve-keys-grid"></div>
-          </div>
-        </div>
-
-        <h2 id="practiceTitle" class="practice-title">Gamme blues</h2>
-        <div id="staff" class="staff"></div>
-        <div id="degreeChips" class="degree-chips" hidden></div>
-
-        <div id="songNotesHeader" class="song-notes-header" hidden>
-          <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7" cy="18" r="3"/><path d="M10 18V5l9-2v13"/><circle cx="16" cy="16" r="3"/></svg>Notes du morceau :</span>
-          <button type="button" id="startSongNotesQuizBtn" class="btn btn-primary btn-small"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>Les apprendre (interro)</button>
-        </div>
-        <div id="pitchPalette" class="degree-chips" hidden></div>
-
-        <div id="songKeyPanel" class="song-key-panel" hidden>
-          <p class="subtitle"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4L2 9l10 5 10-5-10-5z"/><path d="M6 11.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5"/><path d="M22 9v6"/></svg>Gamme à travailler pour ce morceau : <strong id="songKeyLabel">--</strong></p>
-          <button type="button" id="startSongQuizBtn" class="btn btn-primary"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>Réviser cette gamme (interro)</button>
-        </div>
-      </section>
-
-      <section class="panel piston-panel">
-        <div class="piston-panel-header">
-          <div>
-            <span class="eyebrow">Note écrite · trompette Sib</span>
-            <h2>Trompette Sib</h2>
-          </div>
-          <span id="pistonNoteLabel" class="piston-note-label">--</span>
-        </div>
-
-        <section id="instrumentStage" class="instrument-stage" aria-label="Vue animée de la trompette">
-          <canvas id="trumpet3dCanvas" class="trumpet-3d-canvas" aria-label="Trompette en trois dimensions, vue fixe"></canvas>
-          <div class="instrument-stage-vignette" aria-hidden="true"></div>
-          <header class="instrument-stage-header">
-            <button type="button" id="closeInstrumentViewBtn" class="instrument-stage-button" aria-label="Revenir à l'application">← Retour</button>
-            <div class="instrument-stage-title">
-              <span>Vue instrument</span>
-              <small>Caméra fixe · trompette Sib</small>
-            </div>
-            <span id="instrument3dStatus" class="instrument-3d-status">Chargement du modèle…</span>
-          </header>
-          <div class="instrument-note-hud" aria-live="polite">
-            <span id="instrumentTrebleClef" class="instrument-clef" aria-hidden="true">𝄞</span>
-            <div>
-              <small>Note jouée</small>
-              <strong id="instrumentNoteLabel">--</strong>
-            </div>
-            <span id="instrumentFingeringDots" class="instrument-current-fingering" aria-label="Doigté ouvert">0</span>
-          </div>
-          <footer class="instrument-stage-footer">
-            <div class="instrument-valve-legend" aria-label="État des pistons">
-              <span id="instrumentValve1" class="instrument-valve-dot valve-one">1</span>
-              <span id="instrumentValve2" class="instrument-valve-dot valve-two">2</span>
-              <span id="instrumentValve3" class="instrument-valve-dot valve-three">3</span>
-            </div>
-            <div class="instrument-stage-controls">
-              <button type="button" id="instrumentPlayPauseBtn" class="instrument-stage-button instrument-stage-primary">▶ Jouer</button>
-              <button type="button" id="instrumentStopBtn" class="instrument-stage-button">■ Stop</button>
-            </div>
-          </footer>
-        </section>
-
-        <div class="octave-shift-stepper">
-          <button type="button" id="octaveDownBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>Octave</button>
-          <span id="octaveShiftLabel" class="octave-shift-label">Octave normale</span>
-          <button type="button" id="octaveUpBtn" class="btn"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>Octave</button>
-        </div>
-        <div class="note-scanner">
-          <div class="scanner-heading">
-            <div>
-              <span class="eyebrow">Scanner micro</span>
-              <strong id="scannerNoteLabel">--</strong>
-            </div>
-            <span id="scannerCentsLabel" class="scanner-cents">En attente</span>
-          </div>
-          <div class="tuner-track" aria-hidden="true"><span id="tunerNeedle" class="tuner-needle"></span></div>
-          <div class="scanner-actions">
-            <button type="button" id="toggleScannerBtn" class="btn btn-primary">Démarrer le scanner</button>
-            <button type="button" id="captureScannedNoteBtn" class="btn" disabled>Ajouter à la partition</button>
-          </div>
-          <p id="scannerFeedback" class="scanner-feedback" role="status" aria-live="polite">Le scanner reconnaît une note à la fois et affiche directement le doigté.</p>
-        </div>
-        <div class="pistons">
-          <div class="valve-group">
-            <div class="valve" id="valve1"><div class="valve-cap"></div></div>
-            <span class="valve-number">1</span>
-          </div>
-          <div class="valve-group">
-            <div class="valve" id="valve2"><div class="valve-cap"></div></div>
-            <span class="valve-number">2</span>
-          </div>
-          <div class="valve-group">
-            <div class="valve" id="valve3"><div class="valve-cap"></div></div>
-            <span class="valve-number">3</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel piano-panel" id="pianoToolPanel" hidden>
-        <div class="piano-roll-panel">
-          <div class="piano-roll-header">
-            <h2><span class="instrument-tag piano-tag">Piano</span> Accords et réponses</h2>
-            <div class="piano-roll-actions">
-              <a href="chords.html" class="btn btn-primary">Ouvrir Chords Resolver</a>
-              <button type="button" id="addChordSlotBtn" class="btn">+ Accord</button>
-              <button type="button" id="clearPianoRollBtn" class="btn">Effacer</button>
-              <button type="button" id="jazzifyBtn" class="btn btn-primary" disabled>Jazzifier · trouver des réponses</button>
-              <button type="button" id="sendChordToTrumpetBtn" class="btn trumpet-action" disabled>Notes pour trompette</button>
-            </div>
-          </div>
-          <p class="subtitle">Construis et vérifie les accords ici. Jazzifier propose plusieurs réponses à écouter avant d'ajouter la meilleure à la fin.</p>
-          <p id="pianoRollFeedback" class="piano-roll-feedback" role="status" aria-live="polite"></p>
-          <div id="jazzVariationPicker" class="jazz-variation-picker" hidden></div>
-          <div id="pianoRollGrid" class="piano-roll-grid"></div>
-        </div>
-      </section>
-
-      <section class="panel saved-scores-panel" id="savedScoresPanel" hidden>
-        <div class="panel-header">
-          <h2><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/></svg>Partitions sauvegardées</h2>
-          <button type="button" id="saveScoreBtn" class="btn btn-primary"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h11l3 3v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>Sauvegarder la partition actuelle</button>
-        </div>
-        <p class="subtitle">Enregistrées dans ce navigateur — rejoue-les à tout moment, même après avoir chargé un autre fichier.</p>
-        <div id="savedScoresList" class="saved-scores-list"></div>
-      </section>
-
-    </section>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
-  <script src="app.js"></script>
-  <script type="importmap">
-    {"imports":{"three":"./vendor/three/three.module.min.js"}}
-  </script>
-  <script type="module" src="trumpet-3d.js"></script>
-  <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("sw.js").catch(() => { /* offline support is a bonus, not required */ });
-      });
-    }
-  </script>
+  <script src="trompetterie-shell.js?v=80"></script>
+  <script src="home.js?v=80"></script>
 </body>
 </html>

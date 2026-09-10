@@ -11,7 +11,7 @@ if(stage&&canvas){
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;
   const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(-5,5,3,-3,.1,100),root=new THREE.Group();scene.add(root);
   scene.add(new THREE.HemisphereLight(0xfff8ea,0x3c3425,3));const key=new THREE.DirectionalLight(0xffd48a,5);key.position.set(-4,6,8);scene.add(key);const rim=new THREE.DirectionalLight(0x9adbd1,2.6);rim.position.set(5,-2,4);scene.add(rim);
-  const valves=[null,null,null],home=[0,0,0],amount=[0,0,0],targets=[0,0,0],tops=[null,null,null];let bounds=null,pistonCenter=0,visible=false;
+  const valves=[null,null,null],home=[0,0,0],amount=[0,0,0],targets=[0,0,0],tops=[null,null,null];let bounds=null,pistonCenter=0,visible=document.body.dataset.viewMode==="instrument";
 
   function resize(){
     if(!stage.clientWidth||!stage.clientHeight||!bounds)return;const width=stage.clientWidth,height=stage.clientHeight;renderer.setSize(width,height,false);const aspect=width/height;

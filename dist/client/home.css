@@ -1,0 +1,14 @@
+@font-face{font-family:Miracle;src:url("assets/fonts/MiracleHistory.ttf") format("truetype");font-display:swap}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#f3efe5;color:#171a17;font-family:Inter,"Segoe UI",sans-serif}
+body{min-height:100dvh;background:radial-gradient(circle at 50% 38%,#fffdf6 0,#f3efe5 55%,#e9e1d1 100%)}
+
+.home-stage{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px}
+.home-eyebrow{display:block;font-size:11px;font-weight:800;letter-spacing:.2em;color:#8a8d81;text-transform:uppercase;margin-bottom:18px}
+.home-title{margin:0;font-family:Miracle,Georgia,serif;font-weight:500;font-size:clamp(64px,13vw,168px);line-height:.92;letter-spacing:-.01em;color:#171a17}
+.home-subtitle{max-width:420px;margin:26px 0 0;font-size:14px;line-height:1.6;color:#686a62}
+
+@media(max-width:700px){
+  .home-title{font-size:clamp(48px,17vw,96px)}
+  .home-subtitle{font-size:13px;padding:0 12px}
+}
