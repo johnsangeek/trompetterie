@@ -338,7 +338,7 @@ function loadScaleExercise(root,scaleKey,octave="auto"){
   if(playing)pause();
   let base,melody,startOctave=null;
   if(scaleKey==="allOctaves"){
-    const notes=[];for(let midi=54;midi<=84;midi++)if(midi%12===root)notes.push(midi);
+    const notes=[];for(let midi=54;midi<=90;midi++)if(midi%12===root)notes.push(midi);
     const sequence=[...notes,...notes.slice(0,-1).reverse()];
     base=notes[0];melody=sequence.map((note,beat)=>({beat,note,duration:.82,track:1,channel:0,velocity:.88}));
   }else{

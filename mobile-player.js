@@ -25,7 +25,7 @@
     const root=Number(params.get("root")||2),key=params.get("scale")||"blues";
     let melody,title;
     if(key==="allOctaves"){
-      const notes=[];for(let midi=54;midi<=84;midi++)if(midi%12===root)notes.push(midi);
+      const notes=[];for(let midi=54;midi<=90;midi++)if(midi%12===root)notes.push(midi);
       const seq=[...notes,...notes.slice(0,-1).reverse()];
       melody=seq.map((n,i)=>({beat:i,note:n,duration:.82,guide:true}));
       title=`${names[root]} trompette · toutes les octaves`;

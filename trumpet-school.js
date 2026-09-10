@@ -120,24 +120,33 @@
     btn.addEventListener("click",()=>{notePitchClass=i;$$("#notePicker button").forEach(b=>b.classList.toggle("active",b===btn));renderNoteLadder()});
     notePicker.appendChild(btn);
   });
-  function noteOctaveMidis(){const out=[];for(let midi=54;midi<=84;midi++)if(midi%12===notePitchClass)out.push(midi);return out}
+  const noteOctaveFingers=$("#noteOctaveFingers");
+  function fingerBadgesHTML(midi){
+    const vals=window.TrumpetFingerings.primary(midi);
+    return vals.length?vals.map(v=>`<span class="ts-mini-dot v${v}">${v}</span>`).join(""):'<span class="ts-mini-dot v0">0</span>';
+  }
+  function isHard(midi){return midi>window.TrumpetFingerings.highestWrittenMidi||midi<window.TrumpetFingerings.lowestWrittenMidi}
+  function noteOctaveMidis(){const out=[];for(let midi=54;midi<=90;midi++)if(midi%12===notePitchClass)out.push(midi);return out}
   let noteOctaveTimer=null;
   function renderNoteLadder(activeIndex=-1){
     noteOctaveLadder.innerHTML="";
     noteOctaveMidis().forEach((midi,i)=>{
-      const span=document.createElement("span");span.textContent=noteName(midi);span.className=i===activeIndex?"on":"";
+      const span=document.createElement("span");span.textContent=noteName(midi);
+      span.className=(i===activeIndex?"on ":"")+(isHard(midi)?"hard":"");
+      if(isHard(midi))span.title="Au-delà de la tessiture standard";
       noteOctaveLadder.appendChild(span);
     });
   }
   renderNoteLadder();
-  function stopNoteOctave(){clearTimeout(noteOctaveTimer);noteOctaveTimer=null;noteOctaveNow.textContent="—";renderNoteLadder()}
+  function stopNoteOctave(){clearTimeout(noteOctaveTimer);noteOctaveTimer=null;noteOctaveNow.textContent="—";noteOctaveFingers.innerHTML="";renderNoteLadder()}
   function playNoteOctaveSequence(sequence){
     ensureAudio();stopNoteOctave();
     const all=noteOctaveMidis();let i=0;
     const step=()=>{
-      if(i>=sequence.length){noteOctaveNow.textContent="—";renderNoteLadder();return}
+      if(i>=sequence.length){noteOctaveNow.textContent="—";noteOctaveFingers.innerHTML="";renderNoteLadder();return}
       const midi=sequence[i];
       noteOctaveNow.textContent=noteName(midi);
+      noteOctaveFingers.innerHTML=fingerBadgesHTML(midi);
       renderNoteLadder(all.indexOf(midi));
       tone(midi,audio.currentTime,.85);
       i++;noteOctaveTimer=setTimeout(step,950);

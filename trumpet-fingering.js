@@ -21,5 +21,5 @@ window.TrumpetFingerings=(()=>{
     return[...upper[((midi%12)+12)%12]];
   }
 
-  return Object.freeze({primary,lowestWrittenMidi:54});
+  return Object.freeze({primary,lowestWrittenMidi:54,highestWrittenMidi:84});
 })();

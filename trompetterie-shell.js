@@ -26,7 +26,7 @@
     gain.gain.setValueAtTime(.0001,now);gain.gain.exponentialRampToValueAtTime(.17,now+.018);gain.gain.exponentialRampToValueAtTime(.0001,now+.48);
     osc.connect(gain).connect(previewAudio.destination);osc.start(now);osc.stop(now+.5);
   }
-  function allOctaveMidis(rootValue){const out=[];for(let midi=54;midi<=84;midi++)if(midi%12===rootValue)out.push(midi);return out}
+  function allOctaveMidis(rootValue){const out=[];for(let midi=54;midi<=90;midi++)if(midi%12===rootValue)out.push(midi);return out}
   function renderScalePreview(){
     const panel=document.querySelector('[data-source-panel="scale"]');if(!panel||!root||!scale)return;
     let preview=panel.querySelector(".drawer-scale-preview");
@@ -36,8 +36,8 @@
     const midis=isAllOctaves?allOctaveMidis(rootValue):intervals.map(interval=>base+interval);
     const notes=preview.querySelector(".mini-scale-notes");notes.style.setProperty("--scale-count",String(midis.length));notes.innerHTML="";
     midis.forEach(midi=>{
-      const button=document.createElement("button"),name=`${noteLabels[midi%12]}${Math.floor(midi/12)-1}`,values=window.TrumpetFingerings.primary(midi);
-      button.type="button";button.className="mini-note";button.style.setProperty("--note-y",`${49-staffStep(compactMidi(midi))*2.15}px`);button.setAttribute("aria-label",`${name}, ${values.length?`pistons ${values.join(" et ")}`:"pistons libres"}`);
+      const button=document.createElement("button"),name=`${noteLabels[midi%12]}${Math.floor(midi/12)-1}`,values=window.TrumpetFingerings.primary(midi),hard=midi>window.TrumpetFingerings.highestWrittenMidi;
+      button.type="button";button.className="mini-note"+(hard?" hard":"");button.style.setProperty("--note-y",`${49-staffStep(compactMidi(midi))*2.15}px`);button.setAttribute("aria-label",`${name}, ${values.length?`pistons ${values.join(" et ")}`:"pistons libres"}${hard?", note avancée au-delà de la tessiture standard":""}`);
       button.innerHTML=`<span class="mini-note-head" aria-hidden="true"></span><strong>${name}</strong><span class="mini-fingering">${(values.length?values:[0]).map(value=>`<i class="finger-${value}">${value}</i>`).join("")}</span>`;
       button.addEventListener("click",()=>{previewNote(midi);notes.querySelectorAll(".mini-note").forEach(note=>note.classList.remove("sounding"));button.classList.add("sounding");setTimeout(()=>button.classList.remove("sounding"),430)});notes.appendChild(button);
     });
