@@ -2,6 +2,7 @@
 (()=>{
   const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
   const NAMES=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"];
+  const NAMES_EN=["C","C♯","D","E♭","E","F","F♯","G","A♭","A","B♭","B"];
   const noteName=midi=>`${NAMES[midi%12]}${Math.floor(midi/12)-1}`;
 
   let audio=null;
@@ -38,6 +39,19 @@
       card.classList.add("sounding");setTimeout(()=>card.classList.remove("sounding"),900);
     });
     harmonicRow.appendChild(card);
+  });
+
+  // Notes FR/EN
+  const translateGrid=$("#translateGrid");
+  NAMES.forEach((label,i)=>{
+    const midi=60+i,card=document.createElement("button");
+    card.type="button";card.className="ts-harmonic-note";
+    card.innerHTML=`<strong>${label}</strong><small>${NAMES_EN[i]}</small>`;
+    card.addEventListener("click",()=>{
+      ensureAudio();tone(midi,audio.currentTime,.7);
+      card.classList.add("sounding");setTimeout(()=>card.classList.remove("sounding"),700);
+    });
+    translateGrid.appendChild(card);
   });
 
   // Toutes les notes (full chromatic reference, F#3 to C6)
@@ -169,6 +183,8 @@
     {q:"Et celui du Ré5, une octave plus haut ?",options:["Pistons 1 et 3, comme au grave","Piston 1 seul","Piston 2 seul"],correct:1},
     {q:"Comment s'appelle l'exercice qui fait passer d'une harmonique à l'autre sans piston, juste avec l'air et les lèvres ?",options:["Un vibrato","Un lip slur","Un trille"],correct:1},
     {q:"Entre Do4 et Sol5, combien d'harmoniques ouvertes utilise-t-on en pratique ?",options:["3","5","7"],correct:1},
+    {q:"Sur une ressource en anglais, quelle lettre correspond au Ré français ?",options:["R","E","D"],correct:2},
+    {q:"Et le Fa♯ en anglais, ça s'écrit comment ?",options:["F♯","S♯","Fa#"],correct:0},
   ];
   let quizScore=0,quizAnswered=0;
   function renderQuiz(){

@@ -24,6 +24,7 @@
     <button type="button" data-tab="valves" role="tab" aria-selected="false">Les pistons</button>
     <button type="button" data-tab="harmonics" role="tab" aria-selected="false">Harmoniques</button>
     <button type="button" data-tab="notes" role="tab" aria-selected="false">Toutes les notes</button>
+    <button type="button" data-tab="translate" role="tab" aria-selected="false">Notes FR/EN</button>
     <button type="button" data-tab="drill" role="tab" aria-selected="false">Exercice</button>
     <button type="button" data-tab="gear" role="tab" aria-selected="false">Matériel</button>
     <button type="button" data-tab="quiz" role="tab" aria-selected="false">Quiz</button>
@@ -89,6 +90,13 @@
         <button type="button" class="ts-drill-btn stop" id="chromStop">Arrêter</button>
       </div>
       <div class="ts-chrom-grid" id="chromGrid"></div>
+    </section>
+
+    <section class="ts-panel" data-panel="translate">
+      <h2>Notes en français et en anglais</h2>
+      <p>Le français nomme les notes Do, Ré, Mi, Fa, Sol, La, Si (le solfège). La plupart des sites, applis et partitions qu'on trouve sur internet sont en anglais et utilisent des lettres&nbsp;: C, D, E, F, G, A, B. C'est la même chose, juste un autre alphabet pour les mêmes notes — utile à connaître pour ne pas être perdu·e face à une ressource en anglais.</p>
+      <div class="ts-translate-grid" id="translateGrid"></div>
+      <p class="ts-note">Repère facile&nbsp;: <strong>Do = C</strong>. À partir de là, les lettres suivent l'ordre alphabétique en montant (C, D, E, F, G, A, B) exactement comme Do, Ré, Mi, Fa, Sol, La, Si se suivent. Les alterations se traduisent pareil&nbsp;: ♯ reste "sharp" (#), ♭ reste "flat" (b) — donc Do♯ = C♯ (ou "C sharp"), et Mi♭ = E♭ (ou "E flat"). La numérotation d'octave ne change pas&nbsp;: Do4 = C4 (le "middle C" en anglais).</p>
     </section>
 
     <section class="ts-panel" data-panel="drill">

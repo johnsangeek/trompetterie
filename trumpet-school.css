@@ -52,7 +52,7 @@ body{min-height:100dvh;background:radial-gradient(circle at 50% 0%,#fffdf6 0,#f3
 .ts-drill-fingers{display:flex;justify-content:center;gap:4px;margin-top:8px;min-height:22px}
 .ts-drill-ladder span.hard{border:2px dashed var(--gold);background:#fff3d6;color:#8a5a06}
 
-.ts-harmonic-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin:18px 0}
+.ts-harmonic-row,.ts-translate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px;margin:18px 0}
 .ts-harmonic-note{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:78px;padding:16px 8px;border:1px solid var(--rule);border-radius:16px;background:rgba(255,253,246,.7);cursor:pointer;transition:.15s}
 .ts-harmonic-note:hover,.ts-harmonic-note:focus-visible{border-color:var(--gold);background:#fffaf0}
 .ts-harmonic-note.sounding{border-color:var(--gold);background:#fff0c9;transform:translateY(-2px)}
