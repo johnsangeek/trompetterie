@@ -43,6 +43,14 @@ body{min-height:100dvh;background:radial-gradient(circle at 50% 0%,#fffdf6 0,#f3
 .ts-valve-card strong{font-size:14px}
 .ts-valve-card small{color:var(--muted);font-size:11px}
 
+.ts-solfege-table{margin:16px 0;border:1px solid var(--rule);border-radius:14px;overflow:hidden;background:rgba(255,253,246,.7)}
+.ts-solfege-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--rule)}
+.ts-solfege-row:last-child{border-bottom:0}
+.ts-solfege-row>span{flex:1;font-size:13px}
+.ts-solfege-head{font-weight:800;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:rgba(217,149,23,.06)}
+.ts-solfege-table--icons .ts-solfege-row>span:first-child{flex:0 0 40px;display:flex;align-items:center;justify-content:center}
+.ts-note-icon{display:flex;align-items:center;justify-content:center}
+
 .ts-combo-table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13px}
 .ts-combo-table th{text-align:left;padding:8px 10px;color:var(--muted);font-size:10px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid var(--rule)}
 .ts-combo-table td{padding:10px;border-bottom:1px solid var(--rule)}
@@ -113,4 +121,7 @@ body{min-height:100dvh;background:radial-gradient(circle at 50% 0%,#fffdf6 0,#f3
   .ts-harmonic-note{min-width:64px}
   .ts-note-picker{grid-template-columns:repeat(4,1fr)}
   .ts-gear-grid{grid-template-columns:1fr}
+  .ts-solfege-row{gap:6px;padding:9px 10px}
+  .ts-solfege-row>span{font-size:11px}
+  .ts-solfege-table--icons .ts-solfege-row>span:first-child{flex:0 0 28px}
 }

@@ -26,6 +26,7 @@
     <button type="button" data-tab="notes" role="tab" aria-selected="false">Toutes les notes</button>
     <button type="button" data-tab="translate" role="tab" aria-selected="false">Notes FR/EN</button>
     <button type="button" data-tab="drill" role="tab" aria-selected="false">Exercice</button>
+    <button type="button" data-tab="solfege" role="tab" aria-selected="false">Solfège</button>
     <button type="button" data-tab="gear" role="tab" aria-selected="false">Matériel</button>
     <button type="button" data-tab="quiz" role="tab" aria-selected="false">Quiz</button>
   </nav>
@@ -139,6 +140,81 @@
         <button type="button" class="ts-drill-btn down" id="noteOctaveDown">↓ Descendre depuis l'aigu</button>
         <button type="button" class="ts-drill-btn up" id="noteOctaveUp">↑ Monter depuis le grave</button>
         <button type="button" class="ts-drill-btn stop" id="noteOctaveStop">Arrêter</button>
+      </div>
+    </section>
+
+    <section class="ts-panel" data-panel="solfege">
+      <h2>Notions de solfège</h2>
+      <p>Le solfège, c'est juste le vocabulaire et les symboles qui disent quoi jouer, quand, et comment. Voici l'essentiel pour lire une partition sans être perdu·e.</p>
+
+      <h3>Les figures de note (durée)</h3>
+      <p>Chaque forme de note dit combien de temps elle dure. La base&nbsp;: chaque figure vaut la moitié de la précédente.</p>
+      <div class="ts-solfege-table ts-solfege-table--icons">
+        <div class="ts-solfege-row ts-solfege-head"><span>Figure</span><span>Nom (FR)</span><span>Nom (EN)</span><span>Durée (en mesure à 4 temps)</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 24 16" width="26" height="18"><ellipse cx="12" cy="8" rx="8" ry="5.3" fill="none" stroke="#171a17" stroke-width="2" transform="rotate(-15 12 8)"/></svg></span><span>Ronde</span><span>Whole note</span><span>4 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 36" width="18" height="32"><ellipse cx="7" cy="29" rx="6.3" ry="4.3" fill="none" stroke="#171a17" stroke-width="2" transform="rotate(-15 7 29)"/><line x1="13" y1="29" x2="13" y2="3" stroke="#171a17" stroke-width="1.8"/></svg></span><span>Blanche</span><span>Half note</span><span>2 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 36" width="18" height="32"><ellipse cx="7" cy="29" rx="6.3" ry="4.3" fill="#171a17" transform="rotate(-15 7 29)"/><line x1="13" y1="29" x2="13" y2="3" stroke="#171a17" stroke-width="1.8"/></svg></span><span>Noire</span><span>Quarter note</span><span>1 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 36" width="18" height="32"><ellipse cx="7" cy="29" rx="6.3" ry="4.3" fill="#171a17" transform="rotate(-15 7 29)"/><line x1="13" y1="29" x2="13" y2="3" stroke="#171a17" stroke-width="1.8"/><path d="M13 3 C19 6,19 12,14 15" fill="none" stroke="#171a17" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Croche</span><span>Eighth note</span><span>1/2 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 36" width="18" height="32"><ellipse cx="7" cy="29" rx="6.3" ry="4.3" fill="#171a17" transform="rotate(-15 7 29)"/><line x1="13" y1="29" x2="13" y2="3" stroke="#171a17" stroke-width="1.8"/><path d="M13 3 C19 6,19 12,14 15" fill="none" stroke="#171a17" stroke-width="1.8" stroke-linecap="round"/><path d="M13 9 C19 12,19 18,14 21" fill="none" stroke="#171a17" stroke-width="1.8" stroke-linecap="round"/></svg></span><span>Double-croche</span><span>Sixteenth note</span><span>1/4 temps</span></div>
+      </div>
+      <p class="ts-note">Un <strong>point</strong> après une note ajoute la moitié de sa valeur&nbsp;: une blanche pointée vaut 2+1 = 3 temps, une noire pointée vaut 1+0,5 = 1,5 temps.</p>
+
+      <h3>Les silences</h3>
+      <p>À chaque figure de note correspond un silence de même durée&nbsp;: un moment où on ne joue pas, mais qui compte quand même dans la mesure.</p>
+      <div class="ts-solfege-table ts-solfege-table--icons">
+        <div class="ts-solfege-row ts-solfege-head"><span>Figure</span><span>Nom (FR)</span><span>Silence de…</span><span>Durée</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 20" width="20" height="20"><line x1="2" y1="8" x2="18" y2="8" stroke="#c8c0ac" stroke-width="1"/><rect x="5" y="8" width="10" height="4" fill="#171a17"/></svg></span><span>Pause</span><span>Ronde</span><span>4 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 20" width="20" height="20"><line x1="2" y1="12" x2="18" y2="12" stroke="#c8c0ac" stroke-width="1"/><rect x="5" y="8" width="10" height="4" fill="#171a17"/></svg></span><span>Demi-pause</span><span>Blanche</span><span>2 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 32" width="18" height="28"><path d="M13 4 L6 13 L12 16 L6 21 L14 29" fill="none" stroke="#171a17" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Soupir</span><span>Noire</span><span>1 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 24" width="18" height="22"><circle cx="8" cy="6" r="3" fill="#171a17"/><path d="M9 8 L16 20" stroke="#171a17" stroke-width="2.2" stroke-linecap="round"/></svg></span><span>Demi-soupir</span><span>Croche</span><span>1/2 temps</span></div>
+        <div class="ts-solfege-row"><span class="ts-note-icon"><svg viewBox="0 0 20 24" width="18" height="22"><circle cx="8" cy="4" r="2.6" fill="#171a17"/><circle cx="11" cy="10" r="2.6" fill="#171a17"/><path d="M12 12 L18 22" stroke="#171a17" stroke-width="2.2" stroke-linecap="round"/></svg></span><span>Quart de soupir</span><span>Double-croche</span><span>1/4 temps</span></div>
+      </div>
+
+      <h3>La mesure et le tempo</h3>
+      <p>Le <strong>chiffrage de mesure</strong> (par exemple 4/4) se lit en deux temps&nbsp;: le chiffre du haut dit combien de temps il y a par mesure, celui du bas dit quelle figure de note vaut un temps (4 = la noire).</p>
+      <div class="ts-fact-row">
+        <div class="ts-fact"><strong>4/4</strong><span>4 temps, la noire = 1 temps (le plus courant)</span></div>
+        <div class="ts-fact"><strong>3/4</strong><span>3 temps par mesure (valse)</span></div>
+        <div class="ts-fact"><strong>6/8</strong><span>2 temps composés de 3 croches chacun</span></div>
+      </div>
+      <p>Le <strong>tempo</strong> dit à quelle vitesse jouer, en battements par minute (BPM) — c'est exactement le chiffre que tu règles dans les modes Héros/Instrument/Partition. Les indications italiennes traditionnelles donnent une fourchette approximative&nbsp;:</p>
+      <div class="ts-solfege-table">
+        <div class="ts-solfege-row ts-solfege-head"><span>Terme</span><span>BPM environ</span><span>Sens</span></div>
+        <div class="ts-solfege-row"><span>Largo</span><span>40–60</span><span>Très lent, large</span></div>
+        <div class="ts-solfege-row"><span>Adagio</span><span>60–80</span><span>Lent</span></div>
+        <div class="ts-solfege-row"><span>Andante</span><span>76–108</span><span>Allant, tempo de marche</span></div>
+        <div class="ts-solfege-row"><span>Moderato</span><span>108–120</span><span>Modéré</span></div>
+        <div class="ts-solfege-row"><span>Allegro</span><span>120–168</span><span>Rapide, vif</span></div>
+        <div class="ts-solfege-row"><span>Presto</span><span>168–200</span><span>Très rapide</span></div>
+      </div>
+
+      <h3>Les altérations</h3>
+      <p>Elles changent la hauteur d'une note d'un demi-ton — exactement ce que font les pistons (voir l'onglet Pistons).</p>
+      <div class="ts-fact-row">
+        <div class="ts-fact"><strong>♯ Dièse</strong><span>monte d'un demi-ton</span></div>
+        <div class="ts-fact"><strong>♭ Bémol</strong><span>baisse d'un demi-ton</span></div>
+        <div class="ts-fact"><strong>♮ Bécarre</strong><span>annule l'altération</span></div>
+      </div>
+      <p class="ts-note">Une altération placée au début de la portée (l'<strong>armure</strong>) s'applique à toute la partition, sur toutes les octaves, jusqu'au changement suivant.</p>
+
+      <h3>Les nuances</h3>
+      <p>Elles indiquent le volume, de l'italien pour "doux" (piano) à "fort" (forte).</p>
+      <div class="ts-solfege-table">
+        <div class="ts-solfege-row ts-solfege-head"><span>Signe</span><span>Nom</span><span>Sens</span></div>
+        <div class="ts-solfege-row"><span>pp</span><span>Pianissimo</span><span>très doux</span></div>
+        <div class="ts-solfege-row"><span>p</span><span>Piano</span><span>doux</span></div>
+        <div class="ts-solfege-row"><span>mf</span><span>Mezzo-forte</span><span>moyennement fort</span></div>
+        <div class="ts-solfege-row"><span>f</span><span>Forte</span><span>fort</span></div>
+        <div class="ts-solfege-row"><span>ff</span><span>Fortissimo</span><span>très fort</span></div>
+      </div>
+      <p class="ts-note"><strong>Crescendo</strong> (de plus en plus fort) et <strong>decrescendo/diminuendo</strong> (de plus en plus doux) se notent souvent avec des "chapeaux" ouverts (&lt; et &gt;) sous la portée.</p>
+
+      <h3>Liaisons et articulation</h3>
+      <p>Deux liaisons se ressemblent sur le papier mais ne font pas la même chose&nbsp;: une <strong>liaison de prolongation</strong> relie deux notes de <em>même hauteur</em> et additionne leurs durées (une seule note tenue, sans rejouer). Une <strong>liaison de phrasé</strong> (un slur) relie des notes <em>différentes</em> et dit de les jouer liées, sans redonner un coup de langue entre elles — à la trompette, c'est justement ce qu'on travaille avec le lip slur (voir l'onglet Harmoniques).</p>
+      <div class="ts-fact-row">
+        <div class="ts-fact"><strong>Staccato •</strong><span>note courte et détachée</span></div>
+        <div class="ts-fact"><strong>Accent &gt;</strong><span>note plus appuyée</span></div>
+        <div class="ts-fact"><strong>Legato</strong><span>notes liées, sans coupure</span></div>
       </div>
     </section>
 
