@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "trumpet-trainer-v109";
+const CACHE_NAME = "trumpet-trainer-v110";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -60,6 +60,7 @@ const CORE_ASSETS = [
   "./tracks/all-blues.json",
   "./tracks/take-the-a-train.json",
   "./tracks/four-brothers.json",
+  "./tracks/hey-pachuco.json",
   "./tracks/stolen-moments.json",
   "./tracks/cherokee.json",
   "./tracks/it-don-t-mean-a-thing.json",
