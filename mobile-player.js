@@ -106,7 +106,9 @@
   }
   function toggleSheetMode(force){
     sheetMode=typeof force==="boolean"?force:!sheetMode;
+    if(sheetMode&&playing)pause();
     partitionView.classList.toggle("sheet-mode",sheetMode);
+    body.classList.toggle("sheet-page",sheetMode);
     sheetWrap.hidden=!sheetMode;
     sheetToggle.setAttribute("aria-pressed",String(sheetMode));
     sheetToggle.textContent=sheetMode?"Défilement":"Page fixe";
@@ -151,7 +153,7 @@
   function play(count=true){ensureAudio();if(count&&pausedBeat===0)pausedBeat=-5/spb();startTime=audio.currentTime-pausedBeat*spb();playing=true;scheduled=song.all.findLastIndex?.(n=>n.beat<pausedBeat-.02)??-1;scheduledSet=new Set();metroBeat=Math.floor(pausedBeat)-1;$("#mpPlay").innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="5" width="4" height="14" rx="1"/><rect x="13.5" y="5" width="4" height="14" rx="1"/></svg>';$("#mpPlay").setAttribute("aria-label","Pause");timer=setInterval(tick,25);tick();draw()}
   function pause(){if(!playing)return;pausedBeat=beat();playing=false;clearInterval(timer);nodes.forEach(n=>{try{n.stop()}catch{}});nodes=[];$("#mpPlay").innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';$("#mpPlay").setAttribute("aria-label","Lecture");$("#mpCount").textContent="PAUSE";draw()}
   function restartWithCountIn(){if(playing)pause();pausedBeat=0;scheduled=-1;scheduledSet=new Set();metroBeat=-1;draw();performance(0);setTimeout(()=>play(true),130)}
-  function setMode(next){mode=next;body.dataset.mode=mode;body.dataset.viewMode=mode;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));window.dispatchEvent(new CustomEvent("hero:view-mode",{detail:{mode}}));body.classList.remove("menu-open");setTimeout(resize,50)}
+  function setMode(next){mode=next;body.dataset.mode=mode;body.dataset.viewMode=mode;document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));window.dispatchEvent(new CustomEvent("hero:view-mode",{detail:{mode}}));body.classList.remove("menu-open");if(mode!=="partition"&&sheetMode)toggleSheetMode(false);setTimeout(resize,50)}
   $("#mpPlay").onclick=()=>playing?pause():play(pausedBeat===0);$("#mpMetro").onclick=()=>$("#mpMetro").classList.toggle("active");$("#mpLoop").onclick=()=>$("#mpLoop").classList.toggle("active");$("#mpBpm").oninput=()=>{$("#mpBpmOut").textContent=$("#mpBpm").value;const was=playing;if(was)pause();if(was&&pausedBeat>0)play(false)};document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));$("#mpMenu").onclick=()=>body.classList.add("menu-open");$("#mpDrawerClose").onclick=()=>body.classList.remove("menu-open");window.addEventListener("resize",resize);
   $("#mpTransposeDown").onclick=()=>applyTranspose(-1);$("#mpTransposeUp").onclick=()=>applyTranspose(1);
   $("#mpRestart").onclick=restartWithCountIn;

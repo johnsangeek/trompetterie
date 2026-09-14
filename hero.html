@@ -113,6 +113,8 @@
         </div>
       </div>
 
+      <button type="button" class="sheet-toggle" id="sheetToggle" aria-pressed="false">Page fixe</button>
+
       <div class="transport-settings">
         <label class="bpm-control">BPM
           <input id="bpmInput" type="range" min="30" max="200" value="92" />
@@ -196,7 +198,6 @@
       </aside>
 
       <div class="score-strip" id="scoreStrip" aria-label="Partition">
-        <button type="button" class="sheet-toggle" id="sheetToggle" aria-pressed="false">Page fixe</button>
         <span class="score-strip-clef" aria-hidden="true">𝄞</span>
         <canvas id="scoreCanvas"></canvas>
         <div class="sheet-wrap" id="sheetWrap" hidden><canvas id="sheetCanvas"></canvas></div>

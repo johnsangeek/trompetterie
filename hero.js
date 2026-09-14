@@ -253,7 +253,9 @@ function drawSheet(beat){
 }
 function toggleSheetMode(force){
   sheetMode=typeof force==="boolean"?force:!sheetMode;
+  if(sheetMode&&playing)pause();
   els.scoreStrip.classList.toggle("sheet-mode",sheetMode);
+  document.body.classList.toggle("sheet-page",sheetMode);
   els.sheetWrap.hidden=!sheetMode;
   els.sheetToggle.setAttribute("aria-pressed",String(sheetMode));
   els.sheetToggle.textContent=sheetMode?"Défilement":"Page fixe";
@@ -405,7 +407,7 @@ async function loadCatalogTrack(id,autoPlay=false){
     if(playing)pause();els.playState.textContent="CHARGEMENT";
     const response=await fetch(`tracks/${encodeURIComponent(id)}.json`);if(!response.ok)throw new Error("Morceau introuvable");
     const entry=await response.json(),loaded=catalogEntryToSong(entry);if(!loaded.melody.length)throw new Error("Aucune piste trompette exploitable");
-    song=loaded;importedSong=true;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;resetTranspose();els.title.textContent=entry.name||id;
+    song=loaded;importedSong=false;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;resetTranspose();els.title.textContent=entry.name||id;
     els.bpm.value=Math.min(200,Math.max(30,loaded.sourceBpm));els.bpmOut.textContent=els.bpm.value;renderMixer();updateUI(0);resizeCanvas();
     toast(`${loaded.melody.length} notes de trompette · ${loaded.stems.length} pistes d’accompagnement`);if(autoPlay)play(true);return true;
   }catch(error){els.playState.textContent="PRÊT";toast(error.message||"Impossible de charger ce morceau.",true);return false}
@@ -431,7 +433,9 @@ function loadScaleExercise(root,scaleKey,octave="auto"){
 }
 function setLearningMode(mode){
   currentViewMode=mode;document.body.dataset.viewMode=mode;const suffix=document.querySelector(".brand i");if(suffix)suffix.textContent=mode==="partition"?"Partition":mode==="instrument"?"Instrument":"Hero";
-  $("#heroInstrument")?.setAttribute("aria-hidden",String(mode!=="instrument"));window.dispatchEvent(new CustomEvent("hero:view-mode",{detail:{mode}}));setTimeout(resizeCanvas,40);return true;
+  $("#heroInstrument")?.setAttribute("aria-hidden",String(mode!=="instrument"));window.dispatchEvent(new CustomEvent("hero:view-mode",{detail:{mode}}));setTimeout(resizeCanvas,40);
+  if(mode!=="partition"&&sheetMode)toggleSheetMode(false);
+  return true;
 }
 window.addEventListener("trompetterie:play",async event=>{
   const choice=event.detail;if(!setLearningMode(choice.mode))return;
