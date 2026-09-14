@@ -22,6 +22,7 @@ body.drawer-open .music-drawer{transform:translateX(0);visibility:visible;transi
 .stage-copy{padding-left:34px}
 body[data-view-mode="partition"] .stage-copy,body[data-view-mode="partition"] .highway-shell,body[data-view-mode="partition"] .coach-panel{opacity:0;pointer-events:none}
 body[data-view-mode="partition"] .score-strip{width:min(1320px,92vw);height:190px;bottom:50%;transform:translate(-50%,50%)}
+body[data-view-mode="partition"] .score-strip.sheet-mode{height:min(80vh,860px)}
 body[data-view-mode="partition"] .score-strip-clef{left:18px}
 body[data-view-mode="instrument"] .stage-copy,body[data-view-mode="instrument"] .highway-shell{opacity:0;pointer-events:none}
 body[data-view-mode="instrument"] .hero-instrument{display:block}

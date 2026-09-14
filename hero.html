@@ -195,9 +195,11 @@
         </div>
       </aside>
 
-      <div class="score-strip" aria-label="Partition défilante">
+      <div class="score-strip" id="scoreStrip" aria-label="Partition">
+        <button type="button" class="sheet-toggle" id="sheetToggle" aria-pressed="false">Page fixe</button>
         <span class="score-strip-clef" aria-hidden="true">𝄞</span>
         <canvas id="scoreCanvas"></canvas>
+        <div class="sheet-wrap" id="sheetWrap" hidden><canvas id="sheetCanvas"></canvas></div>
       </div>
     </section>
 
