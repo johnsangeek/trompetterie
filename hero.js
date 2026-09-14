@@ -250,7 +250,7 @@ function pause(finished=false){
   if(!audioCtx)return;pausedBeat=finished?song.endBeat:currentBeat();playing=false;clearInterval(scheduler);stopNodes();els.play.classList.remove("playing");els.playState.textContent=finished?"TERMINÉ":"EN PAUSE";updateUI(pausedBeat);draw();
 }
 function restart(autoPlay=false){
-  if(playing)pause();pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;updateUI(0);draw();if(autoPlay)setTimeout(()=>play(false),130);
+  if(playing)pause();pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;updateUI(0);draw();if(autoPlay)setTimeout(()=>play(true),130);
 }
 
 function updateUI(beat){
@@ -376,7 +376,7 @@ window.addEventListener("trompetterie:play",async event=>{
   else await loadCatalogTrack(choice.music,true);
 });
 
-els.play.addEventListener("click",()=>playing?pause():play());els.restart.addEventListener("click",()=>restart(false));
+els.play.addEventListener("click",()=>playing?pause():play());els.restart.addEventListener("click",()=>restart(true));
 els.transposeDown.addEventListener("click",()=>applyTranspose(-1));els.transposeUp.addEventListener("click",()=>applyTranspose(1));
 els.bpm.addEventListener("input",()=>{const was=playing,beat=currentBeat();if(was)pause();pausedBeat=beat;els.bpmOut.textContent=els.bpm.value;updateUI(beat);if(was&&pausedBeat>0)play();});
 els.import.addEventListener("click",()=>els.midiInput.click());els.midiInput.addEventListener("change",()=>els.midiInput.files[0]&&importMidi(els.midiInput.files[0]));
