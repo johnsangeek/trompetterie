@@ -1,0 +1,51 @@
+{
+  "id": "mood-jazz-accord",
+  "name": "Accord de fou — Mood Jazz (essai)",
+  "bpm": 91,
+  "duration": 7.912,
+  "notes": [
+    {"time": 0.000, "midi": 50, "duration": 1.319},
+    {"time": 1.319, "midi": 49, "duration": 1.319},
+    {"time": 2.637, "midi": 58, "duration": 1.319},
+    {"time": 3.956, "midi": 50, "duration": 1.319},
+    {"time": 5.275, "midi": 53, "duration": 1.319},
+    {"time": 6.593, "midi": 57, "duration": 1.319}
+  ],
+  "stems": [
+    {
+      "instrument": "Nappe d'accords",
+      "isLead": false,
+      "notes": [
+        {"time": 0.000, "midi": 50, "duration": 1.319},
+        {"time": 0.000, "midi": 53, "duration": 1.319},
+        {"time": 0.000, "midi": 57, "duration": 1.319},
+        {"time": 0.000, "midi": 60, "duration": 1.319},
+
+        {"time": 1.319, "midi": 49, "duration": 1.319},
+        {"time": 1.319, "midi": 52, "duration": 1.319},
+        {"time": 1.319, "midi": 55, "duration": 1.319},
+        {"time": 1.319, "midi": 58, "duration": 1.319},
+
+        {"time": 2.637, "midi": 58, "duration": 1.319},
+        {"time": 2.637, "midi": 62, "duration": 1.319},
+        {"time": 2.637, "midi": 65, "duration": 1.319},
+        {"time": 2.637, "midi": 69, "duration": 1.319},
+
+        {"time": 3.956, "midi": 50, "duration": 1.319},
+        {"time": 3.956, "midi": 53, "duration": 1.319},
+        {"time": 3.956, "midi": 57, "duration": 1.319},
+        {"time": 3.956, "midi": 60, "duration": 1.319},
+
+        {"time": 5.275, "midi": 53, "duration": 1.319},
+        {"time": 5.275, "midi": 57, "duration": 1.319},
+        {"time": 5.275, "midi": 60, "duration": 1.319},
+        {"time": 5.275, "midi": 64, "duration": 1.319},
+
+        {"time": 6.593, "midi": 57, "duration": 1.319},
+        {"time": 6.593, "midi": 61, "duration": 1.319},
+        {"time": 6.593, "midi": 64, "duration": 1.319},
+        {"time": 6.593, "midi": 67, "duration": 1.319}
+      ]
+    }
+  ]
+}
