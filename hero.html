@@ -120,6 +120,12 @@
         </label>
         <label class="switch"><input id="metronomeToggle" type="checkbox" checked /><span></span>Métronome</label>
         <label class="switch"><input id="loopToggle" type="checkbox" checked /><span></span>Boucle</label>
+        <div class="transpose-control" role="group" aria-label="Transposition">
+          <span class="transpose-label">Ton</span>
+          <button type="button" id="transposeDown" aria-label="Transposer d'un demi-ton plus bas">−</button>
+          <output id="transposeOutput">0</output>
+          <button type="button" id="transposeUp" aria-label="Transposer d'un demi-ton plus haut">+</button>
+        </div>
       </div>
 
       <button class="import-button" id="importButton" type="button">Importer un MIDI</button>

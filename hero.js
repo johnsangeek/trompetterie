@@ -11,6 +11,7 @@ const els = {
   midiInput: $("#midiInput"), concert: $("#concertMidiToggle"), overlay: $("#dropOverlay"), toast: $("#toast"),
   shell: $(".highway-shell"), scoreCanvas: $("#scoreCanvas"), mixerWrap: $("#mixerWrap"),
   mixerButton: $("#mixerButton"), mixerPanel: $("#mixerPanel"), mixerClose: $("#mixerClose"), mixerTracks: $("#mixerTracks"),
+  transposeDown: $("#transposeDown"), transposeUp: $("#transposeUp"), transposeOut: $("#transposeOutput"),
 };
 const ctx2d = els.canvas.getContext("2d");
 const scoreCtx = els.scoreCanvas.getContext("2d");
@@ -42,6 +43,18 @@ const demoStem={instrument:"Piano",muted:false,volume:.55};
 const demoBacking=chordRoots.flatMap((root,bar)=>[0,4,7].map(interval=>({beat:bar*4,note:root+interval,duration:3.55,track:2,channel:1,velocity:.22,stem:demoStem})));
 const demoSong={melody:demoMelody,all:[...demoMelody,...demoBacking].sort((a,b)=>a.beat-b.beat),stems:[demoStem],endBeat:32,ppq:480,sourceBpm:92};
 let song=demoSong;
+let transposeOffset=0;
+function resetTranspose(){transposeOffset=0;if(els.transposeOut)els.transposeOut.textContent="0";}
+function applyTranspose(delta){
+  if(!delta)return;
+  // song.melody's note objects are the same references held inside song.all
+  // (every song-construction path builds `all` from `[...melody,...backing]`),
+  // so mutating song.all alone updates both without double-applying the shift.
+  song.all.forEach(n=>n.note+=delta);
+  transposeOffset+=delta;
+  els.transposeOut.textContent=transposeOffset>0?`+${transposeOffset}`:String(transposeOffset);
+  updateUI(currentBeat());draw();
+}
 const SCALE_INTERVALS={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]};
 const SCALE_LABELS={blues:"Blues",major:"Majeure",minor:"Mineure naturelle",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure",allOctaves:"Toutes les octaves"};
 
@@ -288,7 +301,7 @@ function parseMidi(buffer){
 function scoreTrack(t){const avg=t.notes.reduce((s,n)=>s+n.note,0)/t.notes.length;return avg+t.notes.length*.035-t.notes.filter(n=>n.duration>8).length*4;}
 
 async function importMidi(file){
-  try{const parsed=parseMidi(await file.arrayBuffer());if(playing)pause();song=parsed;importedSong=true;pausedBeat=0;els.title.textContent=file.name.replace(/\.midi?$/i,"");els.bpm.value=Math.min(200,Math.max(30,parsed.sourceBpm));els.bpmOut.textContent=els.bpm.value;renderMixer();toast(`Mélodie détectée : ${parsed.trackName} • ${parsed.melody.length} notes`);updateUI(0);draw();}
+  try{const parsed=parseMidi(await file.arrayBuffer());if(playing)pause();song=parsed;importedSong=true;pausedBeat=0;resetTranspose();els.title.textContent=file.name.replace(/\.midi?$/i,"");els.bpm.value=Math.min(200,Math.max(30,parsed.sourceBpm));els.bpmOut.textContent=els.bpm.value;renderMixer();toast(`Mélodie détectée : ${parsed.trackName} • ${parsed.melody.length} notes`);updateUI(0);draw();}
   catch(error){toast(error.message||"Impossible de lire ce MIDI.",true)}
 }
 let toastTimer;function toast(message,error=false){clearTimeout(toastTimer);els.toast.textContent=message;els.toast.style.background=error?"#9d312c":"#171a17";els.toast.classList.add("show");toastTimer=setTimeout(()=>els.toast.classList.remove("show"),3500)}
@@ -328,7 +341,7 @@ async function loadCatalogTrack(id,autoPlay=false){
     if(playing)pause();els.playState.textContent="CHARGEMENT";
     const response=await fetch(`tracks/${encodeURIComponent(id)}.json`);if(!response.ok)throw new Error("Morceau introuvable");
     const entry=await response.json(),loaded=catalogEntryToSong(entry);if(!loaded.melody.length)throw new Error("Aucune piste trompette exploitable");
-    song=loaded;importedSong=true;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;els.title.textContent=entry.name||id;
+    song=loaded;importedSong=true;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;resetTranspose();els.title.textContent=entry.name||id;
     els.bpm.value=Math.min(200,Math.max(30,loaded.sourceBpm));els.bpmOut.textContent=els.bpm.value;renderMixer();updateUI(0);resizeCanvas();
     toast(`${loaded.melody.length} notes de trompette · ${loaded.stems.length} pistes d’accompagnement`);if(autoPlay)play(true);return true;
   }catch(error){els.playState.textContent="PRÊT";toast(error.message||"Impossible de charger ce morceau.",true);return false}
@@ -348,7 +361,7 @@ function loadScaleExercise(root,scaleKey,octave="auto"){
   }
   const tonic=[0,4,7].map(interval=>({beat:0,note:base-12+interval,duration:melody.length-.15,track:2,channel:1,velocity:.2}));
   melody.forEach(note=>note.isGuide=true);const scaleStem={instrument:"Accord de référence",muted:false,volume:.45};tonic.forEach(note=>note.stem=scaleStem);
-  song={melody,all:[...melody,...tonic].sort((a,b)=>a.beat-b.beat),stems:[scaleStem],endBeat:melody.length,ppq:480,sourceBpm:bpm()};importedSong=false;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;
+  song={melody,all:[...melody,...tonic].sort((a,b)=>a.beat-b.beat),stems:[scaleStem],endBeat:melody.length,ppq:480,sourceBpm:bpm()};importedSong=false;pausedBeat=0;scheduledThrough=-1;scheduledMetro=-1;resetTranspose();
   els.title.textContent=scaleKey==="allOctaves"?`${NOTE_FR[root]} trompette · toutes les octaves`:`Gamme ${SCALE_LABELS[scaleKey]} · ${NOTE_FR[root]}${startOctave} trompette`;
   renderMixer();updateUI(0);resizeCanvas();
 }
@@ -359,11 +372,12 @@ function setLearningMode(mode){
 window.addEventListener("trompetterie:play",async event=>{
   const choice=event.detail;if(!setLearningMode(choice.mode))return;
   ensureAudio();if(choice.source==="scale"){loadScaleExercise(choice.root,choice.scale,choice.octave);play(true);}
-  else if(choice.music==="demo"){if(playing)pause();song=demoSong;importedSong=false;pausedBeat=0;els.title.textContent="Premiers pas — démo originale";renderMixer();restart(false);play(true);}
+  else if(choice.music==="demo"){if(playing)pause();song=demoSong;importedSong=false;pausedBeat=0;resetTranspose();els.title.textContent="Premiers pas — démo originale";renderMixer();restart(false);play(true);}
   else await loadCatalogTrack(choice.music,true);
 });
 
 els.play.addEventListener("click",()=>playing?pause():play());els.restart.addEventListener("click",()=>restart(false));
+els.transposeDown.addEventListener("click",()=>applyTranspose(-1));els.transposeUp.addEventListener("click",()=>applyTranspose(1));
 els.bpm.addEventListener("input",()=>{const was=playing,beat=currentBeat();if(was)pause();pausedBeat=beat;els.bpmOut.textContent=els.bpm.value;updateUI(beat);if(was)play()});
 els.import.addEventListener("click",()=>els.midiInput.click());els.midiInput.addEventListener("change",()=>els.midiInput.files[0]&&importMidi(els.midiInput.files[0]));
 els.mixerButton.addEventListener("click",()=>{const open=els.mixerPanel.hidden;els.mixerPanel.hidden=!open;els.mixerButton.setAttribute("aria-expanded",String(open))});
