@@ -47,6 +47,12 @@ function load(){
   try{const saved=JSON.parse(localStorage.getItem(STORAGE)||"null");if(Array.isArray(saved)&&saved.length)state.progression=saved.filter(x=>Array.isArray(x)&&x.length)}catch(_e){}
   try{const layout=JSON.parse(localStorage.getItem(TIMELINE_STORAGE)||"null");if(layout&&Array.isArray(layout.items)){state.timeline=layout.items;state.timelineMeasures=[4,8,16,32].includes(layout.measures)?layout.measures:8}}catch(_e){}
   if(!state.progression.length) state.progression=[canonicalVoicing(2,"min9",58),canonicalVoicing(7,"dom7",55)];
+  if(new URLSearchParams(location.search).get("preset")==="mood-jazz"){
+    state.progression=[canonicalVoicing(5,"maj",58),canonicalVoicing(2,"sus4",58),canonicalVoicing(0,"dim7",58),canonicalVoicing(10,"maj7",58)];
+    state.timeline=[{start:0,duration:0.25},{start:0.25,duration:0.75},{start:1,duration:0.25},{start:1.25,duration:0.75}];
+    state.timelineMeasures=4;
+    $("timelineTempo").value=120;
+  }
   normalizeTimeline();
   state.selected=state.progression.length-1; state.notes=new Set(state.progression[state.selected]);
 }
@@ -136,6 +142,91 @@ function suggestions(){
   if(state.selected===null||!state.progression[state.selected])return[];const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);if(!source)return[];
   return targetIdeas(source).map((idea,i)=>{const direction=i<4?"up":"down",root=pc(source.root+idea.offset),notes=directedVoicing(root,idea.q,direction,sourceNotes);return{...idea,root,quality:idea.q,direction,notes}});
 }
+
+// --- Hooktheory Trends: real "what comes next" statistics from popular songs,
+// layered alongside the hand-written voice-leading ideas above. The token is
+// a free-tier Hooktheory account key - visible client-side since this site
+// has no backend to hide it behind, accepted tradeoff for a free account.
+const HOOKTHEORY_ACTIVKEY="cfd1b00c230215ffa09efd8deb78eaeb";
+const HOOKTHEORY_TRENDS_URL="https://api.hooktheory.com/v1/trends/nodes";
+const trendsCache=new Map();
+
+// Semitone offset from the progression's inferred tonic -> Hooktheory scale-
+// degree node id. Only plain diatonic degrees + common borrowed (flat) ones -
+// anything else falls back to "1" (treat as tonic).
+const DEGREE_ID_BY_OFFSET={0:"1",2:"2",3:"b3",4:"3",5:"4",7:"5",8:"b6",9:"6",10:"b7",11:"7"};
+
+// Roman numeral (as returned in chord_HTML) -> offset from tonic + chord
+// quality, using the standard diatonic 7th-chord qualities of a major scale
+// (I/IV: maj7, ii/iii/vi: min7, V: dom7). Only the clean, unambiguous cases
+// are handled; anything else (inversions, secondary dominants, vii°) is
+// skipped rather than guessed at.
+const ROMAN_DEGREES={
+  I:{offset:0,triad:"maj",seventh:"maj7"}, ii:{offset:2,triad:"min",seventh:"min7"},
+  iii:{offset:4,triad:"min",seventh:"min7"}, IV:{offset:5,triad:"maj",seventh:"maj7"},
+  V:{offset:7,triad:"maj",seventh:"dom7"}, vi:{offset:9,triad:"min",seventh:"min7"},
+};
+const BORROWED_DEGREES={"♭III":3,"♭VI":8,"♭VII":10};
+
+function parseTrendChordHTML(html){
+  const clean=html.replace(/&#9837;/g,"♭").replace(/&deg;/g,"°");
+  const borrowedMatch=Object.keys(BORROWED_DEGREES).find(k=>clean===k);
+  if(borrowedMatch)return{offset:BORROWED_DEGREES[borrowedMatch],quality:"maj"};
+  const numeralOnly=clean.replace(/<sup>7<\/sup>$/,"");
+  const degree=ROMAN_DEGREES[numeralOnly];
+  if(!degree)return null;
+  const hasSeventh=/<sup>7<\/sup>$/.test(clean);
+  return{offset:degree.offset,quality:hasSeventh?degree.seventh:degree.triad};
+}
+
+async function fetchTrendSuggestions(){
+  if(state.selected===null||!state.progression[state.selected])return[];
+  const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);
+  if(!source)return[];
+  const tonic=inferTonic();
+  const offset=pc(source.root-tonic.root);
+  const degreeId=DEGREE_ID_BY_OFFSET[offset]||"1";
+
+  if(trendsCache.has(degreeId))return applyTrendResults(trendsCache.get(degreeId),tonic.root,sourceNotes);
+  try{
+    const response=await fetch(`${HOOKTHEORY_TRENDS_URL}?cp=${degreeId}`,{headers:{Authorization:`Bearer ${HOOKTHEORY_ACTIVKEY}`}});
+    if(!response.ok)return[];
+    const data=await response.json();
+    trendsCache.set(degreeId,data);
+    return applyTrendResults(data,tonic.root,sourceNotes);
+  }catch(_e){return[]}
+}
+
+function applyTrendResults(data,tonicRoot,sourceNotes){
+  const results=[];
+  for(const node of data){
+    const parsed=parseTrendChordHTML(node.chord_HTML);
+    if(!parsed)continue;
+    const root=pc(tonicRoot+parsed.offset);
+    const notes=directedVoicing(root,parsed.quality,"up",sourceNotes);
+    results.push({root,quality:parsed.quality,probability:node.probability,notes});
+    if(results.length>=4)break;
+  }
+  return results;
+}
+
+function renderTrends(){
+  const wrap=$("trends");if(!wrap)return;
+  if(state.selected===null){$("trendsSummary").textContent="Sélectionne un accord pour voir les statistiques réelles.";wrap.innerHTML="";return}
+  $("trendsSummary").textContent="Chargement des tendances Hooktheory...";
+  fetchTrendSuggestions().then(items=>{
+    if(!items.length){$("trendsSummary").textContent="Pas de données claires pour cet accord.";wrap.innerHTML="";return}
+    $("trendsSummary").innerHTML=`D'après des milliers de morceaux populaires (<a href="https://www.hooktheory.com/trends" target="_blank" rel="noopener">Hooktheory Trends</a>), voici ce qui suit le plus souvent :`;
+    wrap.innerHTML="";
+    items.forEach(item=>{
+      const card=document.createElement("article");card.className="answer-card trend-card";
+      card.innerHTML=`<div class="answer-top"><span>${Math.round(item.probability*100)}% des cas</span></div><h3>${chordName(item.root,item.quality)}</h3><div class="voice-line">${item.notes.map(n=>`<span>${midiLabel(n)}</span>`).join("")}</div><div class="answer-actions"><button class="listen-btn">Écouter la suite</button><button class="add-answer-btn">+ Ajouter</button></div>`;
+      card.querySelector(".listen-btn").onclick=()=>playSequence(state.progression[state.selected],item.notes);
+      card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push(item.notes);state.selected=state.progression.length-1;state.notes=new Set(item.notes);save();renderAll();toast(`${chordName(item.root,item.quality)} ajouté à la progression`)};
+      wrap.appendChild(card);
+    });
+  });
+}
 function renderAnswers(){
   const wrap=$("answers"),items=suggestions().filter(x=>state.direction==="both"||x.direction===state.direction);wrap.innerHTML="";
   if(state.selected===null){$("sourceSummary").textContent="Sélectionne un accord de la progression pour lancer le calcul.";return}
@@ -185,6 +276,27 @@ function closestVoicing(root,quality,reference){
   return best.notes;
 }
 
+// One step of "add color": plain triads/7ths gain their 9th (or 13th for a
+// dominant 7), already-extended chords are left alone - so clicking twice
+// doesn't keep stacking indefinitely. Root and quality family (major/minor/
+// dominant) are preserved, only the extension changes.
+const JAZZIFY_MAP={maj:"maj9",min:"min9",dom7:"dom13",maj7:"maj9",min7:"min9"};
+function jazzifyProgression(){
+  if(!state.progression.length)return;
+  let reference=state.progression[0],changed=0;
+  state.progression=state.progression.map(notes=>{
+    const source=detect(notes);
+    if(!source||!JAZZIFY_MAP[source.quality]){reference=notes;return notes}
+    changed++;
+    const jazzed=closestVoicing(source.root,JAZZIFY_MAP[source.quality],reference);
+    reference=jazzed;
+    return jazzed;
+  });
+  if(state.selected!==null)state.notes=new Set(state.progression[state.selected]);
+  save();renderAll();
+  toast(changed?`${changed} accord${changed>1?"s":""} jazzifié${changed>1?"s":""}`:"Rien à jazzifier ici");
+}
+
 function progressionVariants(){
   if(state.progression.length<2)return[];
   const enrichedMap={maj:"maj7",maj7:"maj9",min:"min7",min7:"min9",dom7:"dom9",dom9:"dom13",sus4:"dom7"};
@@ -221,7 +333,7 @@ function exportMidi(){
   const chunk=(name,data)=>[...name].map(c=>c.charCodeAt(0)).concat([(data.length>>>24)&255,(data.length>>>16)&255,(data.length>>>8)&255,data.length&255],data);const header=[77,84,104,100,0,0,0,6,0,0,0,1,1,224],bytes=new Uint8Array(header.concat(chunk("MTrk",track))),url=URL.createObjectURL(new Blob([bytes],{type:"audio/midi"})),a=document.createElement("a");a.href=url;a.download=`progression-${Date.now()}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("MIDI exporté");
 }
 
-function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderAnswers();renderProgressionIdeas();renderCadences()}
+function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderAnswers();renderTrends();renderProgressionIdeas();renderCadences()}
 
 renderSelects();load();renderAll();
 $("placeChordBtn").onclick=()=>{const root=Number($("rootSelect").value),quality=$("qualitySelect").value;state.notes=new Set(canonicalVoicing(root,quality));renderAll();playNotes([...state.notes])};
@@ -239,3 +351,4 @@ $("playTimelineBtn").onclick=playTimeline;$("stopTimelineBtn").onclick=stopTimel
 const timelineCanvas=$("timelineCanvas");timelineCanvas.addEventListener("dragover",event=>event.preventDefault());timelineCanvas.addEventListener("drop",event=>{event.preventDefault();const own=event.dataTransfer.getData("text/timeline-index"),fromTop=event.dataTransfer.getData("text/chord-index"),value=own!==""?own:fromTop;if(value!=="")moveTimelineChord(Number(value),event.clientX)});
 const timelineViewport=$("timelineViewport");timelineViewport.addEventListener("scroll",()=>timelineCanvas.style.setProperty("--roll-scroll-x",`${timelineViewport.scrollLeft}px`),{passive:true});
 document.querySelectorAll(".direction-btn").forEach(btn=>btn.onclick=()=>{state.direction=btn.dataset.direction;document.querySelectorAll(".direction-btn").forEach(b=>b.classList.toggle("active",b===btn));renderAnswers()});
+$("jazzifyBtn").onclick=jazzifyProgression;
