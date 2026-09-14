@@ -18,6 +18,7 @@ const ctx2d = els.canvas.getContext("2d");
 const scoreCtx = els.scoreCanvas.getContext("2d");
 const sheetCtx = els.sheetCanvas.getContext("2d");
 let sheetMode = false;
+let sheetHitTargets = [];
 const NOTE_FR = ["Do", "Do♯", "Ré", "Mi♭", "Mi", "Fa", "Fa♯", "Sol", "La♭", "La", "Si♭", "Si"];
 const COLORS = {1:"#ff655d",2:"#4fd0c1",3:"#f1be43"};
 
@@ -216,7 +217,7 @@ function drawSheet(beat){
   const h=els.sheetCanvas.clientHeight||(marginTop+lineSpacing+30);
   sheetCtx.clearRect(0,0,w,h);
   const totalBeats=Math.max(1,song.endBeat),lines=Math.max(1,Math.ceil(totalBeats/beatsPerLine));
-  const usableWidth=Math.max(80,w-marginLeft-marginRight),beatWidth=usableWidth/beatsPerLine,measuresPerLine=beatsPerLine/4;
+  const usableWidth=Math.max(80,w-marginLeft-marginRight),beatWidth=usableWidth/(beatsPerLine+.28),measuresPerLine=beatsPerLine/4;
   const staffInk="rgba(44,48,45,.72)";
   for(let li=0;li<lines;li++){
     const staffTop=marginTop+li*lineSpacing,staffBottom=staffTop+staffHeight;
@@ -227,13 +228,15 @@ function drawSheet(beat){
     sheetCtx.fillText("𝄞",marginLeft-40,staffBottom-1);
   }
   let previousOctaveShift=0;
+  sheetHitTargets=[];
   song.melody.forEach(n=>{
     const li=Math.floor(n.beat/beatsPerLine);
     if(li>=lines||li<0)return;
-    const beatInLine=n.beat-li*beatsPerLine,x=marginLeft+beatInLine*beatWidth+beatWidth*.28;
+    const beatInLine=n.beat-li*beatsPerLine,rawX=marginLeft+beatInLine*beatWidth+beatWidth*.28,x=Math.min(rawX,w-marginRight-16);
     const staffTop=marginTop+li*lineSpacing,staffBottom=staffTop+staffHeight;
     const midi=displayMidi(n.note),fitted=fitPitchToCompactStaff(midi),y=staffTop+lineGap*3.9-(fitted.midi-60)*2.4;
     const active=n.beat<=beat+.04&&n.beat+n.duration>beat;
+    sheetHitTargets.push({x,y,note:n});
     sheetCtx.save();
     sheetCtx.strokeStyle=staffInk;sheetCtx.lineWidth=1;drawLedgerLines(sheetCtx,x,y,staffTop,staffBottom,lineGap);
     sheetCtx.save();sheetCtx.translate(x,y);sheetCtx.rotate(-.22);sheetCtx.scale(1.45,.9);
@@ -440,6 +443,21 @@ window.addEventListener("trompetterie:play",async event=>{
 els.play.addEventListener("click",()=>playing?pause():play());els.restart.addEventListener("click",()=>restart(true));
 els.transposeDown.addEventListener("click",()=>applyTranspose(-1));els.transposeUp.addEventListener("click",()=>applyTranspose(1));
 els.sheetToggle.addEventListener("click",()=>toggleSheetMode());
+function previewNote(note){
+  ensureAudio();
+  synthNote({note},audioCtx.currentTime+.015,.5,true);
+}
+els.sheetCanvas.addEventListener("click",(e)=>{
+  const rect=els.sheetCanvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  let best=null,bestDist=Infinity;
+  for(const t of sheetHitTargets){
+    const dx=mx-t.x,dy=my-t.y,d=dx*dx+dy*dy;
+    if(d<bestDist){bestDist=d;best=t;}
+  }
+  if(best&&bestDist<26*26)previewNote(best.note.note);
+});
+els.sheetCanvas.style.cursor="pointer";
 els.bpm.addEventListener("input",()=>{const was=playing,beat=currentBeat();if(was)pause();pausedBeat=beat;els.bpmOut.textContent=els.bpm.value;updateUI(beat);if(was&&pausedBeat>0)play();});
 els.import.addEventListener("click",()=>els.midiInput.click());els.midiInput.addEventListener("change",()=>els.midiInput.files[0]&&importMidi(els.midiInput.files[0]));
 els.mixerButton.addEventListener("click",()=>{const open=els.mixerPanel.hidden;els.mixerPanel.hidden=!open;els.mixerButton.setAttribute("aria-expanded",String(open))});

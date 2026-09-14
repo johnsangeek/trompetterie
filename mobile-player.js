@@ -54,6 +54,7 @@
   function drawScore(now){const w=score.clientWidth,h=score.clientHeight,center=w*.42,top=h*.43,gap=9;sctx.clearRect(0,0,w,h);sctx.strokeStyle="rgba(34,39,34,.5)";for(let i=0;i<5;i++){sctx.beginPath();sctx.moveTo(55,top+i*gap);sctx.lineTo(w,top+i*gap);sctx.stroke()}sctx.strokeStyle="#e0a01c";sctx.lineWidth=3;sctx.beginPath();sctx.moveTo(center,top-35);sctx.lineTo(center,top+65);sctx.stroke();for(const n of windowed(song.melody,now,4,8)){const x=center+(n.beat-now)*46,fitted=fit(n.note),y=top+44-staffStep(fitted.midi)*gap/2;if(x<55||x>w+10)continue;if(y>top+gap*4+gap/2||y<top-gap/2){sctx.strokeStyle="rgba(34,39,34,.65)";sctx.lineWidth=1;sctx.beginPath();sctx.moveTo(x-10,y);sctx.lineTo(x+10,y);sctx.stroke()}sctx.fillStyle=n.beat<=now+.05&&n.beat+n.duration>now?"#df9d18":"#20241f";sctx.beginPath();sctx.ellipse(x,y,7,5,-.25,0,Math.PI*2);sctx.fill();sctx.strokeStyle="#20241f";sctx.lineWidth=1.4;sctx.beginPath();sctx.moveTo(x+6,y);sctx.lineTo(x+6,y-25);sctx.stroke();sctx.font="700 9px Segoe UI";sctx.textAlign="center";sctx.fillText(noteName(n.note),x,top+69);const vals=window.TrumpetFingerings.primary(n.note),fingerY=Math.max(12,y-30);sctx.font="800 8px Segoe UI";sctx.fillText(vals.length?vals.join(""):"0",x,fingerY);if(fitted.octaves){sctx.fillStyle="#9a6b12";sctx.font="800 7px Segoe UI";sctx.fillText(`${Math.abs(fitted.octaves)===1?"8":"15"}${fitted.octaves>0?"va":"vb"}`,x+13,y+3)}}}
   const partitionView=document.querySelector(".mp-partition"),sheetToggle=$("#mpSheetToggle"),sheetWrap=$("#mpSheetWrap"),sheetCanvas=$("#mpSheetCanvas"),sctx2=sheetCanvas.getContext("2d");
   let sheetMode=false;
+  let sheetHitTargets=[];
   function resizeSheetCanvas(){
     const d=Math.min(devicePixelRatio||1,2),width=sheetWrap.clientWidth||score.clientWidth,beatsPerLine=8,lineSpacing=104,marginTop=34;
     const totalBeats=Math.max(1,song.endBeat),lines=Math.max(1,Math.ceil(totalBeats/beatsPerLine));
@@ -68,7 +69,7 @@
     const h=sheetCanvas.clientHeight||(marginTop+lineSpacing+26);
     sctx2.clearRect(0,0,w,h);
     const totalBeats=Math.max(1,song.endBeat),lines=Math.max(1,Math.ceil(totalBeats/beatsPerLine));
-    const usableWidth=Math.max(60,w-marginLeft-marginRight),beatWidth=usableWidth/beatsPerLine,measuresPerLine=beatsPerLine/4;
+    const usableWidth=Math.max(60,w-marginLeft-marginRight),beatWidth=usableWidth/(beatsPerLine+.3),measuresPerLine=beatsPerLine/4;
     const ink="rgba(34,39,34,.55)";
     for(let li=0;li<lines;li++){
       const staffTop=marginTop+li*lineSpacing,staffBottom=staffTop+staffHeight;
@@ -78,13 +79,15 @@
       sctx2.fillStyle="#171a17";sctx2.font="30px 'Times New Roman',Georgia,serif";sctx2.textAlign="left";sctx2.textBaseline="alphabetic";
       sctx2.fillText("𝄞",marginLeft-26,staffBottom-1);
     }
+    sheetHitTargets=[];
     song.melody.forEach(n=>{
       const li=Math.floor(n.beat/beatsPerLine);
       if(li>=lines||li<0)return;
-      const beatInLine=n.beat-li*beatsPerLine,x=marginLeft+beatInLine*beatWidth+beatWidth*.3;
+      const beatInLine=n.beat-li*beatsPerLine,rawX=marginLeft+beatInLine*beatWidth+beatWidth*.3,x=Math.min(rawX,w-marginRight-14);
       const staffTop=marginTop+li*lineSpacing,staffBottom=staffTop+staffHeight;
       const fitted=fit(n.note),y=staffTop+39-staffStep(fitted.midi)*gap/2;
       const active=n.beat<=now+.04&&n.beat+n.duration>now;
+      sheetHitTargets.push({x,y,note:n});
       if(y>staffBottom+gap/2||y<staffTop-gap/2){
         sctx2.strokeStyle="rgba(34,39,34,.65)";sctx2.lineWidth=1;
         sctx2.beginPath();sctx2.moveTo(x-9,y);sctx2.lineTo(x+9,y);sctx2.stroke();
@@ -110,6 +113,16 @@
     if(sheetMode)resizeSheetCanvas();
   }
   sheetToggle.onclick=()=>toggleSheetMode();
+  sheetCanvas.addEventListener("click",(e)=>{
+    const rect=sheetCanvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+    let best=null,bestDist=Infinity;
+    for(const t of sheetHitTargets){
+      const dx=mx-t.x,dy=my-t.y,d=dx*dx+dy*dy;
+      if(d<bestDist){bestDist=d;best=t;}
+    }
+    if(best&&bestDist<24*24){ensureAudio();synth(best.note.note,audio.currentTime+.015,.5,.16)}
+  });
   function draw(){const now=beat();drawHero(now);if(sheetMode)drawSheet(now);else drawScore(now);if(playing)requestAnimationFrame(draw)}
   function performance(now){const active=activeAt(song.melody,now),vals=active?window.TrumpetFingerings.primary(active.note):[];$("#mpNote").textContent=active?noteName(active.note):"—";$("#mpFingers").innerHTML=(vals.length?vals:[0]).map(v=>`<i class="${v?`p${v}`:"off"}">${v}</i>`).join("");window.dispatchEvent(new CustomEvent("hero:performance-state",{detail:{valves:vals,note:active?noteName(active.note):"—"}}))}
   function tick(){

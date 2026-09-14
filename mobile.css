@@ -11,7 +11,7 @@
 .mp-sheet-wrap{display:none;position:absolute;inset:0;overflow-y:auto;pointer-events:auto;background:#f8f4ea}
 .mp-partition.sheet-mode .mp-sheet-wrap{display:block}
 .mp-partition.sheet-mode #mpScore,.mp-partition.sheet-mode .mp-score-clef{display:none}
-#mpSheetCanvas{display:block;width:100%}
+#mpSheetCanvas{display:block;width:100%;cursor:pointer}
 .mp-transpose{margin-top:22px}.mp-transpose small{display:block;color:#9a9e94;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}
 .mp-transpose-row{display:flex;align-items:center;gap:12px;margin-top:8px}
 .mp-transpose-row button{display:grid;place-items:center;width:36px;height:36px;border:1px solid #454a42;border-radius:50%;background:#2c302b;color:#fff;font-weight:800;font-size:16px}
