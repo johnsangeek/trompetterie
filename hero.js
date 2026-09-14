@@ -378,7 +378,7 @@ window.addEventListener("trompetterie:play",async event=>{
 
 els.play.addEventListener("click",()=>playing?pause():play());els.restart.addEventListener("click",()=>restart(false));
 els.transposeDown.addEventListener("click",()=>applyTranspose(-1));els.transposeUp.addEventListener("click",()=>applyTranspose(1));
-els.bpm.addEventListener("input",()=>{const was=playing,beat=currentBeat();if(was)pause();pausedBeat=beat;els.bpmOut.textContent=els.bpm.value;updateUI(beat);if(was)play()});
+els.bpm.addEventListener("input",()=>{const was=playing,beat=currentBeat();if(was)pause();pausedBeat=beat;els.bpmOut.textContent=els.bpm.value;updateUI(beat);if(was&&pausedBeat>0)play();});
 els.import.addEventListener("click",()=>els.midiInput.click());els.midiInput.addEventListener("change",()=>els.midiInput.files[0]&&importMidi(els.midiInput.files[0]));
 els.mixerButton.addEventListener("click",()=>{const open=els.mixerPanel.hidden;els.mixerPanel.hidden=!open;els.mixerButton.setAttribute("aria-expanded",String(open))});
 els.mixerClose.addEventListener("click",()=>{els.mixerPanel.hidden=true;els.mixerButton.setAttribute("aria-expanded","false")});
