@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="chords-midi.css" />
   <link rel="stylesheet" href="chords-roll.css" />
   <link rel="stylesheet" href="chords-piano-roll.css?v=1" />
+  <link rel="stylesheet" href="chords-transform.css?v=1" />
 </head>
 <body>
   <header class="resolver-topbar">
@@ -64,7 +65,7 @@
         <label>Durée de l’accord sélectionné
           <select id="chordDurationSelect"><option value="0.25">1 temps</option><option value="0.5">2 temps</option><option value="1" selected>1 mesure</option><option value="2">2 mesures</option><option value="4">4 mesures</option></select>
         </label>
-        <span class="timeline-help">Glisse un bloc d’accord sur une autre mesure.</span>
+        <span class="timeline-help">Glisse pour déplacer · double-clique pour transformer.</span>
       </div>
       <div id="timelineViewport" class="timeline-viewport">
         <div id="timelineCanvas" class="timeline-canvas"></div>
@@ -145,7 +146,25 @@
     </section>
   </main>
 
+  <dialog id="chordTransformDialog" class="chord-transform-dialog" aria-labelledby="transformTitle">
+    <form method="dialog" class="transform-shell">
+      <header class="transform-header">
+        <div><span class="eyebrow">Reharmonisation locale</span><h2 id="transformTitle">Transformer l’accord</h2></div>
+        <button value="cancel" class="transform-close" aria-label="Fermer">×</button>
+      </header>
+      <p id="transformIntro" class="transform-intro"></p>
+      <section class="transform-section">
+        <div class="transform-section-title"><span>01</span><div><strong>Même accord</strong><small>La couleur ne bouge pas. Seule la disposition des notes change.</small></div></div>
+        <div id="transformVoicings" class="transform-grid"></div>
+      </section>
+      <section class="transform-section">
+        <div class="transform-section-title"><span>02</span><div><strong>Changer la couleur</strong><small>La fondamentale reste en place, mais l’accord prend un autre caractère.</small></div></div>
+        <div id="transformStyles" class="transform-grid transform-style-grid"></div>
+      </section>
+    </form>
+  </dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="chords.js?v=7"></script>
+  <script src="chords.js?v=8"></script>
 </body>
 </html>

@@ -11,6 +11,8 @@ const QUALITY = {
   min9:{label:"Mineur 9",symbol:"m9",intervals:[0,3,7,10,14]}, dom9:{label:"Dominante 9",symbol:"9",intervals:[0,4,7,10,14]},
   dom13:{label:"Dominante 13",symbol:"13",intervals:[0,4,7,10,14,21]}, min7b5:{label:"Demi-diminué",symbol:"m7♭5",intervals:[0,3,6,10]},
   dim7:{label:"Diminué 7",symbol:"dim7",intervals:[0,3,6,9]}, sus4:{label:"Sus 4",symbol:"sus4",intervals:[0,5,7]},
+  maj6:{label:"Majeur 6",symbol:"6",intervals:[0,4,7,9]}, min6:{label:"Mineur 6",symbol:"m6",intervals:[0,3,7,9]},
+  maj69:{label:"Majeur 6/9",symbol:"6/9",intervals:[0,2,4,7,9]},
 };
 const STORAGE = "trumpetTrainerChordProgression";
 const TIMELINE_STORAGE = "trumpetTrainerChordTimeline";
@@ -115,7 +117,7 @@ function renderTimeline(){
   const corner=document.createElement("div");corner.className="timeline-corner";corner.textContent="CHORDS";header.appendChild(corner);
   for(let measure=0;measure<state.timelineMeasures;measure++){const number=document.createElement("div");number.className="measure-number";number.style.left=`${labelWidth+measure*measureWidth}px`;number.style.width=`${measureWidth}px`;number.innerHTML=`<strong>${measure+1}</strong>4 / 4`;header.appendChild(number);for(let beat=0;beat<4;beat++){const line=document.createElement("i");line.className=beat===0?"measure-line":"beat-line";line.style.left=`${labelWidth+measure*measureWidth+beat*measureWidth/4}px`;canvas.appendChild(line)}}
   for(let midi=high;midi>=low;midi--){const rowIndex=high-midi,key=document.createElement("div"),row=document.createElement("div"),isBlack=[1,3,6,8,10].includes(pc(midi));key.className=`roll-key ${isBlack?"black":"white"}`;key.style.top=`${top+rowIndex*rowHeight}px`;key.style.height=`${rowHeight}px`;key.innerHTML=`<strong>${flMidiLabel(midi)}</strong><small>${midiLabel(midi)}</small>`;row.className=`roll-row ${isBlack?"black":""}`;row.style.top=key.style.top;row.style.width=`${state.timelineMeasures*measureWidth}px`;row.style.height=key.style.height;canvas.append(row,key)}
-  state.timeline.forEach((item,index)=>{const notes=state.progression[index];if(!notes)return;const found=detect(notes),left=labelWidth+item.start*measureWidth,width=Math.max(18,Math.min(item.duration,state.timelineMeasures-item.start)*measureWidth-4),block=document.createElement("div");block.className=`chord-lane-block ${index===state.selected?"selected":""}`;block.style.left=`${left+2}px`;block.style.width=`${width}px`;block.draggable=true;block.innerHTML=`<strong>${found?chordName(found.root,found.quality):"Accord"}</strong><span>M.${Math.floor(item.start)+1} · ${item.duration<1?Math.round(item.duration*4)+" temps":item.duration+" mesure"+(item.duration>1?"s":"")}</span>`;block.onclick=()=>{state.selected=index;state.notes=new Set(notes);$("chordDurationSelect").value=String(item.duration);renderAll();playNotes(notes)};block.ondragstart=event=>{event.dataTransfer.setData("text/timeline-index",String(index));block.classList.add("dragging")};block.ondragend=()=>block.classList.remove("dragging");header.appendChild(block);
+  state.timeline.forEach((item,index)=>{const notes=state.progression[index];if(!notes)return;const found=detect(notes),left=labelWidth+item.start*measureWidth,width=Math.max(18,Math.min(item.duration,state.timelineMeasures-item.start)*measureWidth-4),block=document.createElement("div");block.className=`chord-lane-block ${index===state.selected?"selected":""}`;block.style.left=`${left+2}px`;block.style.width=`${width}px`;block.draggable=true;block.title="Double-cliquer pour changer le voicing ou le style";block.setAttribute("aria-label",`${found?chordName(found.root,found.quality):"Accord"}, double-cliquer pour transformer`);block.innerHTML=`<strong>${found?chordName(found.root,found.quality):"Accord"}</strong><span>M.${Math.floor(item.start)+1} · ${item.duration<1?Math.round(item.duration*4)+" temps":item.duration+" mesure"+(item.duration>1?"s":"")}</span>`;block.onclick=()=>{state.selected=index;state.notes=new Set(notes);$("chordDurationSelect").value=String(item.duration);document.querySelectorAll(".chord-lane-block").forEach(itemBlock=>itemBlock.classList.toggle("selected",itemBlock===block));renderPiano();renderIdentity();renderProgression();renderVoicings();renderAnswers();renderTrends();renderProgressionIdeas();renderCadences();playNotes(notes)};block.ondblclick=event=>{event.preventDefault();event.stopPropagation();openChordTransform(index)};block.ondragstart=event=>{event.dataTransfer.setData("text/timeline-index",String(index));block.classList.add("dragging")};block.ondragend=()=>block.classList.remove("dragging");header.appendChild(block);
     notes.forEach(midi=>{if(midi<low||midi>high)return;const note=document.createElement("div");note.className="roll-note";note.style.left=`${left+3}px`;note.style.top=`${top+(high-midi)*rowHeight+1}px`;note.style.width=`${Math.max(12,width-3)}px`;canvas.appendChild(note)})});
   if(!state.progression.length){const empty=document.createElement("div");empty.className="empty-roll-message";empty.textContent="Ajoute ou importe des accords pour remplir la grille.";canvas.appendChild(empty)}
   document.querySelectorAll("[data-measures]").forEach(button=>button.classList.toggle("active",Number(button.dataset.measures)===state.timelineMeasures));
@@ -362,6 +364,46 @@ function closestVoicing(root,quality,reference){
   const refMean=reference.reduce((a,b)=>a+b,0)/reference.length;let best=null;
   for(let center=48;center<=72;center+=12){const notes=canonicalVoicing(root,quality,center),mean=notes.reduce((a,b)=>a+b,0)/notes.length,score=Math.abs(mean-refMean);if(!best||score<best.score)best={notes,score}}
   return best.notes;
+}
+
+function styleTransformIdeas(sourceNotes,found){
+  const family=qualityFamily(found.quality);
+  const specs=[
+    {style:"Jazz",quality:family==="dominant"?"dom13":family==="minor"?"min9":"maj9",description:"Les extensions donnent plus de profondeur sans déplacer la fondamentale."},
+    {style:"Bossa nova",quality:family==="dominant"?"dom9":family==="minor"?"min6":"maj69",description:"Une couleur douce en 6e ou 6/9, ronde et très naturelle sur un accompagnement bossa."},
+    {style:"Blues",quality:family==="minor"?"min7":"dom7",description:"La septième apporte la petite tension expressive typique du blues."},
+    {style:"Classique",quality:family==="minor"?"min":"maj",description:"Une triade nette et équilibrée, sans extension : la couleur la plus pure."}
+  ];
+  const seen=new Set();
+  return specs.map(spec=>({...spec,root:found.root,notes:closestVoicing(found.root,spec.quality,sourceNotes)})).filter(idea=>{const signature=idea.notes.join(",");if(seen.has(signature))return false;seen.add(signature);return true});
+}
+
+function replaceProgressionChord(index,notes,message){
+  if(index<0||index>=state.progression.length)return;
+  state.progression[index]=[...notes].sort((a,b)=>a-b);state.selected=index;state.notes=new Set(state.progression[index]);save();renderAll();
+  const dialog=$("chordTransformDialog");if(dialog.open)dialog.close();toast(message);
+}
+
+function transformCard({eyebrow,title,notes,description,index}){
+  const card=document.createElement("article");card.className="transform-card";
+  card.innerHTML=`<span class="transform-card-kicker">${eyebrow}</span><h3>${title}</h3><div class="transform-card-notes">${notes.map(note=>`<span>${midiLabel(note)} <small>${flMidiLabel(note)}</small></span>`).join("")}</div><p>${description}</p><div class="transform-card-actions"><button type="button" class="transform-listen">Écouter</button><button type="button" class="transform-apply">Appliquer</button></div>`;
+  card.querySelector(".transform-listen").onclick=()=>playNotes(notes);
+  card.querySelector(".transform-apply").onclick=()=>replaceProgressionChord(index,notes,`${title} appliqué à l’accord ${index+1}`);
+  return card;
+}
+
+function openChordTransform(index){
+  const sourceNotes=state.progression[index];if(!sourceNotes)return;const found=detect(sourceNotes);if(!found)return;
+  state.selected=index;state.notes=new Set(sourceNotes);renderAll();
+  $("transformTitle").textContent=`${displayChordName(found,sourceNotes)} — choisir une variation`;
+  $("transformIntro").textContent=`Seul l’accord ${String(index+1).padStart(2,"0")} sera modifié. Sa place et sa durée restent exactement les mêmes.`;
+  const voicings=$("transformVoicings"),styles=$("transformStyles");voicings.innerHTML="";styles.innerHTML="";
+  const sourceSignature=[...sourceNotes].sort((a,b)=>a-b).join(",");
+  const alternatives=buildVoicingIdeas(sourceNotes,found).filter(idea=>idea.notes.join(",")!==sourceSignature);
+  alternatives.forEach(idea=>voicings.appendChild(transformCard({eyebrow:"Voicing",title:displayChordName(found,idea.notes),notes:idea.notes,description:`${idea.label}. ${idea.description}`,index})));
+  if(!alternatives.length)voicings.innerHTML='<p class="transform-empty">Ce voicing est déjà la position la plus simple.</p>';
+  styleTransformIdeas(sourceNotes,found).forEach(idea=>styles.appendChild(transformCard({eyebrow:idea.style,title:chordName(idea.root,idea.quality),notes:idea.notes,description:idea.description,index})));
+  $("chordTransformDialog").showModal();
 }
 
 // One step of "add color": plain triads/7ths gain their 9th (or 13th for a
