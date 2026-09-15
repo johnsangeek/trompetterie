@@ -41,6 +41,7 @@
         <select id="drawerScale">
           <option value="blues" selected>Blues</option><option value="major">Majeure</option><option value="minor">Mineure naturelle</option>
           <option value="pentatonic">Pentatonique majeure</option><option value="minorPentatonic">Pentatonique mineure</option>
+          <option value="allOctaves">Une note, toutes les octaves</option>
         </select>
       </label>
       <label>Tessiture
@@ -61,14 +62,17 @@
           <option value="b-y-t">B.Y.T.</option>
           <option value="billie-s-bounce">Billie's Bounce</option>
           <option value="cherokee">Cherokee</option>
-          <option value="four-brothers">Four Brothers</option>
+          <option value="espana-cani">España Cañí (Paso Doble)</option>
+          <option value="four-brothers">Four Brothers</option><option value="hey-pachuco">Hey Pachuco!</option>
           <option value="it-don-t-mean-a-thing">It Don't Mean a Thing</option>
           <option value="mack-the-knife">Mack the Knife</option>
           <option value="misty">Misty</option>
+          <option value="mood-jazz-accord">Accord de fou — Mood Jazz</option>
           <option value="moanin">Moanin'</option>
           <option value="new-york-new-york">New York, New York</option>
           <option value="on-green-dolphin-street">On Green Dolphin Street</option>
-          <option value="satin-doll">Satin Doll</option>
+          <option value="reveille">Le Réveil (Reveille)</option>
+          <option value="satin-doll">Satin Doll</option><option value="say-my-name">Say My Name</option>
           <option value="soda-daoud">Soda — Daoud</option>
           <option value="st-thomas">St. Thomas</option>
           <option value="stolen-moments">Stolen Moments</option>
@@ -112,6 +116,8 @@
         </div>
       </div>
 
+      <button type="button" class="sheet-toggle" id="sheetToggle" aria-pressed="false">Page fixe</button>
+
       <div class="transport-settings">
         <label class="bpm-control">BPM
           <input id="bpmInput" type="range" min="30" max="200" value="92" />
@@ -119,6 +125,12 @@
         </label>
         <label class="switch"><input id="metronomeToggle" type="checkbox" checked /><span></span>Métronome</label>
         <label class="switch"><input id="loopToggle" type="checkbox" checked /><span></span>Boucle</label>
+        <div class="transpose-control" role="group" aria-label="Transposition">
+          <span class="transpose-label">Ton</span>
+          <button type="button" id="transposeDown" aria-label="Transposer d'un demi-ton plus bas">−</button>
+          <output id="transposeOutput">0</output>
+          <button type="button" id="transposeUp" aria-label="Transposer d'un demi-ton plus haut">+</button>
+        </div>
       </div>
 
       <button class="import-button" id="importButton" type="button">Importer un MIDI</button>
@@ -188,9 +200,10 @@
         </div>
       </aside>
 
-      <div class="score-strip" aria-label="Partition défilante">
+      <div class="score-strip" id="scoreStrip" aria-label="Partition">
         <span class="score-strip-clef" aria-hidden="true">𝄞</span>
         <canvas id="scoreCanvas"></canvas>
+        <div class="sheet-wrap" id="sheetWrap" hidden><canvas id="sheetCanvas"></canvas></div>
       </div>
     </section>
 

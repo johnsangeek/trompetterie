@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "trumpet-trainer-v93";
+const CACHE_NAME = "trumpet-trainer-v130";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -36,6 +36,9 @@ const CORE_ASSETS = [
   "./app.js",
   "./trumpet-3d.js",
   "./trumpet-fingering.js",
+  "./trumpet-school.html",
+  "./trumpet-school.css",
+  "./trumpet-school.js",
   "./assets/trumpet/trumpet.glb",
   "./assets/trumpet-samples/C4.mp3",
   "./assets/trumpet-samples/F4.mp3",
@@ -57,14 +60,19 @@ const CORE_ASSETS = [
   "./tracks/all-blues.json",
   "./tracks/take-the-a-train.json",
   "./tracks/four-brothers.json",
+  "./tracks/hey-pachuco.json",
   "./tracks/stolen-moments.json",
   "./tracks/cherokee.json",
+  "./tracks/espana-cani.json",
   "./tracks/it-don-t-mean-a-thing.json",
   "./tracks/moanin.json",
   "./tracks/satin-doll.json",
+  "./tracks/say-my-name.json",
   "./tracks/misty.json",
+  "./tracks/mood-jazz-accord.json",
   "./tracks/mack-the-knife.json",
   "./tracks/on-green-dolphin-street.json",
+  "./tracks/reveille.json",
   "./tracks/billie-s-bounce.json",
   "./tracks/st-thomas.json",
   "./tracks/new-york-new-york.json",
