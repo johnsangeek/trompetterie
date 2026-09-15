@@ -50,3 +50,13 @@
   .voicing-empty { display: grid; }
   .voicing-empty span { text-align: left; }
 }
+
+.answer-card.context-card {
+  border-top: 3px solid var(--gold);
+  background: linear-gradient(145deg, #fffaf0, #f5eedf);
+}
+
+.context-card .voice-line span:last-child {
+  color: #fff;
+  background: var(--night);
+}

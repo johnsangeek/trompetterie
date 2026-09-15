@@ -158,14 +158,42 @@ function directedVoicing(root,quality,direction,sourceNotes){
   }
   candidates.sort((a,b)=>a.score-b.score);return candidates[0]?.notes||canonicalVoicing(root,quality,60);
 }
+
+function meanPitch(notes){return notes.reduce((sum,note)=>sum+note,0)/Math.max(1,notes.length)}
+function movementCost(from,to){const a=[...from].sort((x,y)=>x-y),b=[...to].sort((x,y)=>x-y),count=Math.min(a.length,b.length);let cost=Math.abs(a.length-b.length)*4;for(let i=0;i<count;i++)cost+=Math.abs(a[i]-b[i]);return cost}
+function responseDirection(from,to){return meanPitch(to)>=meanPitch(from)?"up":"down"}
+function openMajorLift(root,sourceNotes){
+  const triad=directedVoicing(root,"maj","up",sourceNotes);let top=root;while(top<=Math.max(...triad))top+=12;if(top<=84)return[...triad,top].sort((a,b)=>a-b);return triad;
+}
+function subtleNinth(sourceNotes,source){
+  const notes=[...sourceNotes].sort((a,b)=>a-b);let ninth=source.root+2;while(ninth<=Math.max(...notes))ninth+=12;if(ninth>84)ninth-=12;if(!notes.includes(ninth))notes.push(ninth);return notes.sort((a,b)=>a-b);
+}
+function tonalResponseIdeas(sourceNotes,source){
+  const tonic=inferTonic(),specs=tonic.minor?[[0,"min7","i"],[3,"maj7","♭III"],[5,"min7","iv"],[7,"dom7","V"],[8,"maj7","♭VI"],[10,"dom7","♭VII"]]:[[0,"maj7","I"],[2,"min7","ii"],[5,"maj7","IV"],[7,"dom7","V"],[9,"min7","vi"]];
+  return specs.map(([offset,quality,degree])=>{const root=pc(tonic.root+offset),up=directedVoicing(root,quality,"up",sourceNotes),down=directedVoicing(root,quality,"down",sourceNotes),notes=movementCost(sourceNotes,up)<=movementCost(sourceNotes,down)?up:down;return{root,quality,notes,direction:responseDirection(sourceNotes,notes),role:`Dans la tonalité · ${degree}`,why:`Une réponse du centre tonal estimé en ${NOTE_FR[tonic.root]} ${tonic.minor?"mineur":"majeur"}, choisie avec le déplacement de voix le plus court.`}}).filter(item=>!(item.root===source.root&&qualityFamily(item.quality)===qualityFamily(source.quality))).sort((a,b)=>movementCost(sourceNotes,a.notes)-movementCost(sourceNotes,b.notes)).slice(0,4);
+}
+function inversionResponseIdeas(sourceNotes,source){
+  return buildVoicingIdeas(sourceNotes,source).filter(idea=>idea.notes.join(",")!==[...sourceNotes].sort((a,b)=>a-b).join(",")).sort((a,b)=>movementCost(sourceNotes,a.notes)-movementCost(sourceNotes,b.notes)).slice(0,2).map(idea=>({root:source.root,quality:source.quality,notes:idea.notes,direction:responseDirection(sourceNotes,idea.notes),role:`Même accord · ${idea.label}`,why:`Aucune harmonie ne change : seule la disposition des voix crée une nouvelle respiration. ${idea.description}`}));
+}
+function progressionBridgeIdeas(sourceNotes){
+  if(state.selected===null||state.selected<1||!state.progression[0])return[];const firstNotes=state.progression[0],first=detect(firstNotes);if(!first)return[];
+  const specs=[{root:pc(first.root+7),quality:"dom7",role:"Pont vers l’accord 01",why:"Répond à l’accord actuel tout en préparant une résolution dominante vers le premier accord."},{root:pc(first.root+1),quality:"dom7",role:"Boucle tritonique vers l’accord 01",why:"Une dominante située un demi-ton au-dessus du premier accord crée un retour jazz très serré."},{root:pc(first.root-1),quality:"dim7",role:"Approche diminuée vers l’accord 01",why:"Le diminué relie la fin au début par demi-ton et transforme la progression en boucle fluide."}];
+  return specs.map(spec=>{const up=directedVoicing(spec.root,spec.quality,"up",sourceNotes),down=directedVoicing(spec.root,spec.quality,"down",sourceNotes),score=notes=>movementCost(sourceNotes,notes)+movementCost(notes,firstNotes)*.85,chosen=score(up)<=score(down)?up:down;return{...spec,notes:chosen,direction:responseDirection(sourceNotes,chosen),previewTail:firstNotes,loopName:displayChordName(first,firstNotes),contextScore:score(chosen)}}).sort((a,b)=>a.contextScore-b.contextScore);
+}
 function suggestions(){
   if(state.selected===null||!state.progression[state.selected])return[];const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);if(!source)return[];
-  const items=targetIdeas(source).map((idea,i)=>{const direction=i<4?"up":"down",root=pc(source.root+idea.offset),notes=directedVoicing(root,idea.q,direction,sourceNotes);return{...idea,root,quality:idea.q,direction,notes}});
+  const items=[];
   if(qualityFamily(source.quality)==="dominant"){
+    const liftedRoot=pc(source.root+1),majorNotes=openMajorLift(liftedRoot,sourceNotes),planedNotes=sourceNotes.map(note=>note+1);
+    items.push({direction:"up",role:"Ouverture lumineuse",why:"La réponse que tu as dessinée : trois voix montent d’un demi-ton et la fondamentale est doublée en haut pour ouvrir l’accord.",root:liftedRoot,quality:"maj",notes:majorNotes});
+    items.push({direction:"up",role:"Même forme · un demi-ton plus haut",why:"Tout l’accord dominant glisse d’un seul demi-ton : la couleur reste la même et la remontée reste parfaitement lisible.",root:liftedRoot,quality:source.quality,notes:planedNotes});
+    const ninthNotes=subtleNinth(sourceNotes,source);items.push({direction:"up",role:"Même accord · couleur 9",why:"Toutes les notes restent en place ; seule la neuvième s’ajoute au-dessus pour une montée presque imperceptible.",root:source.root,quality:"dom9",notes:ninthNotes});
     const diminishedRoot=pc(source.root+1),diminishedNotes=directedVoicing(diminishedRoot,"dim7","up",sourceNotes),arrivalRoot=pc(source.root+2),arrivalNotes=directedVoicing(arrivalRoot,"min7","up",diminishedNotes);
     items.unshift({direction:"up",role:"Montée chromatique jazz",why:"Le diminué sert de pont, pas de destination : la basse monte d’un demi-ton puis se détend dans le mineur suivant.",root:arrivalRoot,quality:"min7",notes:arrivalNotes,sequence:[{root:diminishedRoot,quality:"dim7",notes:diminishedNotes},{root:arrivalRoot,quality:"min7",notes:arrivalNotes}]});
   }
-  return items;
+  items.push(...progressionBridgeIdeas(sourceNotes),...tonalResponseIdeas(sourceNotes,source),...inversionResponseIdeas(sourceNotes,source));
+  items.push(...targetIdeas(source).map((idea,i)=>{const direction=i<4?"up":"down",root=pc(source.root+idea.offset),notes=directedVoicing(root,idea.q,direction,sourceNotes);return{...idea,root,quality:idea.q,direction,notes}}));
+  const seen=new Set();return items.filter(item=>{const signature=item.sequence?item.sequence.map(step=>`${step.root}:${step.quality}:${step.notes.join(".")}`).join("|"):`${item.root}:${item.quality}:${item.notes.join(".")}`;if(seen.has(signature))return false;seen.add(signature);return true});
 }
 
 // Hooktheory is called through our Worker so the API key never reaches the browser.
@@ -251,9 +279,9 @@ function renderTrends(){
 function renderAnswers(){
   const wrap=$("answers"),items=suggestions().filter(x=>state.direction==="both"||x.direction===state.direction);wrap.innerHTML="";
   if(state.selected===null){$("sourceSummary").textContent="Sélectionne un accord de la progression pour lancer le calcul.";return}
-  const source=detect(state.progression[state.selected]);$("sourceSummary").innerHTML=`Après <strong>${chordName(source.root,source.quality)}</strong>, voici les mouvements qui préservent le mieux la logique et la conduite des voix.`;
-  items.forEach(item=>{const card=document.createElement("article"),sequence=item.sequence||[{root:item.root,quality:item.quality,notes:item.notes}],title=sequence.map(step=>chordName(step.root,step.quality)).join(" → "),voiceMarkup=item.sequence?sequence.map(step=>`<span>${chordName(step.root,step.quality)}</span>`).join(""):item.notes.map(note=>`<span>${midiLabel(note)}</span>`).join("");card.className=`answer-card ${item.direction}`;card.innerHTML=`<div class="answer-top"><span>${item.direction==="up"?"↗ réponse montante":"↘ réponse descendante"}</span><span>${item.role}</span></div><h3>${title}</h3><p>${item.why}</p><div class="voice-line">${voiceMarkup}</div><div class="answer-actions"><button class="listen-btn">Écouter la suite</button><button class="add-answer-btn">+ Ajouter</button></div>`;
-    card.querySelector(".listen-btn").onclick=()=>playProgression([state.progression[state.selected],...sequence.map(step=>step.notes)]);card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push(...sequence.map(step=>[...step.notes]));state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);save();renderAll();toast(`${title} ajouté à la progression`)};wrap.appendChild(card)});
+  const source=detect(state.progression[state.selected]);$("sourceSummary").innerHTML=`Après <strong>${chordName(source.root,source.quality)}</strong> : réponses dans la tonalité, glissements subtils et renversements du même accord. Écoute la couleur avant de l’ajouter.`;
+  items.forEach(item=>{const card=document.createElement("article"),sequence=item.sequence||[{root:item.root,quality:item.quality,notes:item.notes}],title=sequence.map(step=>chordName(step.root,step.quality)).join(" → "),notesMarkup=item.sequence?sequence.map(step=>`<span>${chordName(step.root,step.quality)}</span>`).join(""):item.notes.map(note=>`<span>${midiLabel(note)}</span>`).join(""),voiceMarkup=item.previewTail?`${notesMarkup}<span>↻ ${item.loopName}</span>`:notesMarkup;card.className=`answer-card ${item.direction} ${item.previewTail?"context-card":""}`;card.innerHTML=`<div class="answer-top"><span>${item.direction==="up"?"↗ réponse montante":"↘ réponse descendante"}</span><span>${item.role}</span></div><h3>${title}</h3><p>${item.why}</p><div class="voice-line">${voiceMarkup}</div><div class="answer-actions"><button class="listen-btn">${item.previewTail?"Écouter la boucle":"Écouter la suite"}</button><button class="add-answer-btn">+ Ajouter</button></div>`;
+    card.querySelector(".listen-btn").onclick=()=>playProgression([state.progression[state.selected],...sequence.map(step=>step.notes),...(item.previewTail?[item.previewTail]:[])]);card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push(...sequence.map(step=>[...step.notes]));state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);save();renderAll();toast(`${title} ajouté à la progression`)};wrap.appendChild(card)});
 }
 
 function ensureAudio(){if(!state.audio)state.audio=new (window.AudioContext||window.webkitAudioContext)();if(state.audio.state==="suspended")state.audio.resume();return state.audio}
