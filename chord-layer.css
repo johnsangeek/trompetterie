@@ -39,6 +39,7 @@
 .generate-layer-btn:disabled { opacity: .38; cursor: not-allowed; }
 .layer-results { margin-top: 18px; padding: 23px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.48); }
 .result-actions { display: flex; gap: 8px; }
+.phrase-summary { margin: 15px 0 0; padding: 11px 14px; border-left: 3px solid #d9910b; background: #f5eddd; color: var(--muted); font-size: .78rem; line-height: 1.45; }
 .result-legend { display: grid; grid-template-columns: .8fr .8fr 1.2fr; gap: 9px; margin: 18px 0 7px; padding: 0 16px; color: var(--muted); font-size: .68rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
 .layer-sequence { display: grid; gap: 7px; }
 .layer-row { display: grid; grid-template-columns: 42px .8fr .8fr 1.2fr; gap: 9px; align-items: stretch; }
@@ -47,6 +48,8 @@
 .layer-chord.original { background: #e8e2d7; }
 .layer-chord.generated { position: relative; border-color: #d29a31; background: #fff8e8; cursor: pointer; }
 .layer-chord.generated::after { content: "ÉCOUTER"; position: absolute; top: 12px; right: 12px; color: #b57500; font-size: .58rem; font-weight: 900; letter-spacing: .09em; }
+.layer-row.ending .layer-chord.generated { border-color: #b97800; box-shadow: inset 3px 0 #d9910b; }
+.layer-row.ending .layer-row-index { color: #b97800; }
 .layer-chord small { display: block; margin-bottom: 4px; color: var(--muted); font-size: .64rem; font-weight: 800; text-transform: uppercase; }
 .layer-chord strong { font-size: 1.05rem; }
 .layer-chord p { margin: 6px 0 0; color: var(--muted); font-size: .69rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
