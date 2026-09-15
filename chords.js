@@ -14,6 +14,9 @@ const QUALITY = {
   maj6:{label:"Majeur 6",symbol:"6",intervals:[0,4,7,9]}, min6:{label:"Mineur 6",symbol:"m6",intervals:[0,3,7,9]},
   maj69:{label:"Majeur 6/9",symbol:"6/9",intervals:[0,2,4,7,9]},
 };
+const MOOD_FR = {Anguished:"Angoissé",Dark:"Sombre",Dramatic:"Dramatique",Empowered:"Puissant",Excited:"Excité",Fearful:"Craintif",Hopeful:"Plein d'espoir",Joyful:"Joyeux",Lonely:"Solitaire",Mysterious:"Mystérieux",Nostalgic:"Nostalgique",Peaceful:"Paisible",Playful:"Enjoué",Rebellious:"Rebelle",Relaxed:"Détendu",Romantic:"Romantique",Sad:"Triste",Spiritual:"Spirituel",Surprised:"Surpris",Tender:"Tendre",Triumphant:"Triomphant"};
+const SCALE_FR = {M:"Majeur",m:"Mineur",O:"Modal"};
+let moodLibrary = null, selectedMoods = new Set();
 const STORAGE = "trumpetTrainerChordProgression";
 const TIMELINE_STORAGE = "trumpetTrainerChordTimeline";
 const state = {notes:new Set(),progression:[],selected:null,direction:"both",audio:null,importedFile:null,timeline:[],timelineMeasures:8,timelineTimers:[],timelineAnimation:null};
@@ -463,6 +466,42 @@ function exportMidi(){
   const chunk=(name,data)=>[...name].map(c=>c.charCodeAt(0)).concat([(data.length>>>24)&255,(data.length>>>16)&255,(data.length>>>8)&255,data.length&255],data);const header=[77,84,104,100,0,0,0,6,0,0,0,1,1,224],bytes=new Uint8Array(header.concat(chunk("MTrk",track))),url=URL.createObjectURL(new Blob([bytes],{type:"audio/midi"})),a=document.createElement("a");a.href=url;a.download=`progression-${Date.now()}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("MIDI exporté");
 }
 
+function renderMoodChips(){
+  const wrap=$("moodChips");if(!wrap||!moodLibrary)return;wrap.innerHTML="";
+  moodLibrary.moods.forEach((mood,index)=>{
+    const btn=document.createElement("button");btn.type="button";btn.className="mood-chip"+(selectedMoods.has(index)?" active":"");
+    btn.textContent=MOOD_FR[mood]||mood;
+    btn.onclick=()=>{if(selectedMoods.has(index))selectedMoods.delete(index);else selectedMoods.add(index);renderMoodChips();renderMoodResults()};
+    wrap.appendChild(btn);
+  });
+}
+function loadMoodProgression(item){
+  state.progression=item.c.map(notes=>[...notes]);
+  state.timeline=[];state.selected=0;state.notes=new Set(state.progression[0]);
+  normalizeTimeline();save();renderAll();
+  toast(`Progression chargée : ${item.k} ${item.r}`);
+}
+function renderMoodResults(){
+  const wrap=$("moodResults");if(!wrap)return;
+  if(!moodLibrary){wrap.innerHTML="";return}
+  let items=moodLibrary.items;
+  if(selectedMoods.size)items=items.filter(item=>item.m.some(m=>selectedMoods.has(m)));
+  const seen=new Set(),unique=[];
+  for(const item of items){
+    const key=item.s+"|"+item.r;if(seen.has(key))continue;seen.add(key);unique.push(item);
+    if(unique.length>=24)break;
+  }
+  wrap.innerHTML="";
+  if(!unique.length){wrap.innerHTML='<p class="mood-empty">Aucune progression pour cette combinaison d’ambiances.</p>';return}
+  unique.forEach(item=>{
+    const card=document.createElement("article");card.className="mood-card";
+    const tags=item.m.map(m=>MOOD_FR[moodLibrary.moods[m]]||moodLibrary.moods[m]).join(", ");
+    card.innerHTML=`<div class="mood-card-top"><strong>${item.k}</strong><span>${SCALE_FR[item.s]}</span></div><div class="mood-card-roman">${item.r}</div><div class="mood-card-tags">${item.m.map(m=>`<span>${MOOD_FR[moodLibrary.moods[m]]||moodLibrary.moods[m]}</span>`).join("")}</div><div class="voicing-actions"><button type="button" class="listen-btn">Écouter</button><button type="button" class="mood-load-btn">Charger</button></div>`;
+    card.querySelector(".listen-btn").onclick=()=>playProgression(item.c);
+    card.querySelector(".mood-load-btn").onclick=()=>loadMoodProgression(item);
+    wrap.appendChild(card);
+  });
+}
 function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderVoicings();renderAnswers();renderTrends();renderProgressionIdeas();renderCadences()}
 
 renderSelects();load();renderAll();
@@ -482,3 +521,4 @@ const timelineCanvas=$("timelineCanvas");timelineCanvas.addEventListener("dragov
 const timelineViewport=$("timelineViewport");timelineViewport.addEventListener("scroll",()=>timelineCanvas.style.setProperty("--roll-scroll-x",`${timelineViewport.scrollLeft}px`),{passive:true});
 document.querySelectorAll(".direction-btn").forEach(btn=>btn.onclick=()=>{state.direction=btn.dataset.direction;document.querySelectorAll(".direction-btn").forEach(b=>b.classList.toggle("active",b===btn));renderAnswers()});
 $("jazzifyBtn").onclick=jazzifyProgression;
+fetch("chord-moods.json").then(response=>response.json()).then(data=>{moodLibrary=data;renderMoodChips();renderMoodResults()}).catch(()=>{});
