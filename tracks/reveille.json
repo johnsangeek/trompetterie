@@ -1,0 +1,493 @@
+{
+  "id": "reveille",
+  "name": "Le Réveil (Reveille)",
+  "bpm": 152,
+  "duration": 19.5399,
+  "notes": [
+    {
+      "time": 0.5921,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 0.7895,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 0.9868,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 1.0855,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 1.1842,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 1.3816,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 1.5789,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 1.7763,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 1.875,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 1.9737,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 2.1711,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 2.3684,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 2.5658,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 2.6645,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 2.7632,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 2.9605,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 3.1579,
+      "midi": 74,
+      "duration": 0.4025
+    },
+    {
+      "time": 3.5526,
+      "midi": 70,
+      "duration": 0.1867
+    },
+    {
+      "time": 3.75,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 3.9474,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 4.1447,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 4.2434,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 4.3421,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 4.5395,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 4.7368,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 4.9342,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 5.0329,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 5.1316,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 5.3289,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 5.5263,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 5.7237,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 5.8224,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 5.9211,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 6.1184,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 6.3158,
+      "midi": 70,
+      "duration": 0.5921
+    },
+    {
+      "time": 6.9079,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 7.1053,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 7.3026,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 7.5,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 7.6974,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 7.8947,
+      "midi": 77,
+      "duration": 0.4025
+    },
+    {
+      "time": 8.2895,
+      "midi": 74,
+      "duration": 0.1867
+    },
+    {
+      "time": 8.4868,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 8.6842,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 8.8816,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 9.0789,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 9.2763,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 9.4737,
+      "midi": 74,
+      "duration": 0.4025
+    },
+    {
+      "time": 9.8684,
+      "midi": 70,
+      "duration": 0.1867
+    },
+    {
+      "time": 10.0658,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 10.2632,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 10.4605,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 10.6579,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 10.8553,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 11.0526,
+      "midi": 77,
+      "duration": 0.4025
+    },
+    {
+      "time": 11.4474,
+      "midi": 74,
+      "duration": 0.1867
+    },
+    {
+      "time": 11.6447,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 11.8421,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 12.0395,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 12.2368,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 12.4342,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 12.6316,
+      "midi": 70,
+      "duration": 0.5921
+    },
+    {
+      "time": 13.2237,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 13.4211,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 13.6184,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 13.7171,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 13.8158,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 14.0132,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 14.2105,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 14.4079,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 14.5066,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 14.6053,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 14.8026,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 15.0,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 15.1974,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 15.2961,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 15.3947,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 15.5921,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 15.7895,
+      "midi": 74,
+      "duration": 0.4025
+    },
+    {
+      "time": 16.1842,
+      "midi": 70,
+      "duration": 0.1867
+    },
+    {
+      "time": 16.3816,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 16.5789,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 16.7763,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 16.875,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 16.9737,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 17.1711,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 17.3684,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 17.5658,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 17.6645,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 17.7632,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 17.9605,
+      "midi": 74,
+      "duration": 0.1974
+    },
+    {
+      "time": 18.1579,
+      "midi": 70,
+      "duration": 0.1974
+    },
+    {
+      "time": 18.3553,
+      "midi": 74,
+      "duration": 0.0987
+    },
+    {
+      "time": 18.4539,
+      "midi": 70,
+      "duration": 0.0987
+    },
+    {
+      "time": 18.5526,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 18.75,
+      "midi": 65,
+      "duration": 0.1974
+    },
+    {
+      "time": 18.9474,
+      "midi": 70,
+      "duration": 0.5921
+    }
+  ]
+}
