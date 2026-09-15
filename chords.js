@@ -201,8 +201,10 @@ function suggestions(){
   const seen=new Set();return items.filter(item=>{const signature=item.sequence?item.sequence.map(step=>`${step.root}:${step.quality}:${step.notes.join(".")}`).join("|"):`${item.root}:${item.quality}:${item.notes.join(".")}`;if(seen.has(signature))return false;seen.add(signature);return true});
 }
 
-// Hooktheory is called through our Worker so the API key never reaches the browser.
-const HOOKTHEORY_TRENDS_URL="/api/hooktheory/trends";
+// This site is static (no backend to proxy through), so the free-tier key is
+// called directly from the browser - visible client-side, accepted tradeoff.
+const HOOKTHEORY_ACTIVKEY="cfd1b00c230215ffa09efd8deb78eaeb";
+const HOOKTHEORY_TRENDS_URL="https://api.hooktheory.com/v1/trends/nodes";
 const trendsCache=new Map();
 
 // Semitone offset from the progression's inferred tonic -> Hooktheory scale-
@@ -243,7 +245,7 @@ async function fetchTrendSuggestions(){
 
   if(trendsCache.has(childPath))return applyTrendResults(trendsCache.get(childPath),tonic.root,sourceNotes);
   try{
-    const response=await fetch(`${HOOKTHEORY_TRENDS_URL}?cp=${encodeURIComponent(childPath)}`);
+    const response=await fetch(`${HOOKTHEORY_TRENDS_URL}?cp=${encodeURIComponent(childPath)}`,{headers:{Authorization:`Bearer ${HOOKTHEORY_ACTIVKEY}`}});
     if(!response.ok)return[];
     const data=await response.json();
     trendsCache.set(childPath,data);
@@ -475,6 +477,48 @@ function renderMoodChips(){
     wrap.appendChild(btn);
   });
 }
+let transitionTable=null;
+function buildTransitionTable(){
+  if(transitionTable||!moodLibrary)return;
+  transitionTable={};
+  moodLibrary.items.forEach(item=>{
+    const chords=item.c;
+    for(let i=0;i<chords.length-1;i++){
+      const from=detect(chords[i]),to=detect(chords[i+1]);
+      if(!from||!to)continue;
+      const offset=pc(to.root-from.root),toKey=`${offset}|${to.quality}`;
+      transitionTable[from.quality]=transitionTable[from.quality]||{};
+      transitionTable[from.quality][toKey]=(transitionTable[from.quality][toKey]||0)+1;
+    }
+  });
+}
+function localLibrarySuggestions(){
+  if(state.selected===null||!state.progression[state.selected])return[];
+  const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);
+  if(!source)return[];
+  buildTransitionTable();
+  const table=transitionTable&&transitionTable[source.quality];if(!table)return[];
+  const total=Object.values(table).reduce((sum,count)=>sum+count,0);
+  return Object.entries(table).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([key,count])=>{
+    const[offsetStr,quality]=key.split("|"),offset=Number(offsetStr),root=pc(source.root+offset);
+    return{root,quality,probability:count/total,notes:directedVoicing(root,quality,"up",sourceNotes)};
+  });
+}
+function renderLibrarySuggestions(){
+  const wrap=$("library");if(!wrap)return;
+  if(state.selected===null){$("librarySummary").textContent="Sélectionne un accord pour voir ce que suggère la bibliothèque locale.";wrap.innerHTML="";return}
+  const items=localLibrarySuggestions();
+  if(!items.length){$("librarySummary").textContent=moodLibrary?"Pas assez de données locales pour cet accord.":"Chargement de la bibliothèque locale…";wrap.innerHTML="";return}
+  $("librarySummary").innerHTML=`D'après ${moodLibrary.items.length} progressions réelles (licence MIT, <a href="https://github.com/ldrolez/free-midi-chords" target="_blank" rel="noopener">free-midi-chords</a>), voici ce qui suit le plus souvent :`;
+  wrap.innerHTML="";
+  items.forEach(item=>{
+    const card=document.createElement("article");card.className="answer-card library-card";
+    card.innerHTML=`<div class="answer-top"><span>${Math.round(item.probability*100)}% des cas</span></div><h3>${chordName(item.root,item.quality)}</h3><div class="voice-line">${item.notes.map(note=>`<span>${midiLabel(note)}</span>`).join("")}</div><div class="answer-actions"><button class="listen-btn">Écouter la suite</button><button class="add-answer-btn">+ Ajouter</button></div>`;
+    card.querySelector(".listen-btn").onclick=()=>playSequence(state.progression[state.selected],item.notes);
+    card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push(item.notes);state.selected=state.progression.length-1;state.notes=new Set(item.notes);save();renderAll();toast(`${chordName(item.root,item.quality)} ajouté à la progression`)};
+    wrap.appendChild(card);
+  });
+}
 function loadMoodProgression(item){
   state.progression=item.c.map(notes=>[...notes]);
   state.timeline=[];state.selected=0;state.notes=new Set(state.progression[0]);
@@ -502,7 +546,7 @@ function renderMoodResults(){
     wrap.appendChild(card);
   });
 }
-function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderVoicings();renderAnswers();renderTrends();renderProgressionIdeas();renderCadences()}
+function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderVoicings();renderAnswers();renderTrends();renderLibrarySuggestions();renderProgressionIdeas();renderCadences()}
 
 renderSelects();load();renderAll();
 $("placeChordBtn").onclick=()=>{const root=Number($("rootSelect").value),quality=$("qualitySelect").value;state.notes=new Set(canonicalVoicing(root,quality));renderAll();playNotes([...state.notes])};
@@ -521,4 +565,4 @@ const timelineCanvas=$("timelineCanvas");timelineCanvas.addEventListener("dragov
 const timelineViewport=$("timelineViewport");timelineViewport.addEventListener("scroll",()=>timelineCanvas.style.setProperty("--roll-scroll-x",`${timelineViewport.scrollLeft}px`),{passive:true});
 document.querySelectorAll(".direction-btn").forEach(btn=>btn.onclick=()=>{state.direction=btn.dataset.direction;document.querySelectorAll(".direction-btn").forEach(b=>b.classList.toggle("active",b===btn));renderAnswers()});
 $("jazzifyBtn").onclick=jazzifyProgression;
-fetch("chord-moods.json").then(response=>response.json()).then(data=>{moodLibrary=data;renderMoodChips();renderMoodResults()}).catch(()=>{});
+fetch("chord-moods.json").then(response=>response.json()).then(data=>{moodLibrary=data;renderMoodChips();renderMoodResults();renderLibrarySuggestions()}).catch(()=>{});
