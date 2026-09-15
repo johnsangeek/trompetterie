@@ -157,7 +157,12 @@ function directedVoicing(root,quality,direction,sourceNotes){
 }
 function suggestions(){
   if(state.selected===null||!state.progression[state.selected])return[];const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);if(!source)return[];
-  return targetIdeas(source).map((idea,i)=>{const direction=i<4?"up":"down",root=pc(source.root+idea.offset),notes=directedVoicing(root,idea.q,direction,sourceNotes);return{...idea,root,quality:idea.q,direction,notes}});
+  const items=targetIdeas(source).map((idea,i)=>{const direction=i<4?"up":"down",root=pc(source.root+idea.offset),notes=directedVoicing(root,idea.q,direction,sourceNotes);return{...idea,root,quality:idea.q,direction,notes}});
+  if(qualityFamily(source.quality)==="dominant"){
+    const diminishedRoot=pc(source.root+1),diminishedNotes=directedVoicing(diminishedRoot,"dim7","up",sourceNotes),arrivalRoot=pc(source.root+2),arrivalNotes=directedVoicing(arrivalRoot,"min7","up",diminishedNotes);
+    items.unshift({direction:"up",role:"Montée chromatique jazz",why:"Le diminué sert de pont, pas de destination : la basse monte d’un demi-ton puis se détend dans le mineur suivant.",root:arrivalRoot,quality:"min7",notes:arrivalNotes,sequence:[{root:diminishedRoot,quality:"dim7",notes:diminishedNotes},{root:arrivalRoot,quality:"min7",notes:arrivalNotes}]});
+  }
+  return items;
 }
 
 // Hooktheory is called through our Worker so the API key never reaches the browser.
@@ -244,8 +249,8 @@ function renderAnswers(){
   const wrap=$("answers"),items=suggestions().filter(x=>state.direction==="both"||x.direction===state.direction);wrap.innerHTML="";
   if(state.selected===null){$("sourceSummary").textContent="Sélectionne un accord de la progression pour lancer le calcul.";return}
   const source=detect(state.progression[state.selected]);$("sourceSummary").innerHTML=`Après <strong>${chordName(source.root,source.quality)}</strong>, voici les mouvements qui préservent le mieux la logique et la conduite des voix.`;
-  items.forEach(item=>{const card=document.createElement("article");card.className=`answer-card ${item.direction}`;card.innerHTML=`<div class="answer-top"><span>${item.direction==="up"?"↗ réponse montante":"↘ réponse descendante"}</span><span>${item.role}</span></div><h3>${chordName(item.root,item.quality)}</h3><p>${item.why}</p><div class="voice-line">${item.notes.map(n=>`<span>${midiLabel(n)}</span>`).join("")}</div><div class="answer-actions"><button class="listen-btn">Écouter la suite</button><button class="add-answer-btn">+ Ajouter</button></div>`;
-    card.querySelector(".listen-btn").onclick=()=>playSequence(state.progression[state.selected],item.notes);card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push(item.notes);state.selected=state.progression.length-1;state.notes=new Set(item.notes);save();renderAll();toast(`${chordName(item.root,item.quality)} ajouté à la progression`)};wrap.appendChild(card)});
+  items.forEach(item=>{const card=document.createElement("article"),sequence=item.sequence||[{root:item.root,quality:item.quality,notes:item.notes}],title=sequence.map(step=>chordName(step.root,step.quality)).join(" → "),voiceMarkup=item.sequence?sequence.map(step=>`<span>${chordName(step.root,step.quality)}</span>`).join(""):item.notes.map(note=>`<span>${midiLabel(note)}</span>`).join("");card.className=`answer-card ${item.direction}`;card.innerHTML=`<div class="answer-top"><span>${item.direction==="up"?"↗ réponse montante":"↘ réponse descendante"}</span><span>${item.role}</span></div><h3>${title}</h3><p>${item.why}</p><div class="voice-line">${voiceMarkup}</div><div class="answer-actions"><button class="listen-btn">Écouter la suite</button><button class="add-answer-btn">+ Ajouter</button></div>`;
+    card.querySelector(".listen-btn").onclick=()=>playProgression([state.progression[state.selected],...sequence.map(step=>step.notes)]);card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push(...sequence.map(step=>[...step.notes]));state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);save();renderAll();toast(`${title} ajouté à la progression`)};wrap.appendChild(card)});
 }
 
 function ensureAudio(){if(!state.audio)state.audio=new (window.AudioContext||window.webkitAudioContext)();if(state.audio.state==="suspended")state.audio.resume();return state.audio}
