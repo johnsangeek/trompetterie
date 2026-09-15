@@ -134,14 +134,26 @@ function playTimeline(){
 function qualityFamily(q){return q.startsWith("min")?"minor":q.startsWith("dom")||q==="dom7"?"dominant":"major"}
 function targetIdeas(source){
   const r=source.root,fam=qualityFamily(source.quality),tonicQuality=fam==="minor"?"min7":"maj7";
-  const functional=fam==="dominant"?{offset:5,q:"maj7",role:"Résolution naturelle",why:"La sensible et la septième se détendent vers la tonique."}:fam==="minor"?{offset:5,q:"dom7",role:"Mouvement ii → V",why:"Le mineur prépare une dominante située une quarte plus haut."}:{offset:7,q:"dom7",role:"Appel vers la dominante",why:"Une dominante crée un nouvel élan avant le retour."};
+  const functional=fam==="dominant"?{offset:5,q:"maj7",role:"Résolution montante naturelle",why:"Les voix communes restent stables et les autres montent d’un ou deux demi-tons vers une arrivée lumineuse."}:fam==="minor"?{offset:5,q:"dom7",role:"Mouvement ii → V",why:"Le mineur prépare une dominante située une quarte plus haut."}:{offset:7,q:"dom7",role:"Appel vers la dominante",why:"Une dominante crée un nouvel élan avant le retour."};
   return [functional,{offset:5,q:tonicQuality,role:"Ouverture au IV",why:"Une réponse large et chantante sur le quatrième degré."},{offset:3,q:fam==="minor"?"maj7":"min7",role:"Couleur relative",why:"Des notes communes changent la lumière sans casser la phrase."},{offset:1,q:"dim7",role:"Approche chromatique",why:"Un accord diminué de passage crée une tension courte."},{offset:-2,q:"min7",role:"Recul modal",why:"Un pas descendant garde une conduite de voix très souple."},{offset:-1,q:"dom7",role:"Résolution par glissement",why:"Toutes les voix peuvent descendre d’un demi-ton avec impact."}];
 }
 function directedVoicing(root,quality,direction,sourceNotes){
-  const mean=sourceNotes.reduce((a,b)=>a+b,0)/sourceNotes.length;let notes=canonicalVoicing(root,quality,Math.round(mean)-3),m=notes.reduce((a,b)=>a+b,0)/notes.length;
-  if(direction==="up")while(m<=mean){notes=notes.map(n=>n+12);m+=12}
-  else while(m>=mean){notes=notes.map(n=>n-12);m-=12}
-  while(Math.min(...notes)<45)notes=notes.map(n=>n+12);while(Math.max(...notes)>84)notes=notes.map(n=>n-12);return notes;
+  const source=[...sourceNotes].sort((a,b)=>a-b),intervals=[...new Set(QUALITY[quality].intervals.map(interval=>pc(interval)))].sort((a,b)=>a-b),candidates=[];
+  for(let inversion=0;inversion<intervals.length;inversion++){
+    const rotated=intervals.slice(inversion).concat(intervals.slice(0,inversion).map(interval=>interval+12));
+    for(let anchor=36;anchor<=72;anchor+=12){
+      let rootMidi=anchor;while(pc(rootMidi)!==root)rootMidi++;
+      const notes=rotated.map(interval=>rootMidi+interval);
+      if(Math.min(...notes)<45||Math.max(...notes)>84)continue;
+      const compared=Math.min(notes.length,source.length),deltas=[];for(let i=0;i<compared;i++)deltas.push(notes[i]-source[i]);
+      const wrongWay=deltas.reduce((sum,delta)=>sum+(direction==="up"?Math.max(0,-delta):Math.max(0,delta)),0);
+      const average=deltas.reduce((sum,delta)=>sum+delta,0)/Math.max(1,deltas.length),rangePenalty=Math.abs(notes.length-source.length)*3;
+      const directionPenalty=direction==="up"?(average<.5?(1-average)*16:0):(average>-.5?(1+average)*16:0);
+      const score=deltas.reduce((sum,delta)=>sum+Math.abs(delta),0)+wrongWay*24+directionPenalty+rangePenalty;
+      candidates.push({notes,score});
+    }
+  }
+  candidates.sort((a,b)=>a.score-b.score);return candidates[0]?.notes||canonicalVoicing(root,quality,60);
 }
 function suggestions(){
   if(state.selected===null||!state.progression[state.selected])return[];const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);if(!source)return[];
