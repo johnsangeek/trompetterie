@@ -42,7 +42,7 @@
     <section class="progression-panel" aria-labelledby="progressionTitle">
       <div class="section-heading">
         <div><span class="step">02</span><h2 id="progressionTitle">Ta progression</h2></div>
-        <div class="progression-heading-actions"><span id="progressionHint" class="muted">Clique un accord pour le résoudre</span><div id="chordTrash" class="chord-trash">Déposer ici pour supprimer</div></div>
+        <div class="progression-heading-actions"><button type="button" id="jazzifyBtn" class="text-btn">🎷 Jazzifier</button><span id="progressionHint" class="muted">Clique un accord pour le résoudre</span><div id="chordTrash" class="chord-trash">Déposer ici pour supprimer</div></div>
       </div>
       <div id="progression" class="progression"></div>
     </section>
@@ -115,6 +115,14 @@
       </div>
       <div id="sourceSummary" class="source-summary">Sélectionne un accord de la progression pour lancer le calcul.</div>
       <div id="answers" class="answers"></div>
+    </section>
+
+    <section class="answers-panel trends-panel">
+      <div class="section-heading">
+        <div><span class="step">06b</span><h2>Tendances réelles</h2></div>
+      </div>
+      <div id="trendsSummary" class="source-summary">Sélectionne un accord pour voir les statistiques réelles.</div>
+      <div id="trends" class="answers"></div>
     </section>
 
     <section class="cadence-panel">
