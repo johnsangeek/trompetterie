@@ -52,7 +52,11 @@
 .layer-row { display: grid; grid-template-columns: 42px .8fr .8fr 1.2fr; gap: 9px; align-items: stretch; }
 .layer-row-index { display: grid; place-items: center; color: #928979; font-size: .72rem; font-weight: 900; }
 .layer-chord { min-width: 0; padding: 13px 14px; border: 1px solid var(--line); border-radius: 11px; background: #f0eadf; }
-.layer-chord.original { background: #e8e2d7; }
+.layer-chord.original { position: relative; background: #e8e2d7; cursor: pointer; transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.layer-chord.original::after { content: "ÉCOUTER"; position: absolute; top: 12px; right: 12px; color: #6e675b; font-size: .58rem; font-weight: 900; letter-spacing: .09em; }
+.layer-chord.original:hover, .layer-chord.original:focus-visible { border-color: #7c9d94; background: #edf3ef; outline: 0; transform: translateY(-1px); }
+.layer-chord.original.is-playing { animation: original-pulse .42s ease; }
+@keyframes original-pulse { 50% { border-color: #1a756a; background: #d9eee8; box-shadow: 0 0 0 4px rgba(26,117,106,.11); } }
 .layer-chord.generated { position: relative; border-color: #d29a31; background: #fff8e8; cursor: pointer; }
 .layer-chord.generated::after { content: "ÉCOUTER"; position: absolute; top: 12px; right: 12px; color: #b57500; font-size: .58rem; font-weight: 900; letter-spacing: .09em; }
 .layer-row.ending .layer-chord.generated { border-color: #b97800; box-shadow: inset 3px 0 #d9910b; }
@@ -71,6 +75,10 @@
 .local-variation-ideas { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; }
 .local-idea { display: flex; flex-direction: column; min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: #fffdf8; }
 .local-idea.substitution { border-top: 3px solid #d9910b; }
+.local-idea.color { border-top: 3px solid #3b9d91; }
+.local-idea.context { border-top: 3px solid #8a63a9; }
+.local-idea.context small { color: #765193; }
+.local-idea.color small { color: #1a756a; }
 .local-idea small { color: #a36b04; font-size: .67rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .local-idea h3 { margin: 7px 0; font-size: 1.18rem; }
 .local-idea p { flex: 1; margin: 0 0 14px; color: var(--muted); font-size: .77rem; line-height: 1.45; }
