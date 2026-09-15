@@ -7,7 +7,8 @@
   <title>Chords Resolver — Trompette Trainer</title>
   <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
   <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="chords.css" />
+  <link rel="stylesheet" href="chords.css?v=2" />
+  <link rel="stylesheet" href="chords-voicings.css?v=1" />
   <link rel="stylesheet" href="chords-midi.css" />
   <link rel="stylesheet" href="chords-roll.css" />
 </head>
@@ -104,9 +105,17 @@
       </aside>
     </div>
 
+    <section id="voicingsPanel" class="voicings-panel" aria-labelledby="voicingsTitle">
+      <div class="section-heading">
+        <div><span class="step">06</span><h2 id="voicingsTitle">Renversements &amp; voicings</h2></div>
+        <span class="muted">Même harmonie, autre mouvement</span>
+      </div>
+      <div id="voicings" class="voicings-grid"></div>
+    </section>
+
     <section class="answers-panel">
       <div class="section-heading resolver-heading">
-        <div><span class="step">06</span><h2>Réponses possibles</h2></div>
+        <div><span class="step">07</span><h2>Réponses possibles</h2></div>
         <div class="direction-tabs" role="group" aria-label="Direction de la réponse">
           <button type="button" class="direction-btn active" data-direction="both">Toutes</button>
           <button type="button" class="direction-btn" data-direction="up">↗ Montantes</button>
@@ -119,7 +128,7 @@
 
     <section class="answers-panel trends-panel">
       <div class="section-heading">
-        <div><span class="step">06b</span><h2>Tendances réelles</h2></div>
+        <div><span class="step">LIVE</span><h2>Tendances réelles</h2></div>
       </div>
       <div id="trendsSummary" class="source-summary">Sélectionne un accord pour voir les statistiques réelles.</div>
       <div id="trends" class="answers"></div>
@@ -127,7 +136,7 @@
 
     <section class="cadence-panel">
       <div class="section-heading cadence-heading">
-        <div><span class="step">07</span><h2>Finaliser la progression</h2></div>
+        <div><span class="step">08</span><h2>Finaliser la progression</h2></div>
         <span id="tonicGuess" class="tonic-guess">Centre tonal estimé : —</span>
       </div>
       <p class="cadence-intro">Si la progression reste suspendue, choisis une arrivée. Le resolver fabrique les accords manquants jusqu’à une vraie finalité.</p>
@@ -136,6 +145,6 @@
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="chords.js"></script>
+  <script src="chords.js?v=2"></script>
 </body>
 </html>

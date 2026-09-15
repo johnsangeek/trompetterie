@@ -18,6 +18,11 @@ const $ = (id)=>document.getElementById(id);
 function pc(n){return ((n%12)+12)%12}
 function chordName(root,quality,international=false){return `${(international?NOTE_INT:NOTE_FR)[root]}${QUALITY[quality].symbol}`}
 function midiLabel(midi){return `${NOTE_FR[pc(midi)]}${Math.floor(midi/12)-1}`}
+function displayChordName(found,notes,international=false){
+  const base=chordName(found.root,found.quality,international),bass=pc(Math.min(...notes));
+  const chordTones=new Set(QUALITY[found.quality].intervals.map(interval=>pc(found.root+interval)));
+  return bass!==found.root&&chordTones.has(bass)?`${base}/${(international?NOTE_INT:NOTE_FR)[bass]}`:base;
+}
 
 function canonicalVoicing(root,quality,center=60){
   let base=center; while(pc(base)!==root) base++; if(base>center+6) base-=12;
@@ -84,13 +89,13 @@ function renderIdentity(){
   const notes=[...state.notes].sort((a,b)=>a-b),found=detect(notes);$("noteCount").textContent=`${notes.length} note${notes.length>1?"s":""}`;
   $("detectedNotes").innerHTML=notes.map(n=>`<span class="note-pill">${midiLabel(n)}</span>`).join("");
   if(!found||notes.length<3){$("detectedName").textContent="—";$("detectedName").disabled=true;$("detectedInternational").textContent="Ajoute au moins trois notes";$("confidenceBar").style.width="0";$("confidenceLabel").textContent="—";$("addCurrentBtn").disabled=true;$("alternativeNames").textContent="";return}
-  $("detectedName").textContent=chordName(found.root,found.quality);$("detectedInternational").textContent=`${chordName(found.root,found.quality,true)} · ${QUALITY[found.quality].label}`;
+  $("detectedName").textContent=displayChordName(found,notes);$("detectedInternational").textContent=`${displayChordName(found,notes,true)} · ${QUALITY[found.quality].label}`;
   $("detectedName").disabled=false;$("confidenceBar").style.width=`${found.confidence}%`;$("confidenceLabel").textContent=`${found.confidence}%`;$("addCurrentBtn").disabled=false;
   $("alternativeNames").textContent=found.alternatives.length?`Autres lectures : ${found.alternatives.map(a=>chordName(a.root,a.quality)).join(" · ")}`:"Lecture harmonique nette.";
 }
 
 function renderProgression(){
-  const wrap=$("progression");wrap.innerHTML="";state.progression.forEach((notes,i)=>{const found=detect(notes),b=document.createElement("div");b.className=`chord-chip ${i===state.selected?"active":""}`;b.tabIndex=0;b.draggable=true;b.setAttribute("role","button");b.innerHTML=`<button type="button" class="delete-chord" aria-label="Supprimer cet accord">×</button><small>ACCORD ${String(i+1).padStart(2,"0")}</small><strong>${found?chordName(found.root,found.quality):"?"}</strong><span>${notes.length} notes</span>`;const select=()=>{state.selected=i;state.notes=new Set(notes);renderAll();playNotes(notes)};b.onclick=(event)=>{if(!event.target.closest(".delete-chord"))select()};b.onkeydown=(event)=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();select()}};b.querySelector(".delete-chord").onclick=(event)=>{event.stopPropagation();removeChord(i)};b.ondragstart=(event)=>{event.dataTransfer.setData("text/chord-index",String(i));b.classList.add("dragging")};b.ondragend=()=>b.classList.remove("dragging");wrap.appendChild(b)});
+  const wrap=$("progression");wrap.innerHTML="";state.progression.forEach((notes,i)=>{const found=detect(notes),b=document.createElement("div");b.className=`chord-chip ${i===state.selected?"active":""}`;b.tabIndex=0;b.draggable=true;b.setAttribute("role","button");b.innerHTML=`<button type="button" class="delete-chord" aria-label="Supprimer cet accord">×</button><small>ACCORD ${String(i+1).padStart(2,"0")}</small><strong>${found?displayChordName(found,notes):"?"}</strong><span>${notes.length} notes</span>`;const select=()=>{state.selected=i;state.notes=new Set(notes);renderAll();playNotes(notes)};b.onclick=(event)=>{if(!event.target.closest(".delete-chord"))select()};b.onkeydown=(event)=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();select()}};b.querySelector(".delete-chord").onclick=(event)=>{event.stopPropagation();removeChord(i)};b.ondragstart=(event)=>{event.dataTransfer.setData("text/chord-index",String(i));b.classList.add("dragging")};b.ondragend=()=>b.classList.remove("dragging");wrap.appendChild(b)});
   const add=document.createElement("button");add.className="chip-add";add.textContent="+ Accord";add.onclick=()=>{$("clearNotesBtn").click();$("rootSelect").focus()};wrap.appendChild(add);
 }
 
@@ -143,12 +148,8 @@ function suggestions(){
   return targetIdeas(source).map((idea,i)=>{const direction=i<4?"up":"down",root=pc(source.root+idea.offset),notes=directedVoicing(root,idea.q,direction,sourceNotes);return{...idea,root,quality:idea.q,direction,notes}});
 }
 
-// --- Hooktheory Trends: real "what comes next" statistics from popular songs,
-// layered alongside the hand-written voice-leading ideas above. The token is
-// a free-tier Hooktheory account key - visible client-side since this site
-// has no backend to hide it behind, accepted tradeoff for a free account.
-const HOOKTHEORY_ACTIVKEY="cfd1b00c230215ffa09efd8deb78eaeb";
-const HOOKTHEORY_TRENDS_URL="https://api.hooktheory.com/v1/trends/nodes";
+// Hooktheory is called through our Worker so the API key never reaches the browser.
+const HOOKTHEORY_TRENDS_URL="/api/hooktheory/trends";
 const trendsCache=new Map();
 
 // Semitone offset from the progression's inferred tonic -> Hooktheory scale-
@@ -184,15 +185,15 @@ async function fetchTrendSuggestions(){
   const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);
   if(!source)return[];
   const tonic=inferTonic();
-  const offset=pc(source.root-tonic.root);
-  const degreeId=DEGREE_ID_BY_OFFSET[offset]||"1";
+  const through=state.progression.slice(0,state.selected+1).map(detect).filter(Boolean);
+  const childPath=through.map(chord=>DEGREE_ID_BY_OFFSET[pc(chord.root-tonic.root)]||"1").slice(-5).join(",")||"1";
 
-  if(trendsCache.has(degreeId))return applyTrendResults(trendsCache.get(degreeId),tonic.root,sourceNotes);
+  if(trendsCache.has(childPath))return applyTrendResults(trendsCache.get(childPath),tonic.root,sourceNotes);
   try{
-    const response=await fetch(`${HOOKTHEORY_TRENDS_URL}?cp=${degreeId}`,{headers:{Authorization:`Bearer ${HOOKTHEORY_ACTIVKEY}`}});
+    const response=await fetch(`${HOOKTHEORY_TRENDS_URL}?cp=${encodeURIComponent(childPath)}`);
     if(!response.ok)return[];
     const data=await response.json();
-    trendsCache.set(degreeId,data);
+    trendsCache.set(childPath,data);
     return applyTrendResults(data,tonic.root,sourceNotes);
   }catch(_e){return[]}
 }
@@ -216,7 +217,7 @@ function renderTrends(){
   $("trendsSummary").textContent="Chargement des tendances Hooktheory...";
   fetchTrendSuggestions().then(items=>{
     if(!items.length){$("trendsSummary").textContent="Pas de données claires pour cet accord.";wrap.innerHTML="";return}
-    $("trendsSummary").innerHTML=`D'après des milliers de morceaux populaires (<a href="https://www.hooktheory.com/trends" target="_blank" rel="noopener">Hooktheory Trends</a>), voici ce qui suit le plus souvent :`;
+    $("trendsSummary").innerHTML=`À partir de ta progression actuelle, <a href="https://www.hooktheory.com/trends" target="_blank" rel="noopener">Hooktheory Trends</a> observe le plus souvent ces suites :`;
     wrap.innerHTML="";
     items.forEach(item=>{
       const card=document.createElement("article");card.className="answer-card trend-card";
@@ -268,6 +269,45 @@ async function importMidi(file){
   if(!file)return;const result=$("midiImportResult");result.hidden=false;result.textContent="Analyse du MIDI…";
   try{const parsed=readMidiFile(await file.arrayBuffer());state.progression=parsed.progression;state.timeline=[];state.selected=state.progression.length-1;state.notes=new Set(state.progression[state.selected]);state.importedFile=file.name;const needed=parsed.progression.length<=4?4:parsed.progression.length<=8?8:parsed.progression.length<=16?16:32;state.timelineMeasures=needed;save();renderAll();result.innerHTML=`<strong>${file.name}</strong> · ${parsed.trackCount} piste${parsed.trackCount>1?"s":""} · ${parsed.events.length} attaques · ${parsed.progression.length} accords reconnus`;toast("Progression MIDI analysée")}
   catch(error){result.innerHTML=`<strong>Impossible de l’analyser :</strong> ${error.message}`}
+}
+
+function centerVoicing(notes,reference){
+  const target=reference.length?reference.reduce((sum,note)=>sum+note,0)/reference.length:60;
+  let voiced=[...notes].sort((a,b)=>a-b),mean=voiced.reduce((sum,note)=>sum+note,0)/voiced.length;
+  while(mean<target-6){voiced=voiced.map(note=>note+12);mean+=12}
+  while(mean>target+6){voiced=voiced.map(note=>note-12);mean-=12}
+  while(Math.min(...voiced)<45)voiced=voiced.map(note=>note+12);
+  while(Math.max(...voiced)>84)voiced=voiced.map(note=>note-12);
+  return voiced;
+}
+
+function buildVoicingIdeas(sourceNotes,found){
+  const pitchIntervals=[...new Set(QUALITY[found.quality].intervals.map(interval=>pc(interval)))].sort((a,b)=>a-b);
+  let rootMidi=60;while(pc(rootMidi)!==found.root)rootMidi++;
+  const rootPosition=pitchIntervals.map(interval=>rootMidi+interval),ideas=[];
+  const labels=["Position fondamentale","1er renversement","2e renversement","3e renversement","4e renversement","5e renversement"];
+  for(let inversion=0;inversion<rootPosition.length;inversion++){
+    const rotated=rootPosition.slice(inversion).concat(rootPosition.slice(0,inversion).map(note=>note+12));
+    const notes=centerVoicing(rotated,sourceNotes),bass=NOTE_FR[pc(notes[0])];
+    ideas.push({label:labels[inversion]||`${inversion}e renversement`,notes,description:inversion?`${bass} passe à la basse pour relier les accords avec moins de sauts.`:"La fondamentale reste à la basse : lecture stable et directe."});
+  }
+  if(rootPosition.length>=4){
+    const close=centerVoicing(rootPosition,sourceNotes),drop=[...close],index=drop.length-2;drop[index]-=12;drop.sort((a,b)=>a-b);
+    ideas.push({label:"Drop 2",notes:centerVoicing(drop,sourceNotes),description:"La deuxième voix la plus haute descend d’une octave : un voicing plus ouvert, très utilisé en jazz."});
+  }
+  const seen=new Set();return ideas.filter(idea=>{const signature=idea.notes.join(",");if(seen.has(signature))return false;seen.add(signature);return true});
+}
+
+function renderVoicings(){
+  const wrap=$("voicings");if(!wrap)return;const sourceNotes=[...state.notes].sort((a,b)=>a-b),found=detect(sourceNotes);wrap.innerHTML="";
+  if(!found||sourceNotes.length<3){wrap.innerHTML='<div class="voicing-empty"><strong>Pose ou joue un accord.</strong><span>Ses renversements apparaîtront ici, prêts à écouter et à ajouter.</span></div>';return}
+  buildVoicingIdeas(sourceNotes,found).forEach(idea=>{
+    const card=document.createElement("article");card.className="voicing-card";
+    card.innerHTML=`<div class="voicing-top"><span>${idea.label}</span><strong>${displayChordName(found,idea.notes)}</strong></div><div class="voicing-notes">${idea.notes.map(note=>`<span>${midiLabel(note)}</span>`).join("")}</div><p>${idea.description}</p><div class="voicing-actions"><button type="button" class="listen-btn">Écouter</button><button type="button" class="add-answer-btn">+ Ajouter</button></div>`;
+    card.querySelector(".listen-btn").onclick=()=>playNotes(idea.notes);
+    card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push([...idea.notes]);state.selected=state.progression.length-1;state.notes=new Set(idea.notes);save();renderAll();toast(`${idea.label} ajouté`)};
+    wrap.appendChild(card);
+  });
 }
 
 function closestVoicing(root,quality,reference){
@@ -333,7 +373,7 @@ function exportMidi(){
   const chunk=(name,data)=>[...name].map(c=>c.charCodeAt(0)).concat([(data.length>>>24)&255,(data.length>>>16)&255,(data.length>>>8)&255,data.length&255],data);const header=[77,84,104,100,0,0,0,6,0,0,0,1,1,224],bytes=new Uint8Array(header.concat(chunk("MTrk",track))),url=URL.createObjectURL(new Blob([bytes],{type:"audio/midi"})),a=document.createElement("a");a.href=url;a.download=`progression-${Date.now()}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("MIDI exporté");
 }
 
-function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderAnswers();renderTrends();renderProgressionIdeas();renderCadences()}
+function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderVoicings();renderAnswers();renderTrends();renderProgressionIdeas();renderCadences()}
 
 renderSelects();load();renderAll();
 $("placeChordBtn").onclick=()=>{const root=Number($("rootSelect").value),quality=$("qualitySelect").value;state.notes=new Set(canonicalVoicing(root,quality));renderAll();playNotes([...state.notes])};

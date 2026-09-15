@@ -1,8 +1,11 @@
 :root{--drawer-width:390px;--shell-paper:#f3efe5;--shell-ink:#171a17;--shell-gold:#d99517;--shell-rule:#d7cebc}
-.music-drawer button,.music-clef-handle,.school-tab-handle{color:inherit;-webkit-appearance:none;appearance:none}
+.music-drawer button,.music-clef-handle,.school-tab-handle,.resolver-tab-handle{color:inherit;-webkit-appearance:none;appearance:none}
 .school-tab-handle{position:fixed;z-index:50;right:0;top:auto;bottom:104px;display:flex;align-items:center;justify-content:center;width:110px;height:56px;padding-right:18px;border:1px solid var(--shell-rule);border-right:0;border-radius:30px 0 0 30px;background:rgba(249,246,238,.99);color:var(--shell-ink);text-decoration:none;box-shadow:-8px 12px 34px rgba(48,40,24,.1);transition:background .2s,transform .2s}
 .school-tab-handle:hover{background:#fffaf0;transform:translateX(-3px)}
 .school-tab-handle span{font:500 17px/1 Miracle,Georgia,serif;letter-spacing:.015em}
+.resolver-tab-handle{position:fixed;z-index:50;right:0;bottom:169px;display:flex;align-items:center;justify-content:center;width:124px;height:56px;padding-right:18px;border:1px solid var(--shell-rule);border-right:0;border-radius:30px 0 0 30px;background:var(--shell-ink);color:#fff;text-decoration:none;box-shadow:-8px 12px 34px rgba(48,40,24,.14);transition:background .2s,transform .2s}
+.resolver-tab-handle:hover{background:#282c26;transform:translateX(-3px)}
+.resolver-tab-handle span{font:500 17px/1 Miracle,Georgia,serif;letter-spacing:.015em}
 @media(max-width:700px){.school-tab-handle{width:96px;height:50px;padding-right:16px;bottom:86px}}
 .music-clef-handle{position:fixed;z-index:50;left:0;top:auto;bottom:104px;display:flex;align-items:center;justify-content:center;width:110px;height:56px;padding-left:18px;border:1px solid var(--shell-rule);border-left:0;border-radius:0 30px 30px 0;background:rgba(249,246,238,.99);color:var(--shell-ink);cursor:pointer;box-shadow:8px 12px 34px rgba(48,40,24,.1);transition:left .48s cubic-bezier(.22,1,.36,1),background .2s,transform .2s}
 .music-clef-handle:hover{background:#fffaf0;transform:translateX(3px)}.music-clef-handle .menu-handle-label{font:500 17px/1 Miracle,Georgia,serif;letter-spacing:.015em}
@@ -27,5 +30,5 @@ body[data-view-mode="partition"] .score-strip-clef{left:18px}
 body[data-view-mode="instrument"] .stage-copy,body[data-view-mode="instrument"] .highway-shell{opacity:0;pointer-events:none}
 body[data-view-mode="instrument"] .hero-instrument{display:block}
 body[data-view-mode="instrument"] .score-strip{width:min(1040px,72vw)}
-@media(max-width:700px){:root{--drawer-width:min(88vw,370px)}.music-clef-handle{width:96px;height:50px;padding-left:16px;bottom:86px}body.drawer-open .music-clef-handle{left:var(--drawer-width)}.music-drawer{padding:24px 22px 20px}.mode-options{grid-template-columns:1fr}.mode-options label span{display:flex;align-items:center;justify-content:space-between}.mode-options small{margin:0}.drawer-source{min-height:150px}}
+@media(max-width:700px){:root{--drawer-width:min(88vw,370px)}.music-clef-handle{width:96px;height:50px;padding-left:16px;bottom:86px}.resolver-tab-handle{width:106px;height:50px;padding-right:16px;bottom:144px}body.drawer-open .music-clef-handle{left:var(--drawer-width)}.music-drawer{padding:24px 22px 20px}.mode-options{grid-template-columns:1fr}.mode-options label span{display:flex;align-items:center;justify-content:space-between}.mode-options small{margin:0}.drawer-source{min-height:150px}}
 .drawer-source .octave-hint{display:block;margin:9px 0 0;padding:9px 11px;border-left:2px solid var(--shell-gold);background:rgba(217,149,23,.08);color:#756c5d;font:500 10px/1.45 "Segoe UI",sans-serif}.drawer-source .octave-hint:empty{display:none}.drawer-source select option:disabled{color:#a7a59e}

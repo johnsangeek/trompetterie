@@ -1,0 +1,52 @@
+.voicings-panel {
+  margin-top: 16px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .42);
+}
+
+.voicings-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.voicing-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #faf8f2;
+}
+
+.voicing-card:first-child { border-top: 3px solid var(--gold); }
+.voicing-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.voicing-top span { color: var(--muted); font-size: .68rem; font-weight: 850; text-transform: uppercase; letter-spacing: .06em; }
+.voicing-top strong { font-size: 1.18rem; text-align: right; }
+.voicing-notes { display: flex; flex-wrap: wrap; gap: 5px; margin: 18px 0 12px; }
+.voicing-notes span { padding: 5px 7px; border-radius: 999px; background: #e8e2d5; font-size: .67rem; font-weight: 750; }
+.voicing-card p { flex: 1; margin: 0 0 15px; color: var(--muted); font-size: .78rem; line-height: 1.45; }
+.voicing-actions { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
+
+.voicing-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 19px;
+  border: 1px dashed #bdb6a6;
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.voicing-empty strong { color: var(--ink); }
+.voicing-empty span { font-size: .8rem; text-align: right; }
+
+@media (max-width: 850px) {
+  .voicings-grid { grid-template-columns: 1fr; }
+  .voicing-empty { display: grid; }
+  .voicing-empty span { text-align: left; }
+}
