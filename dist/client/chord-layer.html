@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#171914" />
+  <title>Atelier de superposition — Chords Resolver</title>
+  <link rel="icon" href="icons/favicon-32.png" sizes="32x32" />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@900,700,500,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="chords.css?v=2" />
+  <link rel="stylesheet" href="chord-layer.css?v=1" />
+</head>
+<body class="layer-page">
+  <header class="resolver-topbar">
+    <a href="chords.html" class="back-link">← Chords Resolver</a>
+    <div class="brand"><span class="brand-dots"><i></i><i></i><i></i></span> Layer Lab</div>
+    <button type="button" id="resetBtn" class="ghost-btn">Recommencer</button>
+  </header>
+
+  <main class="layer-shell">
+    <section class="layer-intro">
+      <div><span class="eyebrow">Deux couches · une seule harmonie</span><h1>Le socle reste.<br><em>Le piano s’amuse.</em></h1></div>
+      <p>Le premier MIDI fixe la tonalité et les accords à respecter. Le second devient une réponse jazz : plus mobile, plus colorée, mais toujours juste.</p>
+    </section>
+
+    <section class="layer-inputs" aria-label="Fichiers MIDI à superposer">
+      <label class="layer-drop" id="masterDrop">
+        <input id="masterInput" type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden />
+        <span class="layer-number">01</span><small>Socle harmonique</small><strong>Déposer le MIDI maître</strong><p>Rhodes, basse ou accords principaux</p><output id="masterStatus">En attente</output>
+      </label>
+      <div class="layer-link-mark" aria-hidden="true"><span></span><b>+</b><span></span></div>
+      <label class="layer-drop" id="overlayDrop">
+        <input id="overlayInput" type="file" accept=".mid,.midi,audio/midi,audio/x-midi" hidden />
+        <span class="layer-number">02</span><small>Couche à réinventer</small><strong>Déposer le MIDI piano</strong><p>La partie qui recevra les nouveaux voicings</p><output id="overlayStatus">En attente</output>
+      </label>
+    </section>
+
+    <section id="analysisPanel" class="layer-analysis" hidden>
+      <div class="analysis-fact"><small>Tonalité estimée</small><strong id="keyResult">—</strong></div>
+      <div class="analysis-fact"><small>Accords du socle</small><strong id="masterChordCount">—</strong></div>
+      <div class="analysis-fact"><small>Réponses piano</small><strong id="overlayChordCount">—</strong></div>
+      <div class="analysis-fact analysis-health"><small>Compatibilité</small><strong id="compatibilityResult">—</strong></div>
+    </section>
+
+    <section class="layer-controls" aria-labelledby="directionTitle">
+      <div><span class="step">03</span><div><h2 id="directionTitle">Direction artistique</h2><p>Le dosage change la richesse des extensions et le mouvement entre les accords.</p></div></div>
+      <div class="style-pills" role="group" aria-label="Style harmonique">
+        <button type="button" data-style="jazz" class="active">Jazz</button><button type="button" data-style="neosoul">Neo-soul</button><button type="button" data-style="bossa">Bossa</button><button type="button" data-style="blues">Blues</button>
+      </div>
+      <label class="audacity-control"><span><b>Liberté artistique</b><output id="audacityLabel">Équilibrée</output></span><input id="audacityInput" type="range" min="1" max="3" value="2" step="1" /></label>
+      <button type="button" id="generateBtn" class="generate-layer-btn" disabled>Créer la couche jazz</button>
+    </section>
+
+    <section id="resultPanel" class="layer-results" hidden aria-labelledby="resultTitle">
+      <div class="section-heading">
+        <div><span class="step">04</span><h2 id="resultTitle">Dialogue harmonique</h2></div>
+        <div class="result-actions"><button type="button" id="listenResultBtn" class="ghost-btn">▶ Écouter</button><button type="button" id="exportLayerBtn" class="gold-btn">Exporter le piano MIDI</button></div>
+      </div>
+      <p class="result-legend"><span>Socle</span><span>Piano original</span><span>Nouvelle réponse</span></p>
+      <div id="layerSequence" class="layer-sequence"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="chord-layer.js?v=1"></script>
+</body>
+</html>
