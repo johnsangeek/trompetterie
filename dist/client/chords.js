@@ -2,6 +2,8 @@
 
 const NOTE_FR = ["Do","Réb","Ré","Mib","Mi","Fa","Solb","Sol","Lab","La","Sib","Si"];
 const NOTE_INT = ["C","D♭","D","E♭","E","F","G♭","G","A♭","A","B♭","B"];
+const NOTE_FL = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const ROLL_KEY_WIDTH = 88;
 const QUALITY = {
   maj:{label:"Majeur",symbol:"",intervals:[0,4,7]}, min:{label:"Mineur",symbol:"m",intervals:[0,3,7]},
   maj7:{label:"Maj 7",symbol:"maj7",intervals:[0,4,7,11]}, min7:{label:"Mineur 7",symbol:"m7",intervals:[0,3,7,10]},
@@ -18,6 +20,7 @@ const $ = (id)=>document.getElementById(id);
 function pc(n){return ((n%12)+12)%12}
 function chordName(root,quality,international=false){return `${(international?NOTE_INT:NOTE_FR)[root]}${QUALITY[quality].symbol}`}
 function midiLabel(midi){return `${NOTE_FR[pc(midi)]}${Math.floor(midi/12)-1}`}
+function flMidiLabel(midi){return `${NOTE_FL[pc(midi)]}${Math.floor(midi/12)}`}
 function displayChordName(found,notes,international=false){
   const base=chordName(found.root,found.quality,international),bass=pc(Math.min(...notes));
   const chordTones=new Set(QUALITY[found.quality].intervals.map(interval=>pc(found.root+interval)));
@@ -106,12 +109,12 @@ function removeChord(index){
 }
 
 function renderTimeline(){
-  normalizeTimeline();const canvas=$("timelineCanvas"),measureWidth=150,labelWidth=52,rowHeight=14,top=46,low=45,high=84,totalWidth=labelWidth+state.timelineMeasures*measureWidth,totalHeight=top+(high-low+1)*rowHeight;
+  normalizeTimeline();const canvas=$("timelineCanvas"),measureWidth=150,labelWidth=ROLL_KEY_WIDTH,rowHeight=20,top=46,low=45,high=84,totalWidth=labelWidth+state.timelineMeasures*measureWidth,totalHeight=top+(high-low+1)*rowHeight;
   canvas.innerHTML="";canvas.style.width=`${totalWidth}px`;canvas.style.height=`${totalHeight}px`;
   const header=document.createElement("div");header.className="timeline-header";header.style.width=`${totalWidth}px`;canvas.appendChild(header);
   const corner=document.createElement("div");corner.className="timeline-corner";corner.textContent="CHORDS";header.appendChild(corner);
   for(let measure=0;measure<state.timelineMeasures;measure++){const number=document.createElement("div");number.className="measure-number";number.style.left=`${labelWidth+measure*measureWidth}px`;number.style.width=`${measureWidth}px`;number.innerHTML=`<strong>${measure+1}</strong>4 / 4`;header.appendChild(number);for(let beat=0;beat<4;beat++){const line=document.createElement("i");line.className=beat===0?"measure-line":"beat-line";line.style.left=`${labelWidth+measure*measureWidth+beat*measureWidth/4}px`;canvas.appendChild(line)}}
-  for(let midi=high;midi>=low;midi--){const rowIndex=high-midi,key=document.createElement("div"),row=document.createElement("div");key.className="roll-key";key.style.top=`${top+rowIndex*rowHeight}px`;key.style.height=`${rowHeight}px`;key.textContent=midiLabel(midi);row.className=`roll-row ${[1,3,6,8,10].includes(pc(midi))?"black":""}`;row.style.top=key.style.top;row.style.width=`${state.timelineMeasures*measureWidth}px`;row.style.height=key.style.height;canvas.append(row,key)}
+  for(let midi=high;midi>=low;midi--){const rowIndex=high-midi,key=document.createElement("div"),row=document.createElement("div"),isBlack=[1,3,6,8,10].includes(pc(midi));key.className=`roll-key ${isBlack?"black":"white"}`;key.style.top=`${top+rowIndex*rowHeight}px`;key.style.height=`${rowHeight}px`;key.innerHTML=`<strong>${flMidiLabel(midi)}</strong><small>${midiLabel(midi)}</small>`;row.className=`roll-row ${isBlack?"black":""}`;row.style.top=key.style.top;row.style.width=`${state.timelineMeasures*measureWidth}px`;row.style.height=key.style.height;canvas.append(row,key)}
   state.timeline.forEach((item,index)=>{const notes=state.progression[index];if(!notes)return;const found=detect(notes),left=labelWidth+item.start*measureWidth,width=Math.max(18,Math.min(item.duration,state.timelineMeasures-item.start)*measureWidth-4),block=document.createElement("div");block.className=`chord-lane-block ${index===state.selected?"selected":""}`;block.style.left=`${left+2}px`;block.style.width=`${width}px`;block.draggable=true;block.innerHTML=`<strong>${found?chordName(found.root,found.quality):"Accord"}</strong><span>M.${Math.floor(item.start)+1} · ${item.duration<1?Math.round(item.duration*4)+" temps":item.duration+" mesure"+(item.duration>1?"s":"")}</span>`;block.onclick=()=>{state.selected=index;state.notes=new Set(notes);$("chordDurationSelect").value=String(item.duration);renderAll();playNotes(notes)};block.ondragstart=event=>{event.dataTransfer.setData("text/timeline-index",String(index));block.classList.add("dragging")};block.ondragend=()=>block.classList.remove("dragging");header.appendChild(block);
     notes.forEach(midi=>{if(midi<low||midi>high)return;const note=document.createElement("div");note.className="roll-note";note.style.left=`${left+3}px`;note.style.top=`${top+(high-midi)*rowHeight+1}px`;note.style.width=`${Math.max(12,width-3)}px`;canvas.appendChild(note)})});
   if(!state.progression.length){const empty=document.createElement("div");empty.className="empty-roll-message";empty.textContent="Ajoute ou importe des accords pour remplir la grille.";canvas.appendChild(empty)}
@@ -120,13 +123,13 @@ function renderTimeline(){
 }
 
 function moveTimelineChord(index,clientX){
-  const viewport=$("timelineViewport"),rect=$("timelineCanvas").getBoundingClientRect(),measureWidth=150,labelWidth=52,x=clientX-rect.left+viewport.scrollLeft-labelWidth,start=Math.max(0,Math.min(state.timelineMeasures-1,Math.floor(x/measureWidth)));
+  const viewport=$("timelineViewport"),rect=$("timelineCanvas").getBoundingClientRect(),measureWidth=150,labelWidth=ROLL_KEY_WIDTH,x=clientX-rect.left+viewport.scrollLeft-labelWidth,start=Math.max(0,Math.min(state.timelineMeasures-1,Math.floor(x/measureWidth)));
   if(!state.timeline[index])return;state.timeline[index].start=start;if(start+state.timeline[index].duration>state.timelineMeasures)state.timeline[index].duration=Math.max(.25,state.timelineMeasures-start);state.selected=index;save();renderAll();toast(`Accord déplacé en mesure ${start+1}`);
 }
 
 function stopTimeline(){state.timelineTimers.forEach(clearTimeout);state.timelineTimers=[];if(state.timelineAnimation){state.timelineAnimation.cancel();state.timelineAnimation=null}const head=document.querySelector(".timeline-playhead");if(head)head.remove()}
 function playTimeline(){
-  stopTimeline();if(!state.progression.length)return;const bpm=Math.max(30,Math.min(260,Number($("timelineTempo").value)||100)),measureMs=240000/bpm,canvas=$("timelineCanvas"),head=document.createElement("div");head.className="timeline-playhead";head.style.left="52px";canvas.appendChild(head);
+  stopTimeline();if(!state.progression.length)return;const bpm=Math.max(30,Math.min(260,Number($("timelineTempo").value)||100)),measureMs=240000/bpm,canvas=$("timelineCanvas"),head=document.createElement("div");head.className="timeline-playhead";head.style.left=`${ROLL_KEY_WIDTH}px`;canvas.appendChild(head);
   state.timeline.forEach((item,index)=>state.timelineTimers.push(setTimeout(()=>{state.selected=index;playNotes(state.progression[index],Math.min(1.4,item.duration*measureMs/1000*.85));renderProgression()},item.start*measureMs)));
   const end=Math.max(...state.timeline.map(item=>item.start+item.duration),1),distance=end*150;state.timelineAnimation=head.animate([{transform:"translateX(0)"},{transform:`translateX(${distance}px)`}],{duration:end*measureMs,easing:"linear",fill:"forwards"});state.timelineAnimation.onfinish=()=>{state.timelineAnimation=null;state.timelineTimers=[]};
 }

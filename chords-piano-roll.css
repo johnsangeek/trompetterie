@@ -1,0 +1,47 @@
+.timeline-corner {
+  width: 88px;
+  color: #c4c9bf;
+  letter-spacing: .08em;
+}
+
+.timeline-corner::after { content: "PIANO · FL"; }
+.timeline-corner { font-size: 0; }
+.timeline-corner::after { font-size: .59rem; }
+
+.roll-row { left: 88px; }
+
+.roll-key {
+  width: 88px;
+  padding: 0 7px;
+  justify-content: flex-end;
+  gap: 5px;
+  border-right: 1px solid #343830;
+  font-variant-numeric: tabular-nums;
+}
+
+.roll-key.white {
+  color: #171914;
+  background: linear-gradient(90deg, #deddd7 0, #faf9f4 74%, #d4d3cc 100%);
+  border-bottom-color: #b7b7b0;
+}
+
+.roll-key.black {
+  left: 24px;
+  z-index: 8;
+  width: 64px;
+  color: #f8f5ec;
+  background: linear-gradient(90deg, #191c18 0, #343832 72%, #151713 100%);
+  border: 1px solid #0d0f0c;
+  border-radius: 0 3px 3px 0;
+  box-shadow: 4px 2px 7px #0007;
+}
+
+.roll-key strong { font-size: .62rem; line-height: 1; }
+.roll-key small { color: inherit; font-size: .48rem; line-height: 1; opacity: .58; }
+.roll-note { height: 18px; }
+.empty-roll-message { left: 88px; }
+
+@media (max-width: 700px) {
+  .roll-key strong { font-size: .58rem; }
+  .roll-key small { font-size: .45rem; }
+}
