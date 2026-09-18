@@ -3,10 +3,15 @@
   const $=selector=>document.querySelector(selector);
   const handle=$("#musicClefHandle"),drawer=$("#musicDrawer"),veil=$("#drawerVeil"),close=$("#drawerClose");
   if(!handle||!drawer)return;
-  const root=$("#drawerRoot"),scale=$("#drawerScale"),octave=$("#drawerOctave"),music=$("#drawerMusic"),summary=$("#drawerSummary");
+  const root=$("#drawerRoot"),scale=$("#drawerScale"),octave=$("#drawerOctave"),music=$("#drawerMusic"),summary=$("#drawerSummary"),backingRoot=$("#backingRoot"),backingMode=$("#backingMode"),backingStyle=$("#backingStyle"),backingAnswer=$("#backingAnswer");
   const noteLabels=["Do","Do♯","Ré","Mi♭","Mi","Fa","Fa♯","Sol","La♭","La","Si♭","Si"];
   const scaleLabels={blues:"Blues",major:"Majeure",minor:"Mineure naturelle",pentatonic:"Pentatonique majeure",minorPentatonic:"Pentatonique mineure",allOctaves:"Toutes les octaves"};
   const scaleIntervals={blues:[0,3,5,6,7,10,12],major:[0,2,4,5,7,9,11,12],minor:[0,2,3,5,7,8,10,12],pentatonic:[0,2,4,7,9,12],minorPentatonic:[0,3,5,7,10,12]};
+  const backingProfiles={
+    jazz:{major:{safe:[0,2,4,7,9],color:[5,11]},minor:{safe:[0,3,5,7,10],color:[2,8]}},
+    blues:{major:{safe:[0,2,3,4,7,9],color:[10]},minor:{safe:[0,3,5,6,7,10],color:[2]}},
+    soul:{major:{safe:[0,2,4,7,9],color:[3,10]},minor:{safe:[0,3,5,7,10],color:[2,9]}}
+  };
   let previewAudio=null;
   const comfortableOctave=rootValue=>rootValue>=7?3:4;
   const scaleBase=(rootValue,octaveValue)=>12*((octaveValue==="auto"?comfortableOctave(rootValue):Number(octaveValue))+1)+rootValue;
@@ -43,6 +48,11 @@
     });
   }
 
+  const backingScaleType=()=>backingStyle?.value==="blues"?"blues":backingMode?.value==="minor"?"minorPentatonic":"pentatonic";
+  function backingWrittenMidi(interval){const writtenRoot=(Number(backingRoot.value)+2)%12;let base=60;while(base%12!==writtenRoot)base++;return base+interval}
+  function backingNoteButton(interval,kind){const concertPc=(Number(backingRoot.value)+interval)%12,midi=backingWrittenMidi(interval),writtenPc=midi%12,values=window.TrumpetFingerings.primary(midi),button=document.createElement("button");button.type="button";button.className=`backing-note ${kind}`;button.innerHTML=`<small>${kind==="safe"?"SÛRE":"COULEUR"}</small><strong>${noteLabels[writtenPc]}${Math.floor(midi/12)-1}</strong><span class="backing-concert">concert ${noteLabels[concertPc]}</span><span class="backing-fingers">${(values.length?values:[0]).map(value=>`<i class="finger-${value}">${value}</i>`).join("")}</span>`;button.onclick=()=>previewNote(midi);return button}
+  function renderBackingGuide(){if(!backingAnswer)return;const concertRoot=Number(backingRoot.value),mode=backingMode.value,profile=backingProfiles[backingStyle.value][mode],writtenRoot=(concertRoot+2)%12,modeLabel=mode==="major"?"majeur":"mineur",scaleName=backingScaleType()==="blues"?"blues":backingScaleType()==="minorPentatonic"?"pentatonique mineure":"pentatonique majeure";backingAnswer.innerHTML=`<div class="backing-key"><small>BACKING EN TONALITÉ CONCERT</small><strong>${noteLabels[concertRoot]} ${modeLabel}</strong><p>À la trompette Sib, pense <b>${noteLabels[writtenRoot]} ${modeLabel}</b>.</p></div><div class="backing-group"><span>Commence par ces notes</span><div class="backing-notes safe-notes"></div></div><div class="backing-group"><span>Ajoute ensuite ces couleurs</span><div class="backing-notes color-notes"></div></div><p class="backing-advice">Travaille d’abord la gamme ${scaleName}. Les notes « couleur » donnent le caractère ${backingStyle.selectedOptions[0].textContent.toLowerCase()}, mais demandent plus d’écoute.</p>`;profile.safe.forEach(interval=>backingAnswer.querySelector(".safe-notes").appendChild(backingNoteButton(interval,"safe")));profile.color.forEach(interval=>backingAnswer.querySelector(".color-notes").appendChild(backingNoteButton(interval,"color")))}
+
   function openDrawer(){document.body.classList.add("drawer-open");drawer.setAttribute("aria-hidden","false");handle.setAttribute("aria-expanded","true");veil.hidden=false;requestAnimationFrame(()=>veil.classList.add("visible"));}
   function closeDrawer(){document.body.classList.remove("drawer-open");drawer.setAttribute("aria-hidden","true");handle.setAttribute("aria-expanded","false");veil.classList.remove("visible");setTimeout(()=>{if(!document.body.classList.contains("drawer-open"))veil.hidden=true},320);handle.focus();}
   function selectedMode(){return document.querySelector('input[name="drawerMode"]:checked')?.value||"hero"}
@@ -53,8 +63,9 @@
     const songName=music?.selectedOptions?.[0]?.textContent||"Premiers pas",rootValue=Number(root.value),isAllOctaves=scale.value==="allOctaves";
     const startOctave=octave?.value==="auto"?comfortableOctave(rootValue):Number(octave?.value||4);
     const scaleSummary=isAllOctaves?`${noteLabels[rootValue]} trompette · toutes les octaves`:`${noteLabels[rootValue]}${startOctave} trompette · ${scaleLabels[scale.value]}`;
-    summary.textContent=selectedSource()==="scale"?`${scaleSummary} · ${mode}`:`${songName} · ${mode}`;
+    if(selectedSource()==="scale")summary.textContent=`${scaleSummary} · ${mode}`;else if(selectedSource()==="backing")summary.textContent=`Backing ${noteLabels[Number(backingRoot.value)]} ${backingMode.value==="major"?"majeur":"mineur"} · ${mode}`;else summary.textContent=`${songName} · ${mode}`;
     renderScalePreview();
+    renderBackingGuide();
   }
 
   handle.addEventListener("click",()=>document.body.classList.contains("drawer-open")?closeDrawer():openDrawer());close.addEventListener("click",closeDrawer);veil.addEventListener("click",closeDrawer);
@@ -63,10 +74,10 @@
     document.querySelectorAll("[data-source-tab]").forEach(item=>{const active=item===tab;item.classList.toggle("active",active);item.setAttribute("aria-selected",String(active))});
     document.querySelectorAll("[data-source-panel]").forEach(panel=>{const active=panel.dataset.sourcePanel===tab.dataset.sourceTab;panel.classList.toggle("active",active);panel.hidden=!active});updateSummary();
   }));
-  [root,scale,octave,music,...document.querySelectorAll('input[name="drawerMode"]')].filter(Boolean).forEach(input=>input.addEventListener("change",updateSummary));
+  [root,scale,octave,music,backingRoot,backingMode,backingStyle,...document.querySelectorAll('input[name="drawerMode"]')].filter(Boolean).forEach(input=>input.addEventListener("change",updateSummary));
   $("#drawerImportMidi").addEventListener("click",()=>{$("#midiInput")?.click()});
   $("#drawerPlay").addEventListener("click",()=>{
-    const detail={source:selectedSource(),mode:selectedMode(),root:Number(root.value),scale:scale.value,octave:octave?.value||"auto",music:music?.value||"demo"};
+    const isBacking=selectedSource()==="backing",detail={source:selectedSource(),mode:selectedMode(),root:isBacking?Number(backingRoot.value):Number(root.value),scale:isBacking?backingScaleType():scale.value,octave:isBacking?"auto":octave?.value||"auto",music:music?.value||"demo"};
     window.dispatchEvent(new CustomEvent("trompetterie:play",{detail}));closeDrawer();
   });
   updateSummary();

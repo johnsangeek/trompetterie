@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <script>if(matchMedia("(max-width:760px)").matches&&!new URLSearchParams(location.search).has("desktop"))location.replace("mobile.html");</script>
   <title>Trompetterie</title>
-  <link rel="stylesheet" href="trompetterie-shell.css?v=93" />
+  <link rel="stylesheet" href="trompetterie-shell.css?v=94" />
   <link rel="stylesheet" href="home.css?v=81" />
   <link rel="manifest" href="manifest.json?v=84" />
   <meta name="theme-color" content="#f3efe5" />
@@ -36,6 +36,7 @@
     <div class="source-tabs" role="tablist" aria-label="Type de contenu">
       <button type="button" class="active" data-source-tab="scale" role="tab" aria-selected="true">Gammes</button>
       <button type="button" data-source-tab="music" role="tab" aria-selected="false">Musiques</button>
+      <button type="button" data-source-tab="backing" role="tab" aria-selected="false">Backing</button>
     </div>
 
     <section class="drawer-source active" data-source-panel="scale">
@@ -92,6 +93,22 @@
       <button class="drawer-import" id="drawerImportMidi" type="button"><span>＋</span><strong>Importer un MIDI</strong><small>Notes exactes et accompagnement</small></button>
     </section>
 
+    <section class="drawer-source backing-guide" data-source-panel="backing" hidden>
+      <div class="backing-fields">
+        <label>Tonalité du backing
+          <select id="backingRoot">
+            <option value="0" selected>Do / C</option><option value="1">Do♯ / C♯</option><option value="2">Ré / D</option>
+            <option value="3">Mi♭ / E♭</option><option value="4">Mi / E</option><option value="5">Fa / F</option>
+            <option value="6">Fa♯ / F♯</option><option value="7">Sol / G</option><option value="8">La♭ / A♭</option>
+            <option value="9">La / A</option><option value="10">Si♭ / B♭</option><option value="11">Si / B</option>
+          </select>
+        </label>
+        <label>Couleur<select id="backingMode"><option value="major" selected>Majeur</option><option value="minor">Mineur</option></select></label>
+        <label>Style<select id="backingStyle"><option value="jazz" selected>Jazz</option><option value="blues">Blues</option><option value="soul">Soul / Funk</option></select></label>
+      </div>
+      <div class="backing-answer" id="backingAnswer" aria-live="polite"></div>
+    </section>
+
     <section class="mode-picker">
       <span class="drawer-section-title">Mode d'apprentissage</span>
       <div class="mode-options">
@@ -114,7 +131,7 @@
   </main>
 
   <script src="trumpet-fingering.js?v=93"></script>
-  <script src="trompetterie-shell.js?v=93"></script>
-  <script src="home.js?v=90"></script>
+  <script src="trompetterie-shell.js?v=94"></script>
+  <script src="home.js?v=91"></script>
 </body>
 </html>

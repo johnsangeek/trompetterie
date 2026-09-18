@@ -6,7 +6,7 @@
     params.set("mode", d.mode || "hero");
     if (d.source === "music" && d.music && d.music !== "demo") {
       params.set("track", d.music);
-    } else if (d.source === "scale") {
+    } else if (d.source === "scale" || d.source === "backing") {
       params.set("root", d.root ?? 2);
       params.set("scale", d.scale || "blues");
       params.set("octave", d.octave || "auto");

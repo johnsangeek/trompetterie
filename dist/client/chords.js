@@ -14,6 +14,9 @@ const QUALITY = {
   maj6:{label:"Majeur 6",symbol:"6",intervals:[0,4,7,9]}, min6:{label:"Mineur 6",symbol:"m6",intervals:[0,3,7,9]},
   maj69:{label:"Majeur 6/9",symbol:"6/9",intervals:[0,2,4,7,9]},
 };
+const MOOD_FR = {Anguished:"Angoissé",Dark:"Sombre",Dramatic:"Dramatique",Empowered:"Puissant",Excited:"Excité",Fearful:"Craintif",Hopeful:"Plein d'espoir",Joyful:"Joyeux",Lonely:"Solitaire",Mysterious:"Mystérieux",Nostalgic:"Nostalgique",Peaceful:"Paisible",Playful:"Enjoué",Rebellious:"Rebelle",Relaxed:"Détendu",Romantic:"Romantique",Sad:"Triste",Spiritual:"Spirituel",Surprised:"Surpris",Tender:"Tendre",Triumphant:"Triomphant"};
+const SCALE_FR = {M:"Majeur",m:"Mineur",O:"Modal"};
+let moodLibrary = null, selectedMoods = new Set();
 const STORAGE = "trumpetTrainerChordProgression";
 const TIMELINE_STORAGE = "trumpetTrainerChordTimeline";
 const state = {notes:new Set(),progression:[],selected:null,direction:"both",audio:null,importedFile:null,timeline:[],timelineMeasures:8,timelineTimers:[],timelineAnimation:null};
@@ -198,7 +201,7 @@ function suggestions(){
   const seen=new Set();return items.filter(item=>{const signature=item.sequence?item.sequence.map(step=>`${step.root}:${step.quality}:${step.notes.join(".")}`).join("|"):`${item.root}:${item.quality}:${item.notes.join(".")}`;if(seen.has(signature))return false;seen.add(signature);return true});
 }
 
-// Hooktheory is called through our Worker so the API key never reaches the browser.
+// Called through the site Worker so the API credential never reaches browsers.
 const HOOKTHEORY_TRENDS_URL="/api/hooktheory/trends";
 const trendsCache=new Map();
 
@@ -463,7 +466,85 @@ function exportMidi(){
   const chunk=(name,data)=>[...name].map(c=>c.charCodeAt(0)).concat([(data.length>>>24)&255,(data.length>>>16)&255,(data.length>>>8)&255,data.length&255],data);const header=[77,84,104,100,0,0,0,6,0,0,0,1,1,224],bytes=new Uint8Array(header.concat(chunk("MTrk",track))),url=URL.createObjectURL(new Blob([bytes],{type:"audio/midi"})),a=document.createElement("a");a.href=url;a.download=`progression-${Date.now()}.mid`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast("MIDI exporté");
 }
 
-function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderVoicings();renderAnswers();renderTrends();renderProgressionIdeas();renderCadences()}
+function renderMoodChips(){
+  const wrap=$("moodChips");if(!wrap||!moodLibrary)return;wrap.innerHTML="";
+  moodLibrary.moods.forEach((mood,index)=>{
+    const btn=document.createElement("button");btn.type="button";btn.className="mood-chip"+(selectedMoods.has(index)?" active":"");
+    btn.textContent=MOOD_FR[mood]||mood;
+    btn.onclick=()=>{if(selectedMoods.has(index))selectedMoods.delete(index);else selectedMoods.add(index);renderMoodChips();renderMoodResults()};
+    wrap.appendChild(btn);
+  });
+}
+let transitionTable=null;
+function buildTransitionTable(){
+  if(transitionTable||!moodLibrary)return;
+  transitionTable={};
+  moodLibrary.items.forEach(item=>{
+    const chords=item.c;
+    for(let i=0;i<chords.length-1;i++){
+      const from=detect(chords[i]),to=detect(chords[i+1]);
+      if(!from||!to)continue;
+      const offset=pc(to.root-from.root),toKey=`${offset}|${to.quality}`;
+      transitionTable[from.quality]=transitionTable[from.quality]||{};
+      transitionTable[from.quality][toKey]=(transitionTable[from.quality][toKey]||0)+1;
+    }
+  });
+}
+function localLibrarySuggestions(){
+  if(state.selected===null||!state.progression[state.selected])return[];
+  const sourceNotes=state.progression[state.selected],source=detect(sourceNotes);
+  if(!source)return[];
+  buildTransitionTable();
+  const table=transitionTable&&transitionTable[source.quality];if(!table)return[];
+  const total=Object.values(table).reduce((sum,count)=>sum+count,0);
+  return Object.entries(table).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([key,count])=>{
+    const[offsetStr,quality]=key.split("|"),offset=Number(offsetStr),root=pc(source.root+offset);
+    return{root,quality,probability:count/total,notes:directedVoicing(root,quality,"up",sourceNotes)};
+  });
+}
+function renderLibrarySuggestions(){
+  const wrap=$("library");if(!wrap)return;
+  if(state.selected===null){$("librarySummary").textContent="Sélectionne un accord pour voir ce que suggère la bibliothèque locale.";wrap.innerHTML="";return}
+  const items=localLibrarySuggestions();
+  if(!items.length){$("librarySummary").textContent=moodLibrary?"Pas assez de données locales pour cet accord.":"Chargement de la bibliothèque locale…";wrap.innerHTML="";return}
+  $("librarySummary").innerHTML=`D'après ${moodLibrary.items.length} progressions réelles (licence MIT, <a href="https://github.com/ldrolez/free-midi-chords" target="_blank" rel="noopener">free-midi-chords</a>), voici ce qui suit le plus souvent :`;
+  wrap.innerHTML="";
+  items.forEach(item=>{
+    const card=document.createElement("article");card.className="answer-card library-card";
+    card.innerHTML=`<div class="answer-top"><span>${Math.round(item.probability*100)}% des cas</span></div><h3>${chordName(item.root,item.quality)}</h3><div class="voice-line">${item.notes.map(note=>`<span>${midiLabel(note)}</span>`).join("")}</div><div class="answer-actions"><button class="listen-btn">Écouter la suite</button><button class="add-answer-btn">+ Ajouter</button></div>`;
+    card.querySelector(".listen-btn").onclick=()=>playSequence(state.progression[state.selected],item.notes);
+    card.querySelector(".add-answer-btn").onclick=()=>{state.progression.push(item.notes);state.selected=state.progression.length-1;state.notes=new Set(item.notes);save();renderAll();toast(`${chordName(item.root,item.quality)} ajouté à la progression`)};
+    wrap.appendChild(card);
+  });
+}
+function loadMoodProgression(item){
+  state.progression=item.c.map(notes=>[...notes]);
+  state.timeline=[];state.selected=0;state.notes=new Set(state.progression[0]);
+  normalizeTimeline();save();renderAll();
+  toast(`Progression chargée : ${item.k} ${item.r}`);
+}
+function renderMoodResults(){
+  const wrap=$("moodResults");if(!wrap)return;
+  if(!moodLibrary){wrap.innerHTML="";return}
+  let items=moodLibrary.items;
+  if(selectedMoods.size)items=items.filter(item=>item.m.some(m=>selectedMoods.has(m)));
+  const seen=new Set(),unique=[];
+  for(const item of items){
+    const key=item.s+"|"+item.r;if(seen.has(key))continue;seen.add(key);unique.push(item);
+    if(unique.length>=24)break;
+  }
+  wrap.innerHTML="";
+  if(!unique.length){wrap.innerHTML='<p class="mood-empty">Aucune progression pour cette combinaison d’ambiances.</p>';return}
+  unique.forEach(item=>{
+    const card=document.createElement("article");card.className="mood-card";
+    const tags=item.m.map(m=>MOOD_FR[moodLibrary.moods[m]]||moodLibrary.moods[m]).join(", ");
+    card.innerHTML=`<div class="mood-card-top"><strong>${item.k}</strong><span>${SCALE_FR[item.s]}</span></div><div class="mood-card-roman">${item.r}</div><div class="mood-card-tags">${item.m.map(m=>`<span>${MOOD_FR[moodLibrary.moods[m]]||moodLibrary.moods[m]}</span>`).join("")}</div><div class="voicing-actions"><button type="button" class="listen-btn">Écouter</button><button type="button" class="mood-load-btn">Charger</button></div>`;
+    card.querySelector(".listen-btn").onclick=()=>playProgression(item.c);
+    card.querySelector(".mood-load-btn").onclick=()=>loadMoodProgression(item);
+    wrap.appendChild(card);
+  });
+}
+function renderAll(){renderPiano();renderIdentity();renderProgression();renderTimeline();renderVoicings();renderAnswers();renderTrends();renderLibrarySuggestions();renderProgressionIdeas();renderCadences()}
 
 renderSelects();load();renderAll();
 $("placeChordBtn").onclick=()=>{const root=Number($("rootSelect").value),quality=$("qualitySelect").value;state.notes=new Set(canonicalVoicing(root,quality));renderAll();playNotes([...state.notes])};
@@ -482,3 +563,4 @@ const timelineCanvas=$("timelineCanvas");timelineCanvas.addEventListener("dragov
 const timelineViewport=$("timelineViewport");timelineViewport.addEventListener("scroll",()=>timelineCanvas.style.setProperty("--roll-scroll-x",`${timelineViewport.scrollLeft}px`),{passive:true});
 document.querySelectorAll(".direction-btn").forEach(btn=>btn.onclick=()=>{state.direction=btn.dataset.direction;document.querySelectorAll(".direction-btn").forEach(b=>b.classList.toggle("active",b===btn));renderAnswers()});
 $("jazzifyBtn").onclick=jazzifyProgression;
+fetch("chord-moods.json").then(response=>response.json()).then(data=>{moodLibrary=data;renderMoodChips();renderMoodResults();renderLibrarySuggestions()}).catch(()=>{});

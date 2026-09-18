@@ -201,10 +201,8 @@ function suggestions(){
   const seen=new Set();return items.filter(item=>{const signature=item.sequence?item.sequence.map(step=>`${step.root}:${step.quality}:${step.notes.join(".")}`).join("|"):`${item.root}:${item.quality}:${item.notes.join(".")}`;if(seen.has(signature))return false;seen.add(signature);return true});
 }
 
-// This site is static (no backend to proxy through), so the free-tier key is
-// called directly from the browser - visible client-side, accepted tradeoff.
-const HOOKTHEORY_ACTIVKEY="cfd1b00c230215ffa09efd8deb78eaeb";
-const HOOKTHEORY_TRENDS_URL="https://api.hooktheory.com/v1/trends/nodes";
+// Called through the site Worker so the API credential never reaches browsers.
+const HOOKTHEORY_TRENDS_URL="/api/hooktheory/trends";
 const trendsCache=new Map();
 
 // Semitone offset from the progression's inferred tonic -> Hooktheory scale-
@@ -245,7 +243,7 @@ async function fetchTrendSuggestions(){
 
   if(trendsCache.has(childPath))return applyTrendResults(trendsCache.get(childPath),tonic.root,sourceNotes);
   try{
-    const response=await fetch(`${HOOKTHEORY_TRENDS_URL}?cp=${encodeURIComponent(childPath)}`,{headers:{Authorization:`Bearer ${HOOKTHEORY_ACTIVKEY}`}});
+    const response=await fetch(`${HOOKTHEORY_TRENDS_URL}?cp=${encodeURIComponent(childPath)}`);
     if(!response.ok)return[];
     const data=await response.json();
     trendsCache.set(childPath,data);
